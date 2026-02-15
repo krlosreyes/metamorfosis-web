@@ -39,7 +39,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
-          server-dir: ./
+          server-dir: 
           port: 21
           protocol: ftps
           timeout: 600000 # Aumentamos el tiempo de espera a 10 minutos
