@@ -32,3 +32,6 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
           server-dir: ./public_html/
+          port: 21
+          protocol: ftps
+          timeout: 600000 # Aumentamos el tiempo de espera a 10 minutos
