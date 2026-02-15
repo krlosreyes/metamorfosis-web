@@ -1,0 +1,295 @@
+---
+import "../../styles/global.css";
+import Navbar from "../../components/Navbar.astro";
+import Quiz from "../../components/Quiz.astro";
+import Footer from "../../components/Footer.astro";
+import StyleSafelist from "../../components/StyleSafelist.astro";
+import { db } from "../../lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
+import { marked } from "marked";
+import {
+    BookOpen,
+    Clock,
+    Calendar,
+    Zap,
+    Target,
+    TrendingUp,
+} from "lucide-astro";
+
+export async function getStaticPaths() {
+    const postsCollection = collection(db, "metamorfosis_posts");
+    const snapshot = await getDocs(postsCollection);
+
+    return snapshot.docs.map((doc) => ({
+        params: { slug: doc.data().metadata?.slug || doc.id },
+        props: { post: { id: doc.id, ...doc.data() } },
+    }));
+}
+
+interface Post {
+    id: string;
+    metadata?: {
+        seoTitle?: string;
+        seoDescription?: string;
+        publishedAt?: string;
+        youtubeUrl?: string;
+        slug?: string;
+        category?: string;
+        readingTime?: number;
+        thumbnailUrl?: string;
+    };
+    content?: {
+        body?: string;
+    };
+    quiz?: Array<{
+        question: string;
+        options: string[];
+        correctIndex: number;
+        rationale: string;
+    }>;
+    app_integration?: {
+        callToAction?: string;
+        deepLink?: string;
+    };
+}
+
+const { post } = Astro.props as { post: Post };
+
+// Parse markdown content
+const content = post.content?.body
+    ? marked.parse(post.content.body)
+    : "<p>No content available</p>";
+
+// Format date
+const formatDate = (dateString?: string) => {
+    if (!dateString) return "Fecha no disponible";
+    return new Date(dateString).toLocaleDateString("es-ES", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
+};
+---
+
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="viewport" content="width=device-width" />
+        <meta name="generator" content={Astro.generator} />
+        <meta
+            name="description"
+            content={post.metadata?.seoDescription ||
+                "Artículo sobre salud metabólica"}
+        />
+        <title>
+            {post.metadata?.seoTitle || "Post"} - Metamorfosis Real
+        </title>
+
+        <!-- Google Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body
+        class="bg-gradient-to-br from-gray-50 via-white to-gray-50 font-sans text-gray-900 antialiased"
+    >
+        <Navbar />
+
+        <div class="min-h-screen">
+            <!-- Back Navigation -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+                <a
+                    href="/"
+                    class="inline-flex items-center gap-2 text-gray-600 hover:text-emerald-600 font-medium transition-colors duration-200 group"
+                >
+                    <svg
+                        class="w-5 h-5 flex-shrink-0 transition-transform group-hover:-translate-x-1"
+                        width="20"
+                        height="20"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    Volver al inicio
+                </a>
+            </div>
+
+            <!-- Hero Section with Gradient -->
+            <div
+                class="bg-gradient-to-r from-emerald-500 to-blue-600 text-white py-16 md:py-24 mt-8"
+            >
+                <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <!-- Category Badge -->
+                    {
+                        post.metadata?.category && (
+                            <div class="mb-6">
+                                <span class="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold border border-white/30">
+                                    <BookOpen className="w-4 h-4" />
+                                    {post.metadata.category}
+                                </span>
+                            </div>
+                        )
+                    }
+
+                    <!-- Title -->
+                    <h1
+                        class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight"
+                    >
+                        {post.metadata?.seoTitle || "Título del Post"}
+                    </h1>
+
+                    <!-- Metadata -->
+                    <div
+                        class="flex flex-wrap items-center gap-4 text-white/90"
+                    >
+                        {
+                            post.metadata?.readingTime && (
+                                <div class="flex items-center gap-2">
+                                    <Clock className="w-5 h-5" />
+                                    <span class="font-medium">
+                                        {post.metadata.readingTime} min de
+                                        lectura
+                                    </span>
+                                </div>
+                            )
+                        }
+                        {
+                            post.metadata?.publishedAt && (
+                                <div class="flex items-center gap-2">
+                                    <Calendar className="w-5 h-5" />
+                                    <span class="font-medium">
+                                        {formatDate(post.metadata.publishedAt)}
+                                    </span>
+                                </div>
+                            )
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <!-- Content Body with Prose -->
+                <article
+                    class="prose prose-lg max-w-none prose-headings:font-bold prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6 prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-4 prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-emerald-600 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-ul:my-6 prose-li:my-2 prose-blockquote:border-l-4 prose-blockquote:border-emerald-500 prose-blockquote:bg-emerald-50 prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:rounded-r-lg"
+                    set:html={content}
+                >
+                </article>
+
+                <!-- Quiz Section with Dashboard Design -->
+                {
+                    post.quiz && post.quiz.length > 0 && (
+                        <div class="mt-16">
+                            <Quiz questions={post.quiz} />
+                        </div>
+                    )
+                }
+
+                <!-- App CTA -->
+                {
+                    post.app_integration?.callToAction && (
+                        <div class="mt-12 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-2xl p-8 md:p-12 text-center shadow-xl">
+                            <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">
+                                🦋 Pasa a la acción
+                            </h3>
+                            <p class="text-white/90 text-lg mb-6 max-w-2xl mx-auto">
+                                {post.app_integration.callToAction}
+                            </p>
+                            <a
+                                href={
+                                    post.app_integration.deepLink ||
+                                    "https://app.metamorfosisvital.com.co/#/login"
+                                }
+                                class="inline-flex items-center gap-2 bg-white text-emerald-600 px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105"
+                            >
+                                Regístrate en ElenaApp para llevar tu registro →
+                            </a>
+                        </div>
+                    )
+                }
+            </div>
+        </div>
+
+        <Footer />
+        <div style="display: none;">
+            <StyleSafelist />
+        </div>
+        <style is:global>
+            /* Pro Numbered Lists */
+            article.prose ol {
+                counter-reset: my-counter;
+                list-style: none;
+                padding-left: 0;
+            }
+            article.prose ol > li {
+                position: relative;
+                counter-increment: my-counter;
+                padding-left: 4rem;
+                margin-bottom: 2rem;
+            }
+            article.prose ol > li::before {
+                content: counter(my-counter);
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 2.5rem;
+                height: 2.5rem;
+                background-color: #007bff; /* Electric Blue */
+                color: white;
+                font-weight: 700;
+                font-size: 1.1rem;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 4px 6px -1px rgba(0, 123, 255, 0.3);
+            }
+            article.prose ol > li > strong:first-child {
+                display: block;
+                font-size: 1.1em;
+                margin-bottom: 0.25rem;
+                color: #111827;
+                font-weight: 700;
+            }
+
+            /* Section Subtitles (H2, H3) - Premium SaaS Style */
+            article.prose h2,
+            article.prose h3 {
+                position: relative;
+                padding-top: 1rem !important; /* Adjusted spacing */
+                padding-bottom: 1rem;
+                padding-left: 1.5rem;
+                margin-top: 3.5rem;
+                margin-bottom: 1.5rem;
+                background: linear-gradient(
+                    to right,
+                    rgba(0, 196, 154, 0.1),
+                    transparent
+                );
+                border-left: 4px solid #00c49a; /* Emerald */
+                border-radius: 0 8px 8px 0;
+            }
+
+            /* Remove bottom border from previous design */
+            article.prose h2::after,
+            article.prose h3::after {
+                content: none;
+            }
+            /* Feature Box Adjustments if needed */
+            article.prose blockquote {
+                font-style: normal;
+            }
+        </style>
+    </body>
+</html>

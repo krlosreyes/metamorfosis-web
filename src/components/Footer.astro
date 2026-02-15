@@ -1,0 +1,75 @@
+---
+import { Youtube, Facebook, Instagram } from "lucide-astro";
+---
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-white py-12 mt-20 border-t border-gray-800">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div
+            class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8"
+        >
+            <!-- Brand -->
+            <div class="text-center md:text-left">
+                <span class="text-2xl font-bold tracking-tight">
+                    Metamorfosis<span class="text-[#00C49A]">Real</span>
+                </span>
+                <p class="text-gray-500 text-sm mt-2">
+                    Transformando vidas a través de la ciencia.
+                </p>
+                <p class="text-xs text-gray-600 mt-1">
+                    &copy; {new Date().getFullYear()} Todos los derechos reservados.
+                </p>
+            </div>
+
+            <!-- Social Icons -->
+            <div class="flex items-center gap-6">
+                <a
+                    href="https://youtube.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-gray-400 hover:text-[#00C49A] transition-colors duration-300"
+                >
+                    <Youtube class="w-6 h-6" />
+                    <span class="sr-only">YouTube</span>
+                </a>
+                <a
+                    href="https://facebook.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-gray-400 hover:text-[#00C49A] transition-colors duration-300"
+                >
+                    <Facebook class="w-6 h-6" />
+                    <span class="sr-only">Facebook</span>
+                </a>
+                <a
+                    href="https://instagram.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-gray-400 hover:text-[#00C49A] transition-colors duration-300"
+                >
+                    <Instagram class="w-6 h-6" />
+                    <span class="sr-only">Instagram</span>
+                </a>
+                <a
+                    href="https://tiktok.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-gray-400 hover:text-[#00C49A] transition-colors duration-300"
+                >
+                    <svg
+                        class="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path>
+                    </svg>
+                    <span class="sr-only">TikTok</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</footer>

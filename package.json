@@ -1,0 +1,20 @@
+{
+  "name": "metamorfosis-web",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.18",
+    "astro": "^5.17.1",
+    "firebase": "^12.9.0",
+    "firebase-admin": "^13.6.1",
+    "lucide-astro": "^0.556.0",
+    "marked": "^17.0.2",
+    "tailwindcss": "^4.1.18"
+  }
+}
