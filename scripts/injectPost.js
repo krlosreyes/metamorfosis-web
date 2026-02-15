@@ -1,16 +1,16 @@
-
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname, '..'); // <-- Movido al scope global para que Git sepa dónde ejecutarse
 
 // Find Service Account Key
 function findServiceAccount() {
-    const rootDir = path.resolve(__dirname, '..');
     const files = fs.readdirSync(rootDir);
 
     // Look for any .json file that contains "private_key" and "client_email"
@@ -107,6 +107,26 @@ async function uploadPost() {
 
         console.log(`✅ Successfully uploaded post: ${slug}`);
         console.log(`📄 Document ID: ${slug}`);
+
+        // --- INICIO DEL NUEVO BLOQUE DE AUTO-DESPLIEGUE ---
+        try {
+            console.log('🚀 Iniciando proceso de auto-despliegue hacia GitHub y Hostinger...');
+
+            // 1. Crea/Modifica el archivo trigger en la raíz del proyecto
+            const triggerFile = path.join(rootDir, 'last-update.txt');
+            fs.writeFileSync(triggerFile, `Última actualización: ${new Date().toISOString()} - Post: ${slug}`);
+
+            // 2. Ejecuta los comandos de Git automáticamente, indicando que use la carpeta raíz (cwd: rootDir)
+            execSync('git add last-update.txt', { stdio: 'inherit', cwd: rootDir });
+            execSync(`git commit -m "content: auto-deploy after injecting post ${slug}"`, { stdio: 'inherit', cwd: rootDir });
+            execSync('git push origin main', { stdio: 'inherit', cwd: rootDir });
+
+            console.log('✅ Pipeline de GitHub Actions disparado con éxito. El sitio estará en vivo en ~2 minutos.');
+        } catch (gitError) {
+            console.error('❌ Error disparando el despliegue en Git. El post subió a Firebase, pero el sitio no se actualizó automáticamente:', gitError.message);
+            console.log('💡 Sugerencia: Puedes hacer un git add . && git commit -m "update" && git push manual para actualizar la web.');
+        }
+        // --- FIN DEL NUEVO BLOQUE ---
 
     } catch (error) {
         console.error('❌ Error uploading post:', error.message);
