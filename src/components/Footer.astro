@@ -16,7 +16,21 @@ import { Youtube, Facebook, Instagram } from "lucide-astro";
                 <p class="text-gray-500 text-sm mt-2">
                     Transformando vidas a través de la ciencia.
                 </p>
-                <p class="text-xs text-gray-600 mt-1">
+                <div
+                    class="flex flex-col md:flex-row gap-4 mt-4 text-sm text-gray-400"
+                >
+                    <a
+                        href="/terminos"
+                        class="hover:text-[#00C49A] transition-colors"
+                        >Términos y Condiciones</a
+                    >
+                    <a
+                        href="/privacidad"
+                        class="hover:text-[#00C49A] transition-colors"
+                        >Política de Privacidad</a
+                    >
+                </div>
+                <p class="text-xs text-gray-600 mt-4">
                     &copy; {new Date().getFullYear()} Todos los derechos reservados.
                 </p>
             </div>
