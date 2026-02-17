@@ -1,0 +1,224 @@
+---
+---
+
+<div
+    id="metabolic-quiz"
+    class="w-full max-w-2xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl p-6 sm:p-8 shadow-2xl border border-white/20 text-white"
+>
+    <!-- Start Screen -->
+    <div id="quiz-start" class="text-center">
+        <h2
+            class="text-3xl font-extrabold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-[#00C49A] to-[#007BFF]"
+        >
+            Test de Diagnóstico Metabólico
+        </h2>
+        <p class="text-lg text-gray-200 mb-8 leading-relaxed">
+            Descubre tu <span class="font-bold text-[#00C49A]"
+                >Edad Metabólica Real</span
+            > y recibe una estrategia personalizada en menos de 2 minutos.
+        </p>
+        <button
+            id="start-btn"
+            class="w-full sm:w-auto px-8 py-4 bg-[#00C49A] hover:bg-[#00A885] text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-[#00C49A]/20"
+        >
+            Comenzar Diagnóstico Gratuito
+        </button>
+    </div>
+
+    <!-- Question Screen -->
+    <div id="quiz-question" class="hidden">
+        <div class="mb-6">
+            <div class="flex justify-between text-sm text-gray-400 mb-2">
+                <span id="progress-text">Pregunta 1 de 7</span>
+                <span id="progress-percent">0%</span>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-2.5">
+                <div
+                    id="progress-bar"
+                    class="bg-[#00C49A] h-2.5 rounded-full transition-all duration-300"
+                    style="width: 0%"
+                >
+                </div>
+            </div>
+        </div>
+
+        <h3
+            id="question-title"
+            class="text-xl sm:text-2xl font-bold mb-6 text-white min-h-[64px]"
+        >
+            <!-- Question text injected here -->
+        </h3>
+
+        <div id="options-container" class="space-y-3">
+            <!-- Options injected here -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // Logic for the quiz
+    const questions = [
+        {
+            id: 1,
+            title: "¿Cuántas veces al día comes (incluyendo snacks)?",
+            category: "frequency",
+            weight: 20,
+            options: [
+                { text: "1 o 2 veces (Ayuno intermitente)", score: 100 },
+                { text: "3 veces (Desayuno, Almuerzo, Cena)", score: 70 },
+                { text: "4 a 5 veces (Incluye meriendas)", score: 40 },
+                { text: "6 o más veces (Picoteo constante)", score: 10 },
+            ],
+        },
+        {
+            id: 2,
+            title: "¿Dónde tiendes a acumular más grasa?",
+            category: "abdominal_fat",
+            weight: 20,
+            options: [
+                { text: "Distribuida uniformemente", score: 100 },
+                { text: "Caderas y muslos", score: 80 },
+                { text: "Ligera barriga", score: 50 },
+                { text: "Abdomen pronunciado (Grasa visceral)", score: 10 },
+            ],
+        },
+        {
+            id: 3,
+            title: "¿Cuántas horas pasas sin comer entre la cena y el desayuno?",
+            category: "flexibility",
+            weight: 15,
+            options: [
+                { text: "Más de 14 horas", score: 100 },
+                { text: "12 a 13 horas", score: 80 },
+                { text: "8 a 10 horas", score: 40 },
+                {
+                    text: "Menos de 8 horas (Ceno tarde y desayuno temprano)",
+                    score: 10,
+                },
+            ],
+        },
+        {
+            id: 4,
+            title: "¿Cómo te sientes después de almorzar?",
+            category: "energy",
+            weight: 15,
+            options: [
+                { text: "Lleno de energía y agudeza mental", score: 100 },
+                { text: "Normal, sin cambios notables", score: 80 },
+                { text: "Un poco somnoliento", score: 40 },
+                {
+                    text: "Con mucha pesadez y sueño (Necesito siesta)",
+                    score: 10,
+                },
+            ],
+        },
+        {
+            id: 5,
+            title: "¿Podrías hacer ejercicio en ayunas sin marearte?",
+            category: "fasting_performance",
+            weight: 10,
+            options: [
+                { text: "Sí, entreno mejor en ayunas", score: 100 },
+                { text: "Sí, pero prefiero comer algo pequeño", score: 70 },
+                { text: "No, me siento débil o me mareo", score: 30 },
+                { text: "Imposible, necesito desayunar antes", score: 10 },
+            ],
+        },
+        {
+            id: 6,
+            title: "En el último año, ¿has notado pérdida de fuerza muscular?",
+            category: "strength_age",
+            weight: 10,
+            options: [
+                { text: "No, me siento más fuerte que nunca", score: 100 },
+                { text: "Me mantengo igual", score: 80 },
+                { text: "Un poco, me cuesta más levantar cosas", score: 40 },
+                { text: "Sí, notable pérdida de masa muscular", score: 10 },
+            ],
+        },
+        {
+            id: 7,
+            title: "¿Cómo es tu calidad de sueño?",
+            category: "sleep",
+            weight: 10,
+            options: [
+                { text: "Duermo profundo y despierto renovado", score: 100 },
+                { text: "Aceptable, 6-7 horas seguidas", score: 70 },
+                { text: "Me despierto varias veces en la noche", score: 40 },
+                { text: "Insomnio frecuente o sueño no reparador", score: 10 },
+            ],
+        },
+    ];
+
+    let currentQuestionIndex = 0;
+    let totalScore = 0;
+
+    const startScreen = document.getElementById("quiz-start");
+    const questionScreen = document.getElementById("quiz-question");
+    const startBtn = document.getElementById("start-btn");
+    const questionTitle = document.getElementById("question-title");
+    const optionsContainer = document.getElementById("options-container");
+    const progressBar = document.getElementById("progress-bar");
+    const progressText = document.getElementById("progress-text");
+    const progressPercent = document.getElementById("progress-percent");
+
+    startBtn?.addEventListener("click", () => {
+        startScreen?.classList.add("hidden");
+        questionScreen?.classList.remove("hidden");
+        loadQuestion();
+    });
+
+    function loadQuestion() {
+        const question = questions[currentQuestionIndex];
+        if (questionTitle) questionTitle.innerText = question.title;
+
+        // Update progress
+        const percent = Math.round(
+            (currentQuestionIndex / questions.length) * 100
+        );
+        if (progressBar) progressBar.style.width = `${percent}%`;
+        if (progressText)
+            progressText.innerText = `Pregunta ${currentQuestionIndex + 1} de ${
+                questions.length
+            }`;
+        if (progressPercent) progressPercent.innerText = `${percent}%`;
+
+        if (optionsContainer) {
+            optionsContainer.innerHTML = "";
+            question.options.forEach((option) => {
+                const btn = document.createElement("button");
+                btn.className = `w-full text-left p-4 rounded-xl border border-gray-600 bg-gray-800/50 hover:bg-[#00C49A]/20 hover:border-[#00C49A] transition-all duration-200 group flex items-center justify-between group`;
+                btn.innerHTML = `
+          <span class="text-gray-200 group-hover:text-white font-medium">${option.text}</span>
+          <div class="w-5 h-5 rounded-full border border-gray-500 group-hover:border-[#00C49A] flex items-center justify-center">
+            <div class="w-2.5 h-2.5 rounded-full bg-[#00C49A] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          </div>
+        `;
+                btn.onclick = () => selectOption(option.score, question.weight);
+                optionsContainer.appendChild(btn);
+            });
+        }
+    }
+
+    function selectOption(score, weight) {
+        // Calculate weighted points relative to the max score of 100 per question
+        // Formula: (Score / 100) * Weight
+        // Example: Option Score 70, Category Weight 20 => (70/100)*20 = 14 points added to total
+        const weightedPoints = (score / 100) * weight;
+        totalScore += weightedPoints;
+
+        currentQuestionIndex++;
+
+        if (currentQuestionIndex < questions.length) {
+            loadQuestion();
+        } else {
+            finishQuiz();
+        }
+    }
+
+    function finishQuiz() {
+        const finalScore = Math.round(totalScore);
+        localStorage.setItem("imx_score", finalScore.toString());
+        window.location.href = "/resultado-imx";
+    }
+</script>
