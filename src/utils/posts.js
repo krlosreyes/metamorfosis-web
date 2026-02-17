@@ -1,5 +1,5 @@
 
-import { collection, getDocs, getDoc, doc, query, orderBy, limit } from "firebase/firestore";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
 const COLLECTION_NAME = "metamorfosis_posts";

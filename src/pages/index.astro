@@ -1,7 +1,7 @@
 ---
 import { getPosts } from "../utils/posts";
 import Layout from "../layouts/Layout.astro";
-import MetabolicQuiz from "../components/MetabolicQuiz.astro";
+import IMXQuiz from "../components/IMXQuiz.tsx";
 
 interface Post {
 	id: string;
@@ -91,7 +91,7 @@ const posts = (await getPosts()) as Post[];
 			</div>
 
 			<!-- Quiz Component -->
-			<MetabolicQuiz />
+			<IMXQuiz client:load />
 
 			<p class="mt-8 text-sm text-gray-400">
 				Basado en 4 pilares: Nutrición, Ayuno, Sueño y Ejercicio.

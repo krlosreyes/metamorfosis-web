@@ -9,7 +9,7 @@ interface Props {
 }
 
 const { questions } = Astro.props;
-const quizId = `quiz-${Math.random().toString(36).substr(2, 9)}`;
+const quizId = `quiz-${Math.random().toString(36).slice(2, 11)}`;
 ---
 
 <!-- Dashboard-style Quiz Container -->
@@ -45,7 +45,7 @@ const quizId = `quiz-${Math.random().toString(36).substr(2, 9)}`;
     </div>
 </div>
 
-<script define:vars={{ questions, quizId }}>
+<script is:inline define:vars={{ questions, quizId }}>
     class QuizManager {
         constructor(containerId, questions) {
             this.containerId = containerId;
@@ -109,7 +109,7 @@ const quizId = `quiz-${Math.random().toString(36).substr(2, 9)}`;
         attachEventListeners() {
             const options = document.querySelectorAll(`#options-container-${this.containerId} .quiz-option`);
             options.forEach((option) => {
-                option.addEventListener("click", (e) => {
+                option.addEventListener("click", () => {
                     if (!this.answered) {
                         this.handleAnswer(parseInt(option.dataset.index));
                     }
