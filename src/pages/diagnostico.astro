@@ -145,6 +145,10 @@ import Layout from "../layouts/Layout.astro";
         // Simulator delay for realistic analysis feel
         setTimeout(() => {
             const scoreStr = sessionStorage.getItem("imx_score");
+            // Default to empty string if not found, or a generic term if preferred,
+            // but the prompt implies we captured it.
+            // Fallback to "Sujeto" if empty/null.
+            const userName = sessionStorage.getItem("imx_userName") || "Sujeto";
 
             if (!scoreStr) {
                 window.location.href = "/";
@@ -193,7 +197,7 @@ import Layout from "../layouts/Layout.astro";
             let colorClass = "";
 
             if (score <= 40) {
-                // ALERTA (0-40) - Hard Sell
+                // ALERTA (0-40) - Hard Sell / Emergency Protocol
                 colorClass = "text-red-500";
                 if (scoreCircle) {
                     scoreCircle.classList.add(
@@ -202,27 +206,26 @@ import Layout from "../layouts/Layout.astro";
                     );
                 }
                 if (levelTitle)
-                    levelTitle.innerHTML = `<span class="${colorClass}">Alerta Metabólica</span>`;
+                    levelTitle.innerHTML = `<span class="${colorClass}">⚠️ ${userName}, tu sistema está en Bloqueo Metabólico.</span>`;
                 if (levelDesc)
                     levelDesc.innerText =
-                        "Rigidez metabólica severa y dependencia de glucosa.";
+                        "Tu resultado indica una resistencia severa a la insulina.";
                 if (levelAnalysis)
                     levelAnalysis.innerHTML = `
-                Tus marcadores indican que tu cuerpo ha perdido la capacidad de quemar grasa eficientemente. Esto no es solo "subir de peso", es un estado de inflamación y baja energía que requiere intervención inmediata.
+                Las dietas tradicionales no van a funcionar. Necesitas una <strong>intervención de emergencia de 7 días</strong> para forzar a tu cuerpo a volver a quemar grasa. Este es el protocolo exacto para tu estado.
                 <br><br>
-                <strong>Diagnóstico:</strong> Resistencia a la insulina probable.
+                <strong>Diagnóstico:</strong> Resistencia a la insulina severa.
             `;
 
                 if (ctaTitle)
-                    ctaTitle.innerText =
-                        "Protocolo de Reinicio Metabólico (7 Días)";
+                    ctaTitle.innerText = "Protocolo de Emergencia (7 Días)";
                 if (ctaDesc)
                     ctaDesc.innerText =
-                        "El sistema paso a paso para 'resetear' tus hormonas y volver a quemar grasa. Sin dietas de hambre.";
+                        "Detén la inflamación y resetea tus hormonas ahora.";
                 if (ctaButtons)
                     ctaButtons.innerHTML = `
-                <a href="https://buy.stripe.com/test_link_reinicio" class="inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-[#3d0000] bg-red-500 hover:bg-red-400 rounded-xl transition-all shadow-lg hover:shadow-red-500/40 transform hover:-translate-y-1 w-full sm:w-auto">
-                    Obtener Plan de Emergencia ($9 USD)
+                <a href="https://buy.stripe.com/test_link_reinicio" class="inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white bg-red-600 hover:bg-red-500 rounded-xl transition-all shadow-lg hover:shadow-red-500/40 transform hover:-translate-y-1 w-full sm:w-auto">
+                    ACTIVAR PROTOCOLO ($9 USD)
                     <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
                 </a>
                 <div class="mt-4 text-center w-full">
@@ -243,8 +246,7 @@ import Layout from "../layouts/Layout.astro";
                 if (levelTitle)
                     levelTitle.innerHTML = `<span class="${colorClass}">Estancamiento Metabólico</span>`;
                 if (levelDesc)
-                    levelDesc.innerText =
-                        "Tu metabolismo funciona, pero no a su máxima capacidad.";
+                    levelDesc.innerText = `${userName}, tu metabolismo funciona, pero no a su máxima capacidad.`;
                 if (levelAnalysis)
                     levelAnalysis.innerHTML = `
                 Estás en una zona gris. Tienes días buenos, pero la falta de consistencia y pequeños errores en el ayuno/nutrición están frenando tu progreso real.
@@ -281,11 +283,10 @@ import Layout from "../layouts/Layout.astro";
                 if (levelTitle)
                     levelTitle.innerHTML = `<span class="${colorClass}">Metabolismo Optimizado</span>`;
                 if (levelDesc)
-                    levelDesc.innerText =
-                        "Tienes una maquinaria biológica eficiente.";
+                    levelDesc.innerText = `Excelente trabajo, ${userName}. Tienes una maquinaria biológica eficiente.`;
                 if (levelAnalysis)
                     levelAnalysis.innerHTML = `
-                ¡Excelente! Tu cuerpo sabe alternar entre fuentes de energía. Ahora el juego se trata de longevidad, autofagia celular y rendimiento cognitivo superior.
+                Tu cuerpo sabe alternar entre fuentes de energía. Ahora el juego se trata de longevidad, autofagia celular y rendimiento cognitivo superior.
                 <br><br>
                 <strong>Diagnóstico:</strong> Alta flexibilidad metabólica.
             `;

@@ -5,6 +5,9 @@ const IMXQuiz = () => {
     const [totalScore, setTotalScore] = useState(0);
     const [hasStarted, setHasStarted] = useState(false);
     const [isThinking, setIsThinking] = useState(false);
+    const [showNameInput, setShowNameInput] = useState(false);
+    const [userName, setUserName] = useState('');
+    const [nameError, setNameError] = useState('');
 
     const questions = [
         {
@@ -108,14 +111,24 @@ const IMXQuiz = () => {
         if (currentQuestionIndex < questions.length - 1) {
             setCurrentQuestionIndex(prev => prev + 1);
         } else {
-            finishQuiz(newScore);
+            setShowNameInput(true);
         }
+    };
+
+    const handleNameSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (userName.trim().length < 2) {
+            setNameError('Por favor ingresa un nombre válido.');
+            return;
+        }
+        finishQuiz(totalScore);
     };
 
     const finishQuiz = (finalScore: number) => {
         setIsThinking(true);
         setTimeout(() => {
             sessionStorage.setItem('imx_score', Math.round(finalScore).toString());
+            sessionStorage.setItem('imx_userName', userName.trim());
             window.location.href = '/diagnostico';
         }, 1500);
     };
@@ -135,6 +148,39 @@ const IMXQuiz = () => {
                 >
                     Comenzar Diagnóstico Gratuito
                 </button>
+            </div>
+        );
+    }
+
+    if (showNameInput && !isThinking) {
+        return (
+            <div className="w-full max-w-2xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl p-6 sm:p-8 shadow-2xl border border-white/20 text-white text-center animate-fade-in">
+                <h2 className="text-2xl font-bold mb-6 text-white">
+                    ¡Casi listo!
+                </h2>
+                <p className="text-gray-300 mb-6">
+                    Para personalizar tu reporte metabólico y estrategia, ¿cómo te llamas?
+                </p>
+                <form onSubmit={handleNameSubmit} className="max-w-xs mx-auto space-y-4">
+                    <input
+                        type="text"
+                        value={userName}
+                        onChange={(e) => {
+                            setUserName(e.target.value);
+                            setNameError('');
+                        }}
+                        placeholder="Tu Nombre"
+                        className="w-full bg-black/50 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#00C49A] text-center text-lg"
+                        autoFocus
+                    />
+                    {nameError && <p className="text-red-400 text-sm">{nameError}</p>}
+                    <button
+                        type="submit"
+                        className="w-full px-8 py-3 bg-[#00C49A] hover:bg-[#00A885] text-white font-bold rounded-xl transition-all shadow-lg shadow-[#00C49A]/20"
+                    >
+                        Ver Mi Diagnóstico
+                    </button>
+                </form>
             </div>
         );
     }
