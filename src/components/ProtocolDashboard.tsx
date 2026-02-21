@@ -13,38 +13,38 @@ import DailyStep from './DailyStep';
 const DAYS_CONTENT = [
     {
         day: 1,
-        title: "Protocolo de Eliminación",
-        description: "Hoy es tu día de 'reset'. Tu objetivo es simple: 16 horas de ayuno y eliminar azúcar, ultraprocesados y alcohol. Bebe agua con sal."
+        title: "Depleción de Glucógeno (El Corte)",
+        description: "Descripción: Hoy bloqueamos la entrada de glucosa. Tu hígado tiene reservas para 12-14 horas; tu misión es forzar el vaciado. Sentirás picos de hambre por la hormona Ghrelina (es tu reloj biológico, no falta de energía).\n\nAcción/Táctica: Ayuno estricto de 16h. Cero calorías líquidas. Para evitar dolor de cabeza por pérdida de agua, añade 1/2 cucharadita de sal a tu agua."
     },
     {
         day: 2,
-        title: "Activación Metabólica",
-        description: "Introduce movimiento ligero antes de romper tu ayuno. Una caminata de 20 minutos es suficiente para potenciar la quema de grasa."
+        title: "Switch Metabólico (Activación BHB)",
+        description: "Descripción: Con la insulina en mínimos, tu cuerpo busca una ruta alterna. Hoy tu hígado empieza a sintetizar Beta-Hidroxibutirato (BHB) a partir de tu grasa corporal.\n\nAcción/Táctica: Rompe el ayuno de 16h con proteína de alta absorción (ej. 3 huevos) y grasas (aguacate). Cero carbohidratos para estabilizar la leptina."
     },
     {
         day: 3,
-        title: "Carga de Nutrientes",
-        description: "Rompe tu ayuno con proteína de alta calidad y grasas saludables. Aguacate, huevos, aceite de oliva. Nada de carbohidratos refinados."
+        title: "Inhibición mTOR y Autofagia",
+        description: "Descripción: Al no detectar aminoácidos, tus células apagan la vía mTOR y encienden la AMPK. Estás reciclando proteínas viejas y mitocondrias dañadas.\n\nAcción/Táctica: Intenta llegar a 18h de ayuno. Introduce 20 min de caminata en ayuno profundo para maximizar oxidación lipídica."
     },
     {
         day: 4,
-        title: "Ayuno Extendido (Opcional)",
-        description: "Si te sientes con energía, intenta llegar a las 18 horas de ayuno hoy. La autofagia (limpieza celular) se intensifica."
+        title: "Optimización Circadiana",
+        description: "Descripción: La quema de grasa ocurre mientras duermes, impulsada por la Hormona de Crecimiento (GH). La resistencia a la insulina está ligada a la falta de sueño profundo.\n\nAcción/Táctica: Cero pantallas 1 hora antes de dormir. Bloqueo de luz azul para maximizar tu pico natural de melatonina."
     },
     {
         day: 5,
-        title: "Sueño Reparador",
-        description: "Tu prioridad hoy es dormir 8 horas. Sin pantallas 1 hora antes de dormir. El sueño es cuando tu cuerpo quema más grasa."
+        title: "Preservación Magra (Tensión)",
+        description: "Descripción: Para evitar el catabolismo, necesitamos enviar una señal a tu sistema nervioso de que tus músculos son indispensables para la supervivencia.\n\nAcción/Táctica: Sesión de fuerza de 15 min en ayunas (flexiones, sentadillas). El objetivo es tensión mecánica, no agotamiento."
     },
     {
         day: 6,
-        title: "Entrenamiento de Fuerza",
-        description: "Haz una sesión de fuerza en ayunas o justo antes de comer. Estimula tus músculos para que absorban los nutrientes."
+        title: "Flexibilidad y Densidad",
+        description: "Descripción: Tus receptores de insulina ahora son mucho más sensibles. Lo que comas hoy será absorbido por el músculo, no almacenado como grasa visceral.\n\nAcción/Táctica: Primera comida hiperdensa (carnes o pescados). Cero aceites de semillas (soya, canola) para evitar inflamación."
     },
     {
         day: 7,
-        title: "Día de Celebración & Siguiente Nivel",
-        description: "Has completado la semana. Tu cuerpo está más limpio y eficiente. Es hora de llevar esto al siguiente nivel con ElenaApp."
+        title: "Baseline Alcanzado (Reinicio)",
+        description: "Descripción: Hard Reset completado. Has reescrito el código de acceso a tus reservas de energía y bajado la inflamación sistémica.\n\nAcción/Táctica: Este es tu nuevo baseline. Para calcular tus macros exactos y mantener este estado, necesitas conectar tu sistema a ElenaApp."
     }
 ];
 
