@@ -26,7 +26,8 @@ export interface ProtocolState {
     logs: Record<number, DailyLog>;
     startDate: Timestamp;
     initialWeight?: string;
-    initialFat?: string;
+    initialWaist?: string;
+    initialHip?: string;
 }
 
 const COLLECTION_NAME = "protocols";
@@ -75,9 +76,9 @@ export async function getProtocolState(userId: string): Promise<ProtocolState | 
 }
 
 /**
- * Save onboarding data (weight, fat) to the protocol state.
+ * Save onboarding data (weight, waist, hip) to the protocol state.
  */
-export async function saveOnboardingData(userId: string, weight: string, fat: string) {
+export async function saveOnboardingData(userId: string, weight: string, waist: string, hip: string) {
     if (!userId) throw new Error("User ID required");
 
     const userProtocolRef = doc(db, COLLECTION_NAME, userId);
@@ -88,7 +89,8 @@ export async function saveOnboardingData(userId: string, weight: string, fat: st
     const currentState = snap.data() as ProtocolState;
     const updates = {
         initialWeight: weight,
-        initialFat: fat
+        initialWaist: waist,
+        initialHip: hip
     };
 
     await updateDoc(userProtocolRef, updates);

@@ -166,10 +166,11 @@ export default function ProtocolDashboard() {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
         const weight = fd.get("weight") as string;
-        const fat = fd.get("fat") as string;
+        const waist = fd.get("waist") as string;
+        const hip = fd.get("hip") as string;
 
-        if (!weight || !fat) {
-            alert("Por favor llena ambos campos para calibrar tu protocolo.");
+        if (!weight || !waist || !hip) {
+            alert("Por favor llena todos los campos para calibrar tu protocolo.");
             return;
         }
 
@@ -179,18 +180,47 @@ export default function ProtocolDashboard() {
                 return {
                     ...prev,
                     initialWeight: weight,
-                    initialFat: fat
+                    initialWaist: waist,
+                    initialHip: hip
                 };
             });
             return;
         }
 
         try {
-            const newState = await saveOnboardingData(userId, weight, fat);
+            const newState = await saveOnboardingData(userId, weight, waist, hip);
             setProtocol(newState as ProtocolState);
         } catch (error) {
             alert("Error guardando datos iniciales.");
         }
+    };
+
+    const handleEmailSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        const email = fd.get("email") as string;
+
+        // Basic Email Regex
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert("Por favor ingresa un email válido.");
+            return;
+        }
+
+        // Mock success state change directly in UI for feedback via DOM update
+        const btn = e.currentTarget.querySelector('button[type="submit"]') as HTMLButtonElement;
+        if (btn) {
+            btn.textContent = "Reporte enviado. Revisa tu bandeja en 5 min.";
+            btn.className = "w-full py-4 bg-green-500 text-black font-black text-xl rounded-xl shadow-[0_0_20px_rgba(0,196,154,0.3)] transition-all";
+            btn.disabled = true;
+        }
+
+        // Aquí podrías disparar un evento a tu backend/webhook para guardar el lead
+        console.log("Lead captured:", email, "ICC Data:", {
+            weight: protocol?.initialWeight,
+            waist: protocol?.initialWaist,
+            hip: protocol?.initialHip
+        });
     };
 
     if (loading) {
@@ -212,8 +242,8 @@ export default function ProtocolDashboard() {
             <div className="max-w-2xl mx-auto py-12 px-4 animate-fade-in-up">
                 <div className="bg-gray-900 border border-gray-800 p-8 rounded-3xl shadow-xl">
                     <h2 className="text-3xl font-black text-white mb-4">Métricas Base</h2>
-                    <p className="text-gray-400 mb-8">
-                        Para calibrar tu protocolo, necesitamos tus métricas base. ¿Cuál es tu peso actual y tu porcentaje de grasa estimado (o medida de cintura en cm)?
+                    <p className="text-gray-400 mb-8 leading-relaxed">
+                        Para calibrar el algoritmo de tu protocolo, ingresa tus métricas base. El <strong>Índice Cintura-Cadera</strong> es el mejor indicador de tu salud metabólica.
                     </p>
                     <form onSubmit={handleOnboardingSubmit} className="space-y-6">
                         <div>
@@ -229,18 +259,33 @@ export default function ProtocolDashboard() {
                                 placeholder="Ej. 75.5"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">
-                                Grasa (%) o Cintura (cm)
-                            </label>
-                            <input
-                                type="number"
-                                name="fat"
-                                step="0.1"
-                                required
-                                className="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00C49A] transition-colors"
-                                placeholder="Ej. 20 o 85"
-                            />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">
+                                    Cintura (cm)
+                                </label>
+                                <input
+                                    type="number"
+                                    name="waist"
+                                    step="0.1"
+                                    required
+                                    className="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00C49A] transition-colors"
+                                    placeholder="Ej. 85"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">
+                                    Cadera (cm)
+                                </label>
+                                <input
+                                    type="number"
+                                    name="hip"
+                                    step="0.1"
+                                    required
+                                    className="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00C49A] transition-colors"
+                                    placeholder="Ej. 102"
+                                />
+                            </div>
                         </div>
                         <button
                             type="submit"
@@ -262,28 +307,65 @@ export default function ProtocolDashboard() {
             if (log.checkExercise) totalChecks++;
         });
 
+        const icc = (Number(protocol.initialWaist) / Number(protocol.initialHip)).toFixed(2);
+
         return (
             <div className="text-center py-12 px-4 animate-fade-in-up">
-                <div className="bg-gradient-to-br from-[#00C49A]/20 to-blue-600/20 border border-[#00C49A]/30 p-8 rounded-3xl backdrop-blur-md shadow-2xl max-w-2xl mx-auto">
-                    <span className="text-6xl mb-6 block">🏆</span>
-                    <h2 className="text-4xl font-black text-white mb-4 leading-tight">
-                        Protocolo Completado
+                <div className="bg-gradient-to-br from-[#00C49A]/10 to-blue-900/10 border border-[#00C49A]/30 p-8 rounded-3xl backdrop-blur-md shadow-2xl max-w-2xl mx-auto">
+                    <span className="text-6xl mb-4 block">🔥</span>
+                    <h2 className="text-3xl sm:text-4xl font-black text-white mb-4 leading-tight">
+                        ¡Misión Cumplida!
                     </h2>
-                    <div className="bg-black/30 rounded-xl p-6 mb-8 mt-4 outline outline-white/5">
-                        <p className="text-xl text-gray-300 leading-relaxed">
-                            Iniciaste con <strong className="text-white">{protocol.initialWeight}kg</strong>.<br />
-                            Completaste <strong className="text-[#00C49A] text-2xl">{totalChecks}</strong>/21 objetivos esta semana.
-                        </p>
-                        <p className="mt-4 text-gray-400 font-medium">Tu metabolismo ha salido del estancamiento.</p>
+                    <p className="text-lg text-gray-300 mb-6 font-medium">
+                        Has completado el Reinicio de 7 Días. Hemos procesado tus métricas (Peso: {protocol.initialWeight}kg, Cintura: {protocol.initialWaist}cm).
+                    </p>
+
+                    <div className="flex justify-center gap-6 mb-8 text-xl">
+                        <div className="text-center">
+                            <span className="block text-3xl font-black text-[#00C49A]">{totalChecks}</span>
+                            <span className="text-xs text-gray-400 uppercase tracking-widest">Objetivos</span>
+                        </div>
+                        <div className="w-px bg-white/10"></div>
+                        <div className="text-center">
+                            <span className="block text-3xl font-black text-[#00C49A]">{icc}</span>
+                            <span className="text-xs text-gray-400 uppercase tracking-widest">Tu Índice C-C</span>
+                        </div>
                     </div>
 
-                    <a
-                        href="https://buy.stripe.com/test_link_elena_app"
-                        target="_blank"
-                        className="inline-block w-full sm:w-auto px-8 py-5 bg-gradient-to-r from-[#00C49A] to-blue-600 hover:from-[#00C49A]/90 hover:to-blue-600/90 text-white font-black text-xl rounded-xl shadow-[0_0_30px_rgba(0,196,154,0.4)] transform hover:-translate-y-1 transition-all"
-                    >
-                        DESCARGAR ELENA APP ➔
-                    </a>
+                    {/* GATED CONTENT (Email Capture) */}
+                    <div className="bg-black/40 rounded-2xl p-6 sm:p-8 border border-blue-500/30 text-left relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -z-10 group-hover:bg-[#00C49A]/20 transition-colors"></div>
+                        <h3 className="text-xl font-bold text-white mb-3">Tu Reporte Metabólico Detallado está listo.</h3>
+                        <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+                            Incluye tu Índice Cintura-Cadera calculado, tu nivel de resistencia a la insulina y tu plan de mantenimiento personalizado para transicionar 100% a la ElenaApp.
+                        </p>
+
+                        <form onSubmit={handleEmailSubmit} className="space-y-4">
+                            <input
+                                type="email"
+                                name="email"
+                                required
+                                placeholder="Tu mejor correo electrónico"
+                                className="w-full bg-gray-900/80 border border-gray-700 rounded-xl px-4 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                            />
+                            <button
+                                type="submit"
+                                className="w-full py-4 bg-gradient-to-r from-blue-600 to-[#00C49A] hover:from-blue-500 hover:to-[#00C49A]/90 text-white font-black text-xl rounded-xl shadow-[0_0_20px_rgba(0,196,154,0.2)] transform hover:-translate-y-1 transition-all"
+                            >
+                                Enviarme mi Reporte en PDF
+                            </button>
+                        </form>
+                    </div>
+
+                    <div className="mt-8 pt-6 border-t border-white/5">
+                        <a
+                            href="https://buy.stripe.com/test_link_elena_app"
+                            target="_blank"
+                            className="inline-block text-gray-500 hover:text-white font-medium text-sm transition-colors border-b border-gray-600 hover:border-white pb-1"
+                        >
+                            Saltar e ir directo a probar ElenaApp ➔
+                        </a>
+                    </div>
                 </div>
             </div>
         );
