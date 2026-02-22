@@ -5,42 +5,71 @@ import { Timestamp } from 'firebase/firestore';
 interface DailyLog {
     day: number;
     completed: boolean;
-    fastingHours: number;
-    cleanEating: boolean;
+    checkFasting: boolean;
+    checkFood: boolean;
+    checkExercise: boolean;
     timestamp: Timestamp;
 }
 
 interface DailyStepProps {
     day: number;
     title: string;
-    description: string;
+    food: string;
+    exercise: string;
     isLocked: boolean;
     isCompleted: boolean;
     isActive: boolean;
-    onComplete: (day: number, fastingHours: number, cleanEating: boolean) => void;
+    onComplete: (day: number, checkFasting: boolean, checkFood: boolean, checkExercise: boolean) => void;
     log?: DailyLog;
 }
 
 const DailyStep: React.FC<DailyStepProps> = ({
     day,
     title,
-    description,
+    food,
+    exercise,
     isLocked,
     isCompleted,
     isActive,
     onComplete,
     log
 }) => {
-    const [fastingHours, setFastingHours] = useState(16);
-    const [cleanEating, setCleanEating] = useState(false);
+    const [checkFasting, setCheckFasting] = useState(false);
+    const [checkFood, setCheckFood] = useState(false);
+    const [checkExercise, setCheckExercise] = useState(false);
+
+    // Fasting Timer State
+    const [lastMealTime, setLastMealTime] = useState("");
+    const [nextMealTime, setNextMealTime] = useState("");
+
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setLastMealTime(val);
+        if (val) {
+            const [hours, minutes] = val.split(':').map(Number);
+            const nextMeal = new Date();
+            nextMeal.setHours(hours + 16);
+            nextMeal.setMinutes(minutes);
+
+            const formatter = new Intl.DateTimeFormat('es-MX', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+            setNextMealTime(formatter.format(nextMeal));
+        } else {
+            setNextMealTime("");
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
         // Simulate network delay for better UX feel
         setTimeout(() => {
-            onComplete(day, fastingHours, cleanEating);
+            onComplete(day, checkFasting, checkFood, checkExercise);
             setIsSubmitting(false);
         }, 800);
     };
@@ -61,7 +90,8 @@ const DailyStep: React.FC<DailyStepProps> = ({
                         <span className="text-gray-500 font-bold uppercase tracking-widest text-sm">Día {day}</span>
                     </div>
                     <h3 className="text-xl font-bold text-gray-300 mb-2">{title}</h3>
-                    <p className="text-gray-500">{description}</p>
+                    <p className="text-gray-500 line-clamp-2">Comida: {food}</p>
+                    <p className="text-gray-500 line-clamp-2 mt-1">Ejercicio: {exercise}</p>
                 </div>
             </div>
         );
@@ -85,14 +115,18 @@ const DailyStep: React.FC<DailyStepProps> = ({
 
                 <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
 
-                <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-2 gap-4">
-                    <div className="text-center bg-black/20 rounded-lg p-2">
-                        <div className="text-xs text-gray-400 uppercase">Ayuno</div>
-                        <div className="text-lg font-bold text-[#00C49A]">{log?.fastingHours || 0}h</div>
+                <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-3 gap-2">
+                    <div className="text-center bg-black/20 rounded-lg p-2 flex flex-col items-center">
+                        <div className="text-[10px] text-gray-400 uppercase mb-1">Ayuno</div>
+                        <div className={`w-3 h-3 rounded-full ${log?.checkFasting ? 'bg-[#00C49A]' : 'bg-red-500/50'}`}></div>
                     </div>
-                    <div className="text-center bg-black/20 rounded-lg p-2">
-                        <div className="text-xs text-gray-400 uppercase">Comida Limpia</div>
-                        <div className="text-lg font-bold text-[#00C49A]">{log?.cleanEating ? 'Sí' : 'No'}</div>
+                    <div className="text-center bg-black/20 rounded-lg p-2 flex flex-col items-center">
+                        <div className="text-[10px] text-gray-400 uppercase mb-1">Comida</div>
+                        <div className={`w-3 h-3 rounded-full ${log?.checkFood ? 'bg-[#00C49A]' : 'bg-red-500/50'}`}></div>
+                    </div>
+                    <div className="text-center bg-black/20 rounded-lg p-2 flex flex-col items-center">
+                        <div className="text-[10px] text-gray-400 uppercase mb-1">Ejercicio</div>
+                        <div className={`w-3 h-3 rounded-full ${log?.checkExercise ? 'bg-[#00C49A]' : 'bg-red-500/50'}`}></div>
                     </div>
                 </div>
             </div>
@@ -111,47 +145,81 @@ const DailyStep: React.FC<DailyStepProps> = ({
                 </div>
 
                 <h3 className="text-2xl font-black text-white mb-3">{title}</h3>
-                <p className="text-gray-300 mb-8 leading-relaxed border-l-4 border-[#00C49A] pl-4">
-                    {description}
-                </p>
+                <div className="space-y-3 mb-8">
+                    <div className="bg-black/30 p-4 rounded-xl border-l-4 border-[#00C49A]">
+                        <span className="text-xs text-[#00C49A] font-bold uppercase block mb-1">Comida</span>
+                        <p className="text-gray-200">{food}</p>
+                    </div>
+                    <div className="bg-black/30 p-4 rounded-xl border-l-4 border-blue-500">
+                        <span className="text-xs text-blue-400 font-bold uppercase block mb-1">Ejercicio</span>
+                        <p className="text-gray-200">{exercise}</p>
+                    </div>
+                </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6 bg-black/20 p-6 rounded-xl border border-white/5">
-                    <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Registro Diario</h4>
-
-                    {/* Fasting Input */}
-                    <div>
-                        <label className="block text-gray-300 text-sm font-bold mb-2">
-                            Horas de Ayuno
+                    {/* Fasting Timer */}
+                    <div className="bg-gray-800/40 p-4 rounded-xl border border-gray-700/50">
+                        <label className="block text-gray-300 text-sm font-bold mb-3">
+                            <span className="mr-2">⏱</span> Calculadora de Ayuno
                         </label>
-                        <div className="flex items-center gap-4">
-                            <input
-                                type="range"
-                                min="12"
-                                max="24"
-                                value={fastingHours}
-                                onChange={(e) => setFastingHours(parseInt(e.target.value))}
-                                className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#00C49A]"
-                            />
-                            <span className="text-2xl font-bold text-[#00C49A] w-12 text-center">{fastingHours}h</span>
+                        <div className="flex flex-col sm:flex-row gap-4 items-center">
+                            <div className="w-full sm:w-1/2">
+                                <span className="text-xs text-gray-500 uppercase block mb-1">Última comida ayer:</span>
+                                <input
+                                    type="time"
+                                    value={lastMealTime}
+                                    onChange={handleTimeChange}
+                                    className="w-full bg-black/50 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#00C49A] transition-colors"
+                                />
+                            </div>
+                            {nextMealTime && (
+                                <div className="w-full sm:w-1/2 bg-[#00C49A]/10 border border-[#00C49A]/30 p-3 rounded-lg flex flex-col justify-center items-center h-full">
+                                    <span className="text-[10px] text-[#00C49A] font-bold uppercase tracking-wider">Ventana Abierta</span>
+                                    <span className="text-xl font-black text-[#00C49A]">{nextMealTime}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
 
-                    {/* Clean Eating Check */}
-                    <div className="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer" onClick={() => setCleanEating(!cleanEating)}>
-                        <div className="flex items-center gap-3">
-                            <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${cleanEating ? 'bg-green-500 border-green-500' : 'border-gray-500'}`}>
-                                {cleanEating && <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>}
+                    <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2 mt-6">Checklist Diario</h4>
+                    <div className="space-y-3">
+                        {/* Check 1 */}
+                        <div className="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer" onClick={() => setCheckFasting(!checkFasting)}>
+                            <div className="flex items-center gap-3">
+                                <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${checkFasting ? 'bg-[#00C49A] border-[#00C49A]' : 'border-gray-500'}`}>
+                                    {checkFasting && <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>}
+                                </div>
+                                <span className="text-gray-200 font-medium">Ayuno 16h completado</span>
                             </div>
-                            <span className="text-gray-200 font-medium">Comí limpio hoy (Sin procesados)</span>
+                        </div>
+
+                        {/* Check 2 */}
+                        <div className="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer" onClick={() => setCheckFood(!checkFood)}>
+                            <div className="flex items-center gap-3">
+                                <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${checkFood ? 'bg-[#00C49A] border-[#00C49A]' : 'border-gray-500'}`}>
+                                    {checkFood && <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>}
+                                </div>
+                                <span className="text-gray-200 font-medium">Alimentación limpia</span>
+                            </div>
+                        </div>
+
+                        {/* Check 3 */}
+                        <div className="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer" onClick={() => setCheckExercise(!checkExercise)}>
+                            <div className="flex items-center gap-3">
+                                <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${checkExercise ? 'bg-[#00C49A] border-[#00C49A]' : 'border-gray-500'}`}>
+                                    {checkExercise && <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>}
+                                </div>
+                                <span className="text-gray-200 font-medium">Ejercicio/Movimiento completado</span>
+                            </div>
                         </div>
                     </div>
 
                     <button
                         type="submit"
-                        disabled={!cleanEating || isSubmitting}
-                        className={`w-full py-4 rounded-xl font-bold text-lg transition-all transform ${cleanEating && !isSubmitting
-                                ? 'bg-gradient-to-r from-[#00C49A] to-[#007BFF] text-white hover:scale-[1.02] shadow-lg hover:shadow-blue-500/25'
-                                : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                        disabled={(!checkFasting && !checkFood && !checkExercise) || isSubmitting}
+                        className={`w-full py-4 rounded-xl font-bold text-lg transition-all transform ${(checkFasting || checkFood || checkExercise) && !isSubmitting
+                            ? 'bg-gradient-to-r from-[#00C49A] to-[#007BFF] text-white hover:scale-[1.02] shadow-lg hover:shadow-blue-500/25'
+                            : 'bg-gray-800 text-gray-500 cursor-not-allowed'
                             }`}
                     >
                         {isSubmitting ? (

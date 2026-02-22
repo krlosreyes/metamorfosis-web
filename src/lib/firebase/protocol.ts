@@ -13,8 +13,9 @@ import {
 export interface DailyLog {
     day: number;
     completed: boolean;
-    fastingHours: number;
-    cleanEating: boolean;
+    checkFasting: boolean;
+    checkFood: boolean;
+    checkExercise: boolean;
     timestamp: Timestamp;
 }
 
@@ -24,6 +25,8 @@ export interface ProtocolState {
     isFinished: boolean;
     logs: Record<number, DailyLog>;
     startDate: Timestamp;
+    initialWeight?: string;
+    initialFat?: string;
 }
 
 const COLLECTION_NAME = "protocols";
@@ -72,9 +75,30 @@ export async function getProtocolState(userId: string): Promise<ProtocolState | 
 }
 
 /**
+ * Save onboarding data (weight, fat) to the protocol state.
+ */
+export async function saveOnboardingData(userId: string, weight: string, fat: string) {
+    if (!userId) throw new Error("User ID required");
+
+    const userProtocolRef = doc(db, COLLECTION_NAME, userId);
+    const snap = await getDoc(userProtocolRef);
+
+    if (!snap.exists()) throw new Error("Protocol not initialized");
+
+    const currentState = snap.data() as ProtocolState;
+    const updates = {
+        initialWeight: weight,
+        initialFat: fat
+    };
+
+    await updateDoc(userProtocolRef, updates);
+    return { ...currentState, ...updates };
+}
+
+/**
  * Mark a day as complete and unlock the next day.
  */
-export async function completeDay(userId: string, day: number, fastingHours: number, cleanEating: boolean) {
+export async function completeDay(userId: string, day: number, checkFasting: boolean, checkFood: boolean, checkExercise: boolean) {
     if (!userId) throw new Error("User ID required");
 
     const userProtocolRef = doc(db, COLLECTION_NAME, userId);
@@ -92,8 +116,9 @@ export async function completeDay(userId: string, day: number, fastingHours: num
     const newLog: DailyLog = {
         day,
         completed: true,
-        fastingHours,
-        cleanEating,
+        checkFasting,
+        checkFood,
+        checkExercise,
         timestamp: Timestamp.now()
     };
 
