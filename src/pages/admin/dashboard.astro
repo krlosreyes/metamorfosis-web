@@ -2,82 +2,31 @@
 import Layout from '../../layouts/Layout.astro';
 import AdminApp from '../../components/admin/AdminApp';
 
-// Forzar SSR en Astro (Necesario para Cookies y Astro.request)
+// Forzar SSR en Astro (Necesario para Cookies)
 export const prerender = false;
-
-// Handle Form POST for login
-let isAuthenticated = false;
-let errorMsg = '';
 
 // Check matching password with .env or fallback
 const ADMIN_PASSWORD = import.meta.env.ADMIN_PASSWORD || 'metamorfosis2026';
 
-if (Astro.request.method === 'POST') {
-  try {
-    const data = await Astro.request.formData();
-    const password = data.get('password');
-    if (password === ADMIN_PASSWORD) {
-      Astro.cookies.set('admin_session', password as string, { path: '/' });
-      isAuthenticated = true;
-    } else {
-      errorMsg = 'Contraseña incorrecta. Acceso denegado.';
-    }
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(error.message);
-    }
-  }
-} else {
-  // Check cookie on GET request
-  const sessionCookie = Astro.cookies.get('admin_session');
-  if (sessionCookie && sessionCookie.value === ADMIN_PASSWORD) {
-    isAuthenticated = true;
-  }
+// Check cookie on GET request
+const sessionCookie = Astro.cookies.get('admin_session');
+const isAuthenticated = sessionCookie && sessionCookie.value === ADMIN_PASSWORD;
+
+if (!isAuthenticated) {
+    return Astro.redirect('/admin/login');
 }
 
 // Handling Logout
 if (Astro.url.searchParams.get('logout') === 'true') {
   Astro.cookies.delete('admin_session', { path: '/' });
-  return Astro.redirect('/admin/dashboard');
+  return Astro.redirect('/admin/login');
 }
 
 ---
 
 <Layout title="Mission Control | Admin">
-    {!isAuthenticated ? (
-        <div class="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-4">
-            <div class="max-w-md w-full bg-gray-900 border border-red-500/20 rounded-2xl p-8 shadow-2xl relative overflow-hidden group">
-                <div class="absolute -right-12 -top-12 w-32 h-32 bg-red-500/10 rounded-full blur-3xl"></div>
-                
-                <div class="flex flex-col items-center mb-8">
-                    <span class="text-4xl mb-4">🔐</span>
-                    <h1 class="text-2xl font-black text-white uppercase tracking-widest text-center">Protocolo de<br/><span class="text-red-500">Autorización</span></h1>
-                    <p class="text-xs text-gray-500 font-mono mt-2 uppercase tracking-widest">Nivel 4 Requerido</p>
-                </div>
-
-                <form method="POST" class="space-y-6">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Clave de Acceso</label>
-                        <input 
-                            type="password" 
-                            name="password" 
-                            required 
-                            autofocus
-                            class="w-full bg-black border border-gray-700 rounded-lg px-4 py-3 text-red-500 font-mono text-center tracking-widest focus:outline-none focus:border-red-500 transition-colors"
-                        />
-                    </div>
-                    {errorMsg && (
-                        <p class="text-red-500 text-xs text-center animate-pulse">{errorMsg}</p>
-                    )}
-                    <button type="submit" class="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-black uppercase tracking-widest rounded-lg transition-colors">
-                        Desbloquear
-                    </button>
-                </form>
-            </div>
-        </div>
-    ) : (
-        <div class="min-h-screen bg-[#050505] text-white font-sans flex flex-col">
-            <header class="border-b border-white/10 bg-black/80 backdrop-blur-md sticky top-0 z-50 shrink-0">
+    <div class="min-h-screen bg-[#050505] text-white font-sans flex flex-col">
+        <header class="border-b border-white/10 bg-black/80 backdrop-blur-md sticky top-0 z-50 shrink-0">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <span class="text-2xl">⚡️</span>
@@ -108,5 +57,5 @@ if (Astro.url.searchParams.get('logout') === 'true') {
                 <AdminApp client:only="react" />
             </div>
         </div>
-    )}
+    </div>
 </Layout>
