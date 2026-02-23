@@ -133,6 +133,30 @@ const DailyStep: React.FC<DailyStepProps> = ({
         );
     }
 
+    const checklistItems = [
+        {
+            id: 'fasting',
+            title: 'Ayuno 16h completado',
+            description: 'Solo consumí agua, café negro o té verde. Cero calorías en mi ventana de ayuno.',
+            checked: checkFasting,
+            onChange: () => setCheckFasting(!checkFasting)
+        },
+        {
+            id: 'food',
+            title: 'Alimentación limpia',
+            description: 'Cero azúcar, cero harinas refinadas. Prioricé proteína animal y grasas saludables.',
+            checked: checkFood,
+            onChange: () => setCheckFood(!checkFood)
+        },
+        {
+            id: 'workout',
+            title: 'Movimiento intencional',
+            description: 'Completé la recomendación de ejercicio de hoy (fuerza o caminata activa).',
+            checked: checkExercise,
+            onChange: () => setCheckExercise(!checkExercise)
+        }
+    ];
+
     // State: ACTIVE
     return (
         <div className="p-1 rounded-2xl bg-gradient-to-r from-[#00C49A] to-[#007BFF] shadow-2xl shadow-blue-500/20 transform scale-[1.02] transition-transform">
@@ -169,7 +193,7 @@ const DailyStep: React.FC<DailyStepProps> = ({
                                     type="time"
                                     value={lastMealTime}
                                     onChange={handleTimeChange}
-                                    className="w-full bg-black/50 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#00C49A] transition-colors"
+                                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#00C49A] transition-colors"
                                 />
                             </div>
                             {nextMealTime && (
@@ -183,35 +207,21 @@ const DailyStep: React.FC<DailyStepProps> = ({
 
                     <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2 mt-6">Checklist Diario</h4>
                     <div className="space-y-3">
-                        {/* Check 1 */}
-                        <div className="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer" onClick={() => setCheckFasting(!checkFasting)}>
-                            <div className="flex items-center gap-3">
-                                <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${checkFasting ? 'bg-[#00C49A] border-[#00C49A]' : 'border-gray-500'}`}>
-                                    {checkFasting && <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>}
+                        {checklistItems.map(item => (
+                            <div
+                                key={item.id}
+                                className="flex items-start p-4 bg-gray-800/50 rounded-xl border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer"
+                                onClick={item.onChange}
+                            >
+                                <div className={`mt-0.5 shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${item.checked ? 'bg-[#00C49A] border-[#00C49A]' : 'border-gray-500'}`}>
+                                    {item.checked && <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>}
                                 </div>
-                                <span className="text-gray-200 font-medium">Ayuno 16h completado</span>
-                            </div>
-                        </div>
-
-                        {/* Check 2 */}
-                        <div className="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer" onClick={() => setCheckFood(!checkFood)}>
-                            <div className="flex items-center gap-3">
-                                <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${checkFood ? 'bg-[#00C49A] border-[#00C49A]' : 'border-gray-500'}`}>
-                                    {checkFood && <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>}
+                                <div className="ml-3">
+                                    <span className="block text-white font-medium">{item.title}</span>
+                                    <span className="block text-sm text-gray-400 mt-1">{item.description}</span>
                                 </div>
-                                <span className="text-gray-200 font-medium">Alimentación limpia</span>
                             </div>
-                        </div>
-
-                        {/* Check 3 */}
-                        <div className="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer" onClick={() => setCheckExercise(!checkExercise)}>
-                            <div className="flex items-center gap-3">
-                                <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${checkExercise ? 'bg-[#00C49A] border-[#00C49A]' : 'border-gray-500'}`}>
-                                    {checkExercise && <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>}
-                                </div>
-                                <span className="text-gray-200 font-medium">Ejercicio/Movimiento completado</span>
-                            </div>
-                        </div>
+                        ))}
                     </div>
 
                     <button
