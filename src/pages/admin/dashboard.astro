@@ -1,0 +1,90 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import VideoProcessor from '../../components/admin/VideoProcessor';
+import StatsGrid from '../../components/admin/StatsGrid';
+import PostList from '../../components/admin/PostList';
+---
+
+<Layout title="Mission Control | Admin">
+    <div id="admin-root" class="min-h-screen bg-[#050505] text-white font-sans hidden">
+        <header class="border-b border-white/10 bg-black/80 backdrop-blur-md sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">⚡️</span>
+                    <h1 class="text-xl font-black tracking-widest uppercase text-transparent bg-clip-text bg-gradient-to-r from-[#00C49A] to-blue-500">
+                        Mission Control
+                    </h1>
+                    <span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase tracking-wider">
+                        Admin
+                    </span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-[#00C49A] animate-pulse"></div>
+                        <span id="admin-email" class="text-sm font-medium text-gray-400"></span>
+                    </div>
+                    <button id="logout-btn" class="text-xs font-bold uppercase tracking-wider text-red-500 hover:text-red-400 transition-colors px-4 py-1.5 rounded-full border border-red-500/30 hover:bg-red-500/10 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        Abort
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+            <!-- Analytics Grid -->
+            <StatsGrid client:only="react" />
+
+            <!-- Command Center Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1">
+                    <VideoProcessor client:only="react" />
+                </div>
+                <div class="lg:col-span-2">
+                    <PostList client:only="react" />
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Initialization Overlay -->
+    <div id="auth-loading" class="fixed inset-0 bg-[#050505] flex flex-col justify-center items-center z-[100] transition-opacity duration-500">
+        <div class="w-16 h-16 border-4 border-blue-500/20 border-t-[#00C49A] rounded-full animate-spin mb-6 shadow-[0_0_30px_rgba(0,196,154,0.3)]"></div>
+        <h2 class="text-white font-mono uppercase tracking-widest text-sm animate-pulse">Establishing Secure Connection...</h2>
+    </div>
+
+    <script>
+        import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
+        import { db } from '../../lib/firebase'; // Ensure Firebase initializes
+
+        const auth = getAuth();
+        const adminRoot = document.getElementById('admin-root');
+        const adminEmail = document.getElementById('admin-email');
+        const logoutBtn = document.getElementById('logout-btn');
+        const authLoading = document.getElementById('auth-loading');
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Optional: You can enforce specific emails here if desired.
+                // For now, any authenticated user can see it, or we assume only admins have accounts.
+                if (adminRoot && authLoading && adminEmail) {
+                    adminEmail.textContent = user.email;
+                    authLoading.style.opacity = '0';
+                    setTimeout(() => {
+                        authLoading.style.display = 'none';
+                        adminRoot.classList.remove('hidden');
+                        adminRoot.classList.add('animate-fade-in-up');
+                    }, 500);
+                }
+            } else {
+                // Not authenticated -> redirect to login or home
+                window.location.href = '/'; 
+            }
+        });
+
+        logoutBtn?.addEventListener('click', async () => {
+            await signOut(auth);
+            window.location.href = '/';
+        });
+    </script>
+</Layout>
