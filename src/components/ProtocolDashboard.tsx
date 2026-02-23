@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { getAuth, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { Timestamp } from 'firebase/firestore';
@@ -7,6 +6,7 @@ import {
     initializeProtocol,
     completeDay,
     saveOnboardingData,
+    saveLeadEmail,
     type ProtocolState
 } from '../lib/firebase/protocol';
 import DailyStep from './DailyStep';
@@ -138,7 +138,7 @@ export default function ProtocolDashboard() {
             // Scroll to next day smoothly if not finished
             if (day < 7) {
                 setTimeout(() => {
-                    const nextElement = document.getElementById(`day-${day + 1}`);
+                    const nextElement = document.getElementById(`day - ${day + 1} `);
                     nextElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 500);
             }
@@ -153,7 +153,7 @@ export default function ProtocolDashboard() {
             // Scroll to next day smoothly if not finished
             if (!newState.isFinished && day < 7) {
                 setTimeout(() => {
-                    const nextElement = document.getElementById(`day-${day + 1}`);
+                    const nextElement = document.getElementById(`day - ${day + 1} `);
                     nextElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 500);
             }
@@ -195,7 +195,7 @@ export default function ProtocolDashboard() {
         }
     };
 
-    const handleEmailSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleEmailSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
         const email = fd.get("email") as string;
@@ -207,6 +207,15 @@ export default function ProtocolDashboard() {
             return;
         }
 
+        // Save to Firebase immediately using new function
+        if (userId) {
+            try {
+                await saveLeadEmail(userId, email);
+            } catch (err) {
+                console.error("Error saving lead email:", err);
+            }
+        }
+
         // Mock success state change directly in UI for feedback via DOM update
         const btn = e.currentTarget.querySelector('button[type="submit"]') as HTMLButtonElement;
         if (btn) {
@@ -214,13 +223,6 @@ export default function ProtocolDashboard() {
             btn.className = "w-full py-4 bg-green-500 text-black font-black text-xl rounded-xl shadow-[0_0_20px_rgba(0,196,154,0.3)] transition-all";
             btn.disabled = true;
         }
-
-        // Aquí podrías disparar un evento a tu backend/webhook para guardar el lead
-        console.log("Lead captured:", email, "ICC Data:", {
-            weight: protocol?.initialWeight,
-            waist: protocol?.initialWaist,
-            hip: protocol?.initialHip
-        });
     };
 
     if (loading) {
@@ -383,7 +385,7 @@ export default function ProtocolDashboard() {
                     <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
                         <div
                             className="h-full bg-gradient-to-r from-[#00C49A] to-blue-600 transition-all duration-700 ease-out"
-                            style={{ width: `${((protocol?.daysCompleted || 0) / 7) * 100}%` }}
+                            style={{ width: `${((protocol?.daysCompleted || 0) / 7) * 100}% ` }}
                         ></div>
                     </div>
                 </div>
@@ -403,7 +405,7 @@ export default function ProtocolDashboard() {
                     const isLocked = content.day > (protocol?.currentDay || 1);
 
                     return (
-                        <div id={`day-${content.day}`} key={content.day}>
+                        <div id={`day - ${content.day} `} key={content.day}>
                             <DailyStep
                                 {...content}
                                 isCompleted={isCompleted}

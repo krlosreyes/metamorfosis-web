@@ -28,6 +28,7 @@ export interface ProtocolState {
     initialWeight?: string;
     initialWaist?: string;
     initialHip?: string;
+    email?: string; // Captured on Day 7
 }
 
 const COLLECTION_NAME = "protocols";
@@ -95,6 +96,15 @@ export async function saveOnboardingData(userId: string, weight: string, waist: 
 
     await updateDoc(userProtocolRef, updates);
     return { ...currentState, ...updates };
+}
+
+/**
+ * Save lead email to the protocol state upon Day 7 completion.
+ */
+export async function saveLeadEmail(userId: string, email: string) {
+    if (!userId) return;
+    const userProtocolRef = doc(db, COLLECTION_NAME, userId);
+    await updateDoc(userProtocolRef, { email });
 }
 
 /**

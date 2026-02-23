@@ -110,10 +110,20 @@ const PostList = () => {
                                         <span className="font-mono text-blue-400">{post.clicks.toLocaleString()}</span>
                                     </td>
                                     <td className="px-4 py-4 text-right">
-                                        <span className="inline-flex items-center gap-1 font-bold text-[#00C49A]">
-                                            {post.conversions.toLocaleString()}
-                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                                        </span>
+                                        <div className="flex items-center justify-end gap-3">
+                                            <span className="inline-flex items-center gap-1 font-bold text-[#00C49A] w-12 justify-end">
+                                                {post.conversions.toLocaleString()}
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                                            </span>
+                                            <a
+                                                href={`/blog/${post.slug}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold uppercase tracking-widest border border-gray-600 px-2 py-1 rounded text-gray-400 hover:text-white hover:border-gray-400"
+                                            >
+                                                Preview
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             ))
