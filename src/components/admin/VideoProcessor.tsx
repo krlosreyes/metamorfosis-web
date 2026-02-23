@@ -31,55 +31,42 @@ const VideoProcessor = () => {
         setState('ANALYZING');
         setLogs([]);
         addLog(`>> INITIALIZING PROTOCOL FOR: ${url}`);
-        addLog('>> Extracting YouTube metadata and transcript...');
+        addLog('>> Ejecutando fetch a /api/process-video...');
 
-        // SIMULATED PIPELINE (Replace with actual API calls to your AI/Backend)
-        setTimeout(() => {
-            setState('GENERATING_COVER');
-            addLog('>> Transcript extracted successfully. 4,520 words analyzed.');
-            addLog('>> Triggering AI Image Generation via Replicate/Midjourney...');
+        try {
+            const response = await fetch('/api/process-video', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url, title, slug, coverUrl })
+            });
+            const data = await response.json();
 
-            setTimeout(() => {
-                setState('REVIEW');
-                addLog('>> Art Generated successfully.');
-                addLog('>> JSON Structured. AWAITING MANUAL OVERRIDE.');
-
-                // Set Mock Data
-                setTitle('El secreto metabólico que nadie te cuenta');
-                setSlug('secreto-metabolico-revelado');
-                setCoverUrl('https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');
-            }, 3000);
-        }, 2000);
+            if (data.success) {
+                setState('SUCCESS');
+                addLog('>> DB INJECTION COMPLETE. System standing by.');
+                addLog(`>> Document ID (postId): ${data.postId}`);
+                addLog(`>> JSON: ${JSON.stringify(data)}`);
+                setTimeout(() => {
+                    setState('IDLE');
+                    setUrl('');
+                    setTitle('');
+                    setSlug('');
+                    setCoverUrl('');
+                    addLog('>> Memory cleared.');
+                }, 4000);
+            } else {
+                setState('ERROR');
+                addLog(`>> ERROR DEL SERVIDOR: ${data.error}`);
+            }
+        } catch (error) {
+            setState('ERROR');
+            addLog(`>> NETWORK/FALLO DE CONEXIÓN: ${error instanceof Error ? error.message : "Error Desconocido"}`);
+        }
     };
 
-    const handleInject = () => {
-        setState('INJECTING');
-        addLog(`>> OVERRIDE ACCEPTED. Updating slug to: ${slug}`);
-        addLog('>> Pushing to Firestore (Collection: posts)...');
-
-        setTimeout(() => {
-            setState('SUCCESS');
-            addLog('>> DB INJECTION COMPLETE. System standing by.');
-            setTimeout(() => {
-                setState('IDLE');
-                setUrl('');
-                setTitle('');
-                setSlug('');
-                setCoverUrl('');
-                addLog('>> Memory cleared.');
-            }, 3000);
-        }, 1500);
-    };
-
-    const handleRegenerate = () => {
-        addLog('>> Discarding art. Re-prompting AI engine...');
-        setState('GENERATING_COVER');
-        setTimeout(() => {
-            setCoverUrl('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');
-            setState('REVIEW');
-            addLog('>> New Art generated.');
-        }, 2000);
-    };
+    // Obsolete manual trigger, but keeping state transition visually logic if later restored
+    const handleInject = () => { };
+    const handleRegenerate = () => { };
 
     return (
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-2xl flex flex-col h-full relative overflow-hidden">
