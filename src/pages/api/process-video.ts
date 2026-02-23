@@ -4,6 +4,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 import fs from 'fs';
 import path from 'path';
 
+export const prerender = false;
+
 // Localiza el Service Account de Firebase dinámicamente como lo hacía injectPost.js
 function getServiceAccount() {
     // 1. Prioriza las variables de entorno si están seteadas
