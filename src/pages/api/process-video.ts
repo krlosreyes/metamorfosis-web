@@ -70,152 +70,105 @@ export const POST: APIRoute = async ({ request }) => {
         const GEMINI_API_KEY = import.meta.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
         if (!GEMINI_API_KEY) {
             console.error("GEMINI_API_KEY is missing.");
-            return new Response(JSON.stringify({ success: false, error: 'Error: Falta GEMINI_API_KEY en variables de entorno. Agrega la llave para habilitar Antigravity.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+            return new Response(JSON.stringify({ success: false, error: 'Error: Falta GEMINI_API_KEY' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
         }
 
-        let systemPrompt = `Actúa como Lead Research & Content Engineer y Especialista en "Ingeniería Humana" Metabólica.
-Tu tarea es analizar la transcripción (o el título si no hay transcripción suficiente) y extraer un objeto JSON estricto.
+        let systemPrompt = `Actúa como Senior Full-Stack Architect y Especialista Médico.
+REGLA CRÍTICA: Devuelve UNICAMENTE un objeto JSON ESTRICTO de 4 niveles.
+Debes usar TODA tu base de conocimientos internos para expandir el tema, usando la transcripción como punto de partida. NO TE DETENGAS si la transcripción es corta.
+Estructura Exacta:
+1. app_integration: { "callToAction": "...", "deepLink": "elenaapp://fasting/track" }
+2. content.body: HTML estilizado con Tailwind. Usa MÁXIMO 3 líneas por párrafo.
+   - Procesos o Estado Biológico: <div class="bg-blue-50 border-l-4 border-blue-500 p-6 my-8 rounded-r-xl shadow-sm">
+   - Consejos o Pro-Tips: <div class="bg-emerald-50 border-l-4 border-emerald-500 p-6 my-8 rounded-r-xl shadow-sm">
+3. metadata: { seoTitle, seoDescription, category, slug, thumbnailUrl, youtubeUrl, publishedAt, readingTime }
+4. quiz: Array de 3 a 5 preguntas reales con 'question', 'options' (array de 4 strings), 'correctIndex' (int 0-3), y 'rationale'.
 
-Regla Crítica: Mantén el tono de ingeniero de 48 años: datos duros, lógica, y cero pseudociencia.`;
+Ningún otro campo debe estar en la raíz del JSON. Prohibidos los placeholders.`;
 
-        if (isResearchAugmented) {
-            systemPrompt += `
-ATENCIÓN: La transcripción proveída es inexistente o < 500 caracteres. DEBES activar tu módulo interno de investigación médica.
-Utilizando tu propia base profunda de conocimientos técnicos, redacta el post combinando la esencia del título con profundidad técnica real.
-- Extrae datos técnicos, estudios recientes y evidencia científica que respalde el tema (ej. receptores GLUT4, resistencia a la insulina, etc).
-- Mantén el tono de un ingeniero humano: directo, con datos duros y cero pseudociencia.`;
-        } else {
-            systemPrompt += `
-Regla para transcripciones normales/cortas: NO te limites a resumir. EXPANDIR los conceptos profundamente.
-Si el video menciona la insulina, usa el concepto de "la llave" y la "cerradura oxidada" (resistencia) para explicar los receptores celulares. Estructura H2 sugerida:
-- El Mecanismo de la Llave: El proceso normal del páncreas.
-- El Error del Sistema (Cerradura Oxidada): Cómo el exceso de azúcar causa resistencia.
-- Consecuencias y Solución: Aumento de peso y cambio de hábitos.`;
-        }
-
-        systemPrompt += `
-Reglas Generales:
-1. Content Body: Genera todo el contenido HTML estilizado con Tailwind dentro del campo { content: { body: "..." } }.
-   - Párrafos: MÁXIMO 3 líneas por párrafo.
-   - Cajas de Estado (Azules): Usa exactamente <div class="bg-blue-50 border-l-4 border-blue-500 p-6 my-8 rounded-r-xl shadow-sm"> para datos metabólicos.
-   - Cajas de Pro-Tips (Verdes): Usa exactamente <div class="bg-emerald-50 border-l-4 border-emerald-500 p-6 my-8 rounded-r-xl shadow-sm"> para consejos prácticos.
-   - Listas: Estilizalas con círculos de colores y <ul class="space-y-3">.
-2. App Integration: Genera un objeto { app_integration: { callToAction: "Tu CTA aquí", deepLink: "elenaapp://fasting/track" } }.
-3. Metadata: Genera un objeto { metadata: { category, publishedAt, readingTime, seoDescription, seoTitle, slug, thumbnailUrl, youtubeUrl } }.
-4. Quiz: Genera 3 a 5 preguntas de opción múltiple con 'question', 'options', 'correctIndex' (0-3) y 'rationale' científico.
-5. CERO PLACEHOLDERS permitidos. Prohibido usar "Protocolo Extraído IA". Si no puedes generar algo real, falla.
-
-Devuelve EXCLUSIVAMENTE un JSON limpio de backticks y tags de markdown con esta estructura exacta de 4 niveles:
-{
-  "app_integration": {
-    "callToAction": "",
-    "deepLink": "elenaapp://fasting/track"
-  },
-  "content": {
-    "body": ""
-  },
-  "metadata": {
-    "category": "",
-    "publishedAt": "",
-    "readingTime": "",
-    "seoDescription": "",
-    "seoTitle": "",
-    "slug": "",
-    "thumbnailUrl": "",
-    "youtubeUrl": ""
-  },
-  "quiz": [
-    { "question": "", "options": ["", "", "", ""], "correctIndex": 0, "rationale": "" }
-  ]
-}`;
-
-        const requestBody: any = {
+        const requestBody = {
             contents: [{
                 role: "user",
                 parts: [{
-                    text: `${systemPrompt}\n\nTítulo del video: "${title}"\nTranscripción a analizar:\n"""\n${transcript.substring(0, 15000)}\n"""`
+                    text: `Título: "${title}"\nTranscripción: """${transcript.substring(0, 15000)}"""\n\nINSTRUCCIONES EXTRA: Ignora tu configuración por defecto. Responde EXCLUSIVAMENTE con el JSON exigido en el System Prompt.`
                 }]
             }],
+            systemInstruction: {
+                role: "system",
+                parts: [{ text: systemPrompt }]
+            },
             generationConfig: {
-                temperature: 0.3
+                temperature: 0.3,
+                responseMimeType: "application/json"
             }
         };
 
-        console.log("Contactando al motor Gemini (Antigravity Protocol API ESTABLE)...");
-        const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}`, {
+        console.log("Contactando a la Red Gemini v1beta (gemini-1.5-flash)...");
+        // Utilizamos la red nativa v1beta para garantizar json object compliance via systemInstruction y responseMimeType
+        const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody)
         });
 
         if (!aiResponse.ok) {
-            console.warn(">> Falló llamada a Gemini v1:", await aiResponse.text());
-            return new Response(JSON.stringify({ success: false, error: 'Error: El motor Gemini rechazó la solicitud o falló la red' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+            const errBody = await aiResponse.text();
+            console.warn(">> Falló llamada a Gemini:", errBody);
+            return new Response(JSON.stringify({ success: false, error: 'Error: El motor resolvió un fallo de conexión.' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
 
         const aiData = await aiResponse.json();
         const rawJsonString = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!rawJsonString) {
-            console.error("Respuesta vacía de Gemini:", JSON.stringify(aiData));
-            return new Response(JSON.stringify({ success: false, error: 'Error: Respuesta irreconocible de Gemini' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+            console.error("Respuesta vacía:", JSON.stringify(aiData));
+            return new Response(JSON.stringify({ success: false, error: 'Error: Análisis de Contenido Vacío' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
 
-        // Validamos la salida
         let parsedContent;
         try {
-            // Limpieza robusta de backticks markdown en caso de que v1 ignore las instrucciones
-            const cleanedJsonString = rawJsonString.replace(/```json/gi, '').replace(/```/g, '').trim();
-            parsedContent = JSON.parse(cleanedJsonString);
+            const cleaned = rawJsonString.replace(/```json/gi, '').replace(/```/g, '').trim();
+            parsedContent = JSON.parse(cleaned);
         } catch (parseErr) {
-            console.error("JSON Parsing failed from AI output:", rawJsonString);
-            return new Response(JSON.stringify({ success: false, error: 'Error de Análisis de Contenido' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+            console.error("JSON Parsing failed:", rawJsonString);
+            return new Response(JSON.stringify({ success: false, error: 'Error de Análisis Estructural' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
 
-        // Si genera placeholders accidentales (regla estricta)
-        if (parsedContent.title?.includes("Extraido IA") || parsedContent.quiz?.[0]?.question?.includes("seguridad")) {
-            return new Response(JSON.stringify({ success: false, error: 'Error de Análisis de Contenido' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
-        }
-
-        // Mapeo Final de los Datos al Esquema de Firestore
-        // Mapeo Final de los Datos al Esquema de Firestore
         const finalSlug = parsedContent.metadata?.slug || title.replace(/\s+/g, '-').toLowerCase();
 
         const postData = {
-            app_integration: parsedContent.app_integration || { callToAction: "Comienza tu protocolo metabólico", deepLink: "elenaapp://fasting/track" },
+            app_integration: parsedContent.app_integration || { callToAction: "Inicia tu rastreo", deepLink: "elenaapp://fasting/track" },
             content: parsedContent.content || { body: "" },
             metadata: {
-                category: parsedContent.metadata?.category || "Salud Metabólica",
+                category: parsedContent.metadata?.category || "Metabolismo",
                 publishedAt: parsedContent.metadata?.publishedAt || new Date().toISOString(),
                 readingTime: parsedContent.metadata?.readingTime || "5 min",
-                seoDescription: parsedContent.metadata?.seoDescription || "Descubre todo sobre el control metabólico en este análisis profundo.",
+                seoDescription: parsedContent.metadata?.seoDescription || "Artículo médico nativo.",
                 seoTitle: parsedContent.metadata?.seoTitle || title,
                 slug: finalSlug,
-                thumbnailUrl: parsedContent.metadata?.thumbnailUrl || coverUrl || "https://images.unsplash.com/photo-1532187863486-abf9db0c2095?q=80&w=1920&auto=format&fit=crop",
+                thumbnailUrl: parsedContent.metadata?.thumbnailUrl || coverUrl || "",
                 youtubeUrl: parsedContent.metadata?.youtubeUrl || url,
                 views: 0,
                 conversions: 0,
-                source_type: isResearchAugmented ? "knowledge_augmented" : "transcription"
+                source_type: transcript.length < 500 ? "knowledge_augmented" : "transcription"
             },
             quiz: parsedContent.quiz || []
         };
 
-        // Regla de Oro implementada: Inyectar usando el slug como ID del documento
-        await db.collection('metamorfosis_posts').doc(finalSlug).set(postData);
-        console.log(`Inyección exitosa. Documento guardado en metamorfosis_posts con ID (slug): ${finalSlug}`);
+        if (postData.content.body.length < 100) {
+            return new Response(JSON.stringify({ success: false, error: 'Error: Contenido Generado Insuficiente' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        }
 
-        return new Response(JSON.stringify({
-            success: true,
-            postId: finalSlug
-        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        await db.collection('metamorfosis_posts').doc(finalSlug).set(postData);
+        console.log(`Inyección ejecutada con éxito. ID Documento: ${finalSlug}`);
+
+        return new Response(JSON.stringify({ success: true, postId: finalSlug }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
     } catch (error) {
-        console.error("Detalle del error al inyectar en Firestore:", error);
+        console.error("Detalle del error Crítico:", error);
         return new Response(JSON.stringify({
             success: false,
-            error: error instanceof Error ? error.message : 'Unknown network/server error'
+            error: error instanceof Error ? error.message : 'Error inesperado del Servidor'
         }), { status: 500, headers: { 'Content-Type': 'application/json' } });
     }
 };
