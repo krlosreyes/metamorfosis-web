@@ -155,7 +155,7 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
         }
 
         console.log("Contactando al motor Gemini (Antigravity Protocol)...");
-        const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+        let aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -164,8 +164,24 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
         });
 
         if (!aiResponse.ok) {
-            console.error("Fallo de la IA (Gemini):", await aiResponse.text());
-            return new Response(JSON.stringify({ success: false, error: 'Error: El motor Gemini rechazó la solicitud o el modelo está saturado' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+            console.warn(">> Falló primera llamada a Gemini con Grounding:", await aiResponse.text());
+            if (isResearchAugmented) {
+                console.log(">> Reintentando sin Grounding Tools como fallback de seguridad...");
+                delete requestBody.tools;
+                aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!aiResponse.ok) {
+                    return new Response(JSON.stringify({ success: false, error: 'Error: El motor Gemini rechazó la solicitud o el modelo está saturado' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+                }
+            } else {
+                return new Response(JSON.stringify({ success: false, error: 'Error: El motor Gemini falló' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+            }
         }
 
         const aiData = await aiResponse.json();
@@ -175,10 +191,9 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
         const groundingMetadata = aiData.candidates?.[0]?.groundingMetadata;
 
         // Extraer links reales de los chunks de búsqueda
-        const metaReferences = groundingMetadata?.groundingChunks?.map((chunk: any) => ({
-            title: chunk.web?.title || "Referencia Médica",
-            url: chunk.web?.uri || "#"
-        })).filter((ref: any) => ref.url !== "#") || [];
+        const metaReferences = groundingMetadata?.searchEntryPoint?.html
+            ? [{ title: "Fuentes verificadas por Google Search", url: "Grounding Activo" }]
+            : [];
 
         if (!rawJsonString) {
             console.error("Respuesta vacía de Gemini:", JSON.stringify(aiData));
