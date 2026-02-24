@@ -15,44 +15,95 @@ export const POST: APIRoute = async ({ request }) => {
             return new Response(JSON.stringify({ success: false, error: 'Error: Contenido no generado' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
         }
 
-        const { url, title, slug, coverUrl } = body;
+        const { url, title, transcript, coverUrl } = body;
 
-        // --- LÓGICA DE PROCESAMIENTO MIGRADA ---
-        // Generamos la estructura que el sistema espera (Simulando la conversión IA)
-        const computedTitle = title || 'El verdadero impacto del ayuno en tu metabolismo';
-        const postSlug = slug || computedTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+        // --- EXTRACCIÓN DE CONTENIDO REAL (Lógica IA) ---
+        // Se asume que la transcripción se envía desde el frontend o se extrae previamente.
+        // Si no hay transcripción válida suministrada, la AI no podrá procesar (Regla de "Cero Placeholders")
+        if (!transcript || transcript.trim().length < 50) {
+            console.error("No transcript provided or too short.");
+            return new Response(JSON.stringify({ success: false, error: 'Error de Análisis de Contenido' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        }
 
-        const postData = {
-            title: computedTitle,
-            slug: postSlug,
-            content: {
-                introduction: "Un análisis profundo sobre los mecanismos moleculares del ayuno intermitente y su impacto en la flexibilidad metabólica humana.",
-                sections: [
-                    "El ayuno prolongado desencadena autofagia, un proceso donde las células recicladas promueven la longevidad y destruyen patógenos intracelulares de forma eficiente.",
-                    "Durante la restricción calórica, los niveles de insulina caen drásticamente, lo que permite que el glucagón y el cortisol movilicen las reservas de grasa tenaces.",
-                    "Al entrar en cetosis, el hígado produce beta-hidroxibutirato, un súper combustible neuroprotector que reduce la niebla mental y estabiliza la energía todo el día."
-                ]
+        const OPENAI_API_KEY = import.meta.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+        if (!OPENAI_API_KEY) {
+            console.error("OPENAI_API_KEY is missing.");
+            return new Response(JSON.stringify({ success: false, error: 'Error de Análisis de Contenido' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        const systemPrompt = `Actúa como Senior AI Content Engineer en Salud Metabólica.
+Tu tarea es analizar la siguiente transcripción de un video de YouTube y extraer un objeto JSON estricto.
+
+Reglas:
+1. Title: Extrae el título real y atractivo del video.
+2. Slug: Genera un slug basado en ese título (ej: insulina-y-ayuno).
+3. Quiz: Genera 3 preguntas de opción múltiple basadas en los puntos clave discutidos en el video, con explicaciones (rationale) científicas, y 'correctIndex' (0-3).
+4. Sections: Divide el contenido en 3-4 secciones con títulos H2, asegurando que CADA PÁRRAFO de la sección NO SUPERE LAS 3 LÍNEAS.
+5. CERO PLACEHOLDERS permitidos. Prohibido usar "Protocolo Extraído IA" o "Pregunta de seguridad".
+
+Transcripción a analizar:
+"""
+${transcript.substring(0, 15000) /* Limitamos a ~15k chars para context window */}
+"""
+
+Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown de bloques de código:
+{
+  "title": "",
+  "slug": "",
+  "content": {
+    "introduction": "",
+    "sections": [
+       "<h2 class='text-xl font-bold mb-4'>Título de Sección 1</h2><p class='mb-4'>Párrafo corto 1 (max 3 líneas).</p><p class='mb-4'>Párrafo corto 2.</p>",
+       "<h2 class='text-xl font-bold mb-4'>Título de Sección 2</h2><p class='mb-4'>Párrafo corto 1.</p>"
+    ]
+  },
+  "quiz": [
+    { "question": "", "options": ["", "", "", ""], "correctIndex": 0, "rationale": "" }
+  ]
+}`;
+
+        console.log("Contactando a la IA para extracción de contenido real...");
+        const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${OPENAI_API_KEY}`
             },
-            quiz: [
-                {
-                    question: "¿Cuál es el beneficio metabólico principal de mantener bajos niveles de insulina?",
-                    options: ["Mayor hambre", "Quema de grasa acelerada", "Retención de líquidos", "Aumento de estrés"],
-                    correctIndex: 1,
-                    rationale: "La baja insulina es la señal bioquímica principal que le indica al cuerpo que debe acceder a los triglicéridos almacenados."
-                },
-                {
-                    question: "¿Qué compuesto fabrica el hígado durante el ayuno que beneficia al cerebro?",
-                    options: ["Glucosa", "Beta-hidroxibutirato", "Colesterol", "Triglicéridos"],
-                    correctIndex: 1,
-                    rationale: "Los cuerpos cetónicos, como el beta-hidroxibutirato, cruzan la barrera hematoencefálica y proveen hasta el 70% de la energía cerebral."
-                },
-                {
-                    question: "¿Qué proceso de limpieza celular se activa tras 16+ horas de ayuno?",
-                    options: ["Autofagia", "Mitosis", "Lipogénesis", "Glucogenólisis"],
-                    correctIndex: 0,
-                    rationale: "La autofagia es un estado de reciclaje donde las células de baja eficiencia celular son destruidas para generar nuevas células robustas."
-                }
-            ],
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [{ role: 'user', content: systemPrompt }],
+                temperature: 0.3
+            })
+        });
+
+        if (!aiResponse.ok) {
+            console.error("Fallo de la IA:", await aiResponse.text());
+            return new Response(JSON.stringify({ success: false, error: 'Error de Análisis de Contenido' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        const aiData = await aiResponse.json();
+        const rawJsonString = aiData.choices[0].message.content.trim().replace(/^```json/i, '').replace(/```$/i, '').trim();
+
+        // Validamos la salida
+        let parsedContent;
+        try {
+            parsedContent = JSON.parse(rawJsonString);
+        } catch (parseErr) {
+            console.error("JSON Parsing failed from AI output:", rawJsonString);
+            return new Response(JSON.stringify({ success: false, error: 'Error de Análisis de Contenido' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        // Si genera placeholders accidentales (regla estricta)
+        if (parsedContent.title?.includes("Extraído IA") || parsedContent.quiz?.[0]?.question?.includes("seguridad")) {
+            return new Response(JSON.stringify({ success: false, error: 'Error de Análisis de Contenido' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        // Mapeo Final de los Datos al Esquema de Firestore
+        const postData = {
+            title: parsedContent.title || title,
+            slug: parsedContent.slug,
+            content: parsedContent.content,
+            quiz: parsedContent.quiz,
             metadata: {
                 views: 0,
                 conversions: 0,
@@ -63,8 +114,7 @@ export const POST: APIRoute = async ({ request }) => {
             date: new Date().toISOString()
         };
 
-        // Regla de Oro implementada: Modificada ruta de inyección a 'metamorfosis_posts'
-        // Usamos .doc(postSlug).set() si queremos que el ID sea el slug, o .add() según requerimiento
+        // Regla de Oro implementada: Inyectar estrictamente en metamorfosis_posts
         const postRef = await db.collection('metamorfosis_posts').add(postData);
         console.log(`Inyección exitosa. Documento guardado en metamorfosis_posts con ID: ${postRef.id}`);
 
