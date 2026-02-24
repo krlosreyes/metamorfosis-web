@@ -143,11 +143,20 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
 
         if (isResearchAugmented) {
             console.log("Activando herramienta: Google Search Grounding...");
-            requestBody.tools = [{ googleSearch: {} }];
+            requestBody.tools = [
+                {
+                    google_search_retrieval: {
+                        dynamic_retrieval_config: {
+                            mode: "unspecified",
+                            dynamic_threshold: 0.06
+                        }
+                    }
+                }
+            ];
         }
 
         console.log("Contactando al motor Gemini (Antigravity Protocol)...");
-        const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
