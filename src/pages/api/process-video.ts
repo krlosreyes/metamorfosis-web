@@ -29,6 +29,35 @@ export const POST: APIRoute = async ({ request }) => {
 
         console.log("ID de Video detectado:", videoId);
 
+        // --- EXTRACCIÓN DE METADATOS (YouTube Data API v3) ---
+        let finalTitle = title;
+        let finalCoverUrl = coverUrl;
+        let videoDescription = "";
+
+        const YOUTUBE_API_KEY = import.meta.env.YOUTUBE_API_KEY || process.env.YOUTUBE_API_KEY;
+        if (YOUTUBE_API_KEY) {
+            try {
+                console.log("Extrayendo metadatos profundos desde YouTube Data API v3...");
+                const ytResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${YOUTUBE_API_KEY}`);
+                if (ytResponse.ok) {
+                    const ytData = await ytResponse.json();
+                    if (ytData.items && ytData.items.length > 0) {
+                        const snippet = ytData.items[0].snippet;
+                        finalTitle = snippet.title || finalTitle;
+                        videoDescription = snippet.description || "";
+                        finalCoverUrl = snippet.thumbnails?.maxres?.url || snippet.thumbnails?.high?.url || finalCoverUrl;
+                        console.log(`[YouTube API] Metadatos consolidados: ${finalTitle}`);
+                    }
+                } else {
+                    console.warn(">> Fallo en YouTube API, usando scraping/UI de fallback.");
+                }
+            } catch (err) {
+                console.warn(">> Error contactando YouTube API, usando fallback:", err);
+            }
+        } else {
+            console.warn(">> YOUTUBE_API_KEY no detectada. Usando metadatos crudos del Frontend.");
+        }
+
         // --- EXTRACCIÓN ROBUSTA DE TRANSCRIPCIÓN (Nativa) ---
         let transcript = '';
         try {
@@ -90,7 +119,7 @@ Ningún otro campo debe estar en la raíz del JSON. Prohibidos los placeholders.
             contents: [{
                 role: "user",
                 parts: [{
-                    text: `Título: "${title}"\nTranscripción: """${transcript.substring(0, 15000)}"""\n\nINSTRUCCIONES EXTRA: Ignora tu configuración por defecto. Responde EXCLUSIVAMENTE con el JSON exigido en el System Prompt.`
+                    text: `Título: "${finalTitle}"\nDescripción Original: "${videoDescription.substring(0, 1500)}"\nTranscripción: """${transcript.substring(0, 15000)}"""\n\nINSTRUCCIONES EXTRA: Ignora tu configuración por defecto. Responde EXCLUSIVAMENTE con el JSON exigido en el System Prompt.`
                 }]
             }],
             systemInstruction: {
@@ -134,7 +163,7 @@ Ningún otro campo debe estar en la raíz del JSON. Prohibidos los placeholders.
             return new Response(JSON.stringify({ success: false, error: 'Error de Análisis Estructural' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
 
-        const finalSlug = parsedContent.metadata?.slug || title.replace(/\s+/g, '-').toLowerCase();
+        const finalSlug = parsedContent.metadata?.slug || finalTitle.replace(/\s+/g, '-').toLowerCase();
 
         const postData = {
             app_integration: parsedContent.app_integration || { callToAction: "Inicia tu rastreo", deepLink: "elenaapp://fasting/track" },
@@ -144,9 +173,9 @@ Ningún otro campo debe estar en la raíz del JSON. Prohibidos los placeholders.
                 publishedAt: parsedContent.metadata?.publishedAt || new Date().toISOString(),
                 readingTime: parsedContent.metadata?.readingTime || "5 min",
                 seoDescription: parsedContent.metadata?.seoDescription || "Artículo médico nativo.",
-                seoTitle: parsedContent.metadata?.seoTitle || title,
+                seoTitle: parsedContent.metadata?.seoTitle || finalTitle,
                 slug: finalSlug,
-                thumbnailUrl: parsedContent.metadata?.thumbnailUrl || coverUrl || "",
+                thumbnailUrl: parsedContent.metadata?.thumbnailUrl || finalCoverUrl || "",
                 youtubeUrl: parsedContent.metadata?.youtubeUrl || url,
                 views: 0,
                 conversions: 0,
