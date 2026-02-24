@@ -136,8 +136,8 @@ Ningún otro campo debe estar en la raíz del JSON. Prohibidos los placeholders.
             }
         };
 
-        console.log("Contactando a la Red Gemini v1beta (gemini-1.5-flash) vía REST Fetch nativo para eludir OS EPERM Lock...");
-        const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        console.log("Contactando a la Red Gemini v1beta (gemini-2.0-flash) vía REST Fetch nativo para eludir OS EPERM Lock...");
+        const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody)
