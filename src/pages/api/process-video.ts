@@ -61,9 +61,10 @@ export const POST: APIRoute = async ({ request }) => {
 
         console.log("Longitud de transcripción obtenida:", transcript.length);
 
-        if (transcript.trim().length < 10) {
-            console.error("La transcripción es demasiado corta para generar contenido.");
-            return new Response(JSON.stringify({ success: false, error: 'Error: El video no tiene subtítulos disponibles para procesar' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        let isResearchAugmented = false;
+        if (transcript.trim().length < 500) {
+            console.log("Transcripción demasiado corta o inexistente. Activando módulo de investigación médica (Fallback)...");
+            isResearchAugmented = true;
         }
 
         const OPENAI_API_KEY = import.meta.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY;
@@ -72,22 +73,35 @@ export const POST: APIRoute = async ({ request }) => {
             return new Response(JSON.stringify({ success: false, error: 'Error de Análisis de Contenido' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
 
-        const systemPrompt = `Actúa como Senior AI Content Engineer y Especialista en "Ingeniería Humana" Metabólica.
-Tu tarea es analizar la siguiente transcripción de un video corto (Short) y su título, y extraer un objeto JSON estricto.
+        let systemPrompt = `Actúa como Lead Research & Content Engineer y Especialista en "Ingeniería Humana" Metabólica.
+Tu tarea es analizar la transcripción (o el título si no hay transcripción suficiente) y extraer un objeto JSON estricto.
 
-Regla Crítica para Shorts: NO te limites a resumir. EXPANDIR los conceptos profundamente. 
-Si el video menciona la insulina, usa el concepto de "la llave" y la "cerradura oxidada" (resistencia a la insulina) para explicar los receptores celulares y el exceso de glucosa. Usa exactamente esta estructura de H2 si aplica:
+Regla Crítica: Mantén el tono de ingeniero de 48 años: datos duros, lógica, y cero pseudociencia.`;
+
+        if (isResearchAugmented) {
+            systemPrompt += `
+ATENCIÓN: La transcripción proveída es inexistente o < 500 caracteres. DEBES activar tu módulo de investigación web médica.
+Utilizando el título del video como consulta, redacta el post combinando la esencia del título con profundidad técnica real.
+- Extrae datos técnicos, estudios recientes y evidencia científica que respalde el tema (ej. si es insulina: receptores GLUT4, resistencia a la insulina, metabolismo de glucosa).
+- PRIORIZA información basada en PubMed, The Lancet, Nature, o .gov.
+- DEBES incluir citas contextuales obligatorias (ej: "Según estudios publicados en la revista Nature...").`;
+        } else {
+            systemPrompt += `
+Regla para transcripciones normales/cortas: NO te limites a resumir. EXPANDIR los conceptos profundamente.
+Si el video menciona la insulina, usa el concepto de "la llave" y la "cerradura oxidada" (resistencia) para explicar los receptores celulares. Estructura H2 sugerida:
 - El Mecanismo de la Llave: El proceso normal del páncreas.
 - El Error del Sistema (Cerradura Oxidada): Cómo el exceso de azúcar causa resistencia.
-- Consecuencias y Solución: Aumento de peso y cambio de hábitos.
+- Consecuencias y Solución: Aumento de peso y cambio de hábitos.`;
+        }
 
-Reglas:
+        systemPrompt += `
+Reglas Generales:
 1. Title: Genera un título real y atractivo (ej: ¿Qué es la Insulina? La Llave de tu Metabolismo).
-2. Slug: Genera un slug basado en ese título (ej: que-es-la-insulina-clave-salud).
-3. Quiz: Genera 3 preguntas de opción múltiple basadas en los puntos clave discutidos en la transcripción, con explicaciones (rationale) científicas, y 'correctIndex' (0-3). Mapea bien las respuestas según los tiempos de la transcripción corta.
-4. Sections: Divide el contenido en 3-4 secciones con títulos H2, asegurando que CADA PÁRRAFO NO SUPERE LAS 3 LÍNEAS.
+2. Slug: Genera un slug basado en ese título.
+3. Quiz: Genera 3 preguntas de opción múltiple con 'correctIndex' (0-3) y explicaciones (rationale) de alto nivel científico.
+4. Sections: Divide el contenido en 3-4 secciones con títulos H2. CADA PÁRRAFO de la sección NO SUPERE LAS 3 LÍNEAS.
 5. CoverPrompt: Genera un prompt en inglés para Midjourney (ej: "cinematic 3d render of a cell being opened by a cyan energy key, dark technological background, hyper-detailed, 8k").
-6. CERO PLACEHOLDERS. Prohibido usar "Protocolo Extraído IA". Si no puedes generar algo real, falla contundentemente.
+6. CERO PLACEHOLDERS permitidos. Prohibido usar "Protocolo Extraído IA". Si no puedes generar algo real, falla.
 
 Título del video: "${title}"
 Transcripción a analizar:
@@ -158,7 +172,8 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
                 conversions: 0,
                 videoUrl: url,
                 category: "Salud Metabólica",
-                imagePrompt: parsedContent.coverPrompt || ""
+                imagePrompt: parsedContent.coverPrompt || "",
+                source_type: isResearchAugmented ? "research_augmented" : "transcription"
             },
             coverImage: coverUrl || "https://images.unsplash.com/photo-1532187863486-abf9db0c2095?q=80&w=1920&auto=format&fit=crop", // Tecnológico placeholder
             date: new Date().toISOString()
