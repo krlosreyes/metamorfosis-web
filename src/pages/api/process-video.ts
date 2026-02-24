@@ -125,27 +125,34 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
   ]
 }`;
 
+        const requestBody: any = {
+            systemInstruction: {
+                parts: [{ text: systemPrompt }]
+            },
+            contents: [{
+                role: "user",
+                parts: [{
+                    text: `Título del video: "${title}"\nTranscripción a analizar:\n"""\n${transcript.substring(0, 15000)}\n"""`
+                }]
+            }],
+            generationConfig: {
+                temperature: 0.3,
+                responseMimeType: "application/json"
+            }
+        };
+
+        if (isResearchAugmented) {
+            console.log("Activando herramienta: Google Search Grounding...");
+            requestBody.tools = [{ googleSearch: {} }];
+        }
+
         console.log("Contactando al motor Gemini (Antigravity Protocol)...");
         const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                systemInstruction: {
-                    parts: [{ text: systemPrompt }]
-                },
-                contents: [{
-                    role: "user",
-                    parts: [{
-                        text: `Título del video: "${title}"\nTranscripción a analizar:\n"""\n${transcript.substring(0, 15000)}\n"""`
-                    }]
-                }],
-                generationConfig: {
-                    temperature: 0.3,
-                    responseMimeType: "application/json"
-                }
-            })
+            body: JSON.stringify(requestBody)
         });
 
         if (!aiResponse.ok) {
