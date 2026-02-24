@@ -67,10 +67,10 @@ export const POST: APIRoute = async ({ request }) => {
             isResearchAugmented = true;
         }
 
-        const OPENAI_API_KEY = import.meta.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY;
-        if (!OPENAI_API_KEY) {
-            console.error("OPENAI_API_KEY is missing.");
-            return new Response(JSON.stringify({ success: false, error: 'Error de Análisis de Contenido' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        const GEMINI_API_KEY = import.meta.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+        if (!GEMINI_API_KEY) {
+            console.error("GEMINI_API_KEY is missing.");
+            return new Response(JSON.stringify({ success: false, error: 'Error: Falta GEMINI_API_KEY en variables de entorno. Agrega la llave para habilitar Antigravity.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
         }
 
         let systemPrompt = `Actúa como Lead Research & Content Engineer y Especialista en "Ingeniería Humana" Metabólica.
@@ -125,27 +125,41 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
   ]
 }`;
 
-        console.log("Contactando a la IA para extracción de contenido real...");
-        const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        console.log("Contactando al motor Gemini (Antigravity Protocol)...");
+        const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_API_KEY}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'gpt-4o-mini',
-                messages: [{ role: 'user', content: systemPrompt }],
-                temperature: 0.3
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+                contents: [{
+                    role: "user",
+                    parts: [{
+                        text: `Título del video: "${title}"\nTranscripción a analizar:\n"""\n${transcript.substring(0, 15000)}\n"""`
+                    }]
+                }],
+                generationConfig: {
+                    temperature: 0.3,
+                    responseMimeType: "application/json"
+                }
             })
         });
 
         if (!aiResponse.ok) {
-            console.error("Fallo de la IA:", await aiResponse.text());
-            return new Response(JSON.stringify({ success: false, error: 'Error de Análisis de Contenido' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+            console.error("Fallo de la IA (Gemini):", await aiResponse.text());
+            return new Response(JSON.stringify({ success: false, error: 'Error: El motor Gemini rechazó la solicitud o el modelo está saturado' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
 
         const aiData = await aiResponse.json();
-        const rawJsonString = aiData.choices[0].message.content.trim().replace(/^```json/i, '').replace(/```$/i, '').trim();
+        const rawJsonString = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!rawJsonString) {
+            console.error("Respuesta vacía de Gemini:", JSON.stringify(aiData));
+            return new Response(JSON.stringify({ success: false, error: 'Error: Respuesta irreconocible de Gemini' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        }
 
         // Validamos la salida
         let parsedContent;
@@ -157,7 +171,7 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
         }
 
         // Si genera placeholders accidentales (regla estricta)
-        if (parsedContent.title?.includes("Extraído IA") || parsedContent.quiz?.[0]?.question?.includes("seguridad")) {
+        if (parsedContent.title?.includes("Extraido IA") || parsedContent.quiz?.[0]?.question?.includes("seguridad")) {
             return new Response(JSON.stringify({ success: false, error: 'Error de Análisis de Contenido' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
 
@@ -195,4 +209,4 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
             error: error instanceof Error ? error.message : 'Unknown network/server error'
         }), { status: 500, headers: { 'Content-Type': 'application/json' } });
     }
-}
+};
