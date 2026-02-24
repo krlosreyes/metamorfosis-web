@@ -95,24 +95,18 @@ Si el video menciona la insulina, usa el concepto de "la llave" y la "cerradura 
 
         systemPrompt += `
 Reglas Generales:
-1. Title: Genera un título real y atractivo (ej: ¿Qué es la Insulina? La Llave de tu Metabolismo).
-2. Slug: Genera un slug basado en ese título.
-3. Content Body: Genera todo el contenido HTML estilizado con Tailwind dentro del campo { content: { body: "..." } }.
+1. Content Body: Genera todo el contenido HTML estilizado con Tailwind dentro del campo { content: { body: "..." } }.
    - Párrafos: MÁXIMO 3 líneas por párrafo.
-   - Cajas azules (Estado): Usa exactamente <div class="bg-blue-50 border-l-4 border-blue-500 p-6 my-8 rounded-r-xl shadow-sm"> para datos metabólicos.
-   - Cajas verdes (Pro-Tips): Usa exactly <div class="bg-emerald-50 border-l-4 border-emerald-500 p-6 my-8 rounded-r-xl shadow-sm"> para consejos prácticos.
+   - Cajas de Estado (Azules): Usa exactamente <div class="bg-blue-50 border-l-4 border-blue-500 p-6 my-8 rounded-r-xl shadow-sm"> para datos metabólicos.
+   - Cajas de Pro-Tips (Verdes): Usa exactamente <div class="bg-emerald-50 border-l-4 border-emerald-500 p-6 my-8 rounded-r-xl shadow-sm"> para consejos prácticos.
    - Listas: Estilizalas con círculos de colores y <ul class="space-y-3">.
-4. App Integration: Genera un objeto { app_integration: { callToAction: "Tu CTA aquí", deepLink: "elenaapp://fasting/track" } }.
-5. Metadata: Genera un objeto { metadata: { category, publishedAt, readingTime, seoDescription, seoTitle, slug, thumbnailUrl, youtubeUrl } }.
-6. Quiz: Genera 3 a 5 preguntas de opción múltiple con 'question', 'options', 'correctIndex' (0-3) y 'rationale' científico.
-7. CoverPrompt: Genera un prompt en inglés para Midjourney (ej: "cinematic 3d render of a cell...").
-8. CERO PLACEHOLDERS permitidos. Prohibido usar "Protocolo Extraído IA". Si no puedes generar algo real, falla.
+2. App Integration: Genera un objeto { app_integration: { callToAction: "Tu CTA aquí", deepLink: "elenaapp://fasting/track" } }.
+3. Metadata: Genera un objeto { metadata: { category, publishedAt, readingTime, seoDescription, seoTitle, slug, thumbnailUrl, youtubeUrl } }.
+4. Quiz: Genera 3 a 5 preguntas de opción múltiple con 'question', 'options', 'correctIndex' (0-3) y 'rationale' científico.
+5. CERO PLACEHOLDERS permitidos. Prohibido usar "Protocolo Extraído IA". Si no puedes generar algo real, falla.
 
-Devuelve EXCLUSIVAMENTE un JSON limpio de backticks y tags de markdown con esta estructura exacta:
+Devuelve EXCLUSIVAMENTE un JSON limpio de backticks y tags de markdown con esta estructura exacta de 4 niveles:
 {
-  "title": "",
-  "slug": "",
-  "coverPrompt": "",
   "app_integration": {
     "callToAction": "",
     "deepLink": "elenaapp://fasting/track"
@@ -189,10 +183,10 @@ Devuelve EXCLUSIVAMENTE un JSON limpio de backticks y tags de markdown con esta 
 
         // Mapeo Final de los Datos al Esquema de Firestore
         // Mapeo Final de los Datos al Esquema de Firestore
-        const finalSlug = parsedContent.slug || title.replace(/\s+/g, '-').toLowerCase();
+        const finalSlug = parsedContent.metadata?.slug || title.replace(/\s+/g, '-').toLowerCase();
 
         const postData = {
-            title: parsedContent.title || title,
+            title: parsedContent.metadata?.seoTitle || title,
             slug: finalSlug,
             app_integration: parsedContent.app_integration || { callToAction: "Comienza tu protocolo", deepLink: "elenaapp://fasting/track" },
             content: parsedContent.content || { body: "" },
@@ -205,10 +199,9 @@ Devuelve EXCLUSIVAMENTE un JSON limpio de backticks y tags de markdown con esta 
                 youtubeUrl: parsedContent.metadata?.youtubeUrl || url,
                 slug: finalSlug,
                 category: parsedContent.metadata?.category || "Salud Metabólica",
-                imagePrompt: parsedContent.coverPrompt || "",
                 source_type: isResearchAugmented ? "knowledge_augmented" : "transcription"
             },
-            coverImage: parsedContent.thumbnailUrl || coverUrl || "https://images.unsplash.com/photo-1532187863486-abf9db0c2095?q=80&w=1920&auto=format&fit=crop",
+            coverImage: parsedContent.metadata?.thumbnailUrl || coverUrl || "https://images.unsplash.com/photo-1532187863486-abf9db0c2095?q=80&w=1920&auto=format&fit=crop",
             date: parsedContent.metadata?.publishedAt || new Date().toISOString()
         };
 
