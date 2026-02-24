@@ -1,6 +1,5 @@
 import type { APIRoute } from 'astro';
 import { db } from '../../lib/firebaseAdmin';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const prerender = false;
 
@@ -74,15 +73,19 @@ export const POST: APIRoute = async ({ request }) => {
 
             if (tracks.length === 0) throw new Error("Video no tiene subtítulos habilitados.");
 
-            // Trata de buscar subtítulos en Español explícitamente, si no, agarra el primero
             const track = tracks.find((t: any) => t.languageCode === 'es' || t.languageCode.includes('es')) || tracks[0];
 
             console.log(`Usando subtítulo en idioma: ${track.languageCode}`);
             const xmlResponse = await fetch(track.baseUrl);
             const xmlText = await xmlResponse.text();
 
-            // Limpiar XML a texto puro
-            transcript = xmlText.replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
+            transcript = xmlText
+                .replace(/<[^>]+>/g, ' ')
+                .replace(/&amp;/g, '&')
+                .replace(/&#39;/g, "'")
+                .replace(/&quot;/g, '"')
+                .replace(/\s+/g, ' ')
+                .trim();
 
         } catch (error) {
             console.error("Fallo obteniendo la transcripción de YouTube:", error);
@@ -116,27 +119,41 @@ Estructura Exacta:
 
 Ningún otro campo debe estar en la raíz del JSON. Prohibidos los placeholders.`;
 
-        const promptText = `Título: "${finalTitle}"\nDescripción Original: "${videoDescription.substring(0, 1500)}"\nTranscripción: """${transcript.substring(0, 15000)}"""\n\nINSTRUCCIONES EXTRA: Ignora tu configuración por defecto. Responde EXCLUSIVAMENTE con el JSON exigido en el System Prompt.`;
+        const requestBody = {
+            contents: [{
+                role: "user",
+                parts: [{
+                    text: `Título: "${finalTitle}"\nDescripción Original: "${videoDescription.substring(0, 1500)}"\nTranscripción: """${transcript.substring(0, 15000)}"""\n\nINSTRUCCIONES EXTRA: Ignora tu configuración por defecto. Responde EXCLUSIVAMENTE con el JSON exigido en el System Prompt.`
+                }]
+            }],
+            systemInstruction: {
+                role: "system",
+                parts: [{ text: systemPrompt }]
+            },
+            generationConfig: {
+                temperature: 0.3,
+                responseMimeType: "application/json"
+            }
+        };
 
-        console.log("Contactando a la Red Gemini (SDK Oficial gemini-1.5-flash)...");
-        let rawJsonString = "";
-        try {
-            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-            const model = genAI.getGenerativeModel({
-                model: "gemini-1.5-flash",
-                systemInstruction: systemPrompt,
-                generationConfig: {
-                    temperature: 0.3,
-                    responseMimeType: "application/json"
-                }
-            });
+        console.log("Contactando a la Red Gemini v1 (gemini-1.5-flash)...");
+        const aiResponse = await fetch(
+            `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            }
+        );
 
-            const result = await model.generateContent(promptText);
-            rawJsonString = result.response.text();
-        } catch (genErr) {
-            console.error(">> Falló llamada a Gemini SDK:", genErr);
-            return new Response(JSON.stringify({ success: false, error: 'Error: El motor resolvió un fallo de conexión o límite de cuota.' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        if (!aiResponse.ok) {
+            const errBody = await aiResponse.text();
+            console.warn(">> Falló llamada a Gemini:", errBody);
+            return new Response(JSON.stringify({ success: false, error: 'Error: El motor resolvió un fallo de conexión.' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
+
+        const aiData = await aiResponse.json();
+        const rawJsonString = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!rawJsonString) {
             console.error("Respuesta vacía de Gemini SDK.");
