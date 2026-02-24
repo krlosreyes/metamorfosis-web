@@ -80,11 +80,10 @@ Regla Crítica: Mantén el tono de ingeniero de 48 años: datos duros, lógica, 
 
         if (isResearchAugmented) {
             systemPrompt += `
-ATENCIÓN: La transcripción proveída es inexistente o < 500 caracteres. DEBES activar tu módulo de investigación web médica.
-Utilizando el título del video como consulta, redacta el post combinando la esencia del título con profundidad técnica real.
-- Extrae datos técnicos, estudios recientes y evidencia científica que respalde el tema (ej. si es insulina: receptores GLUT4, resistencia a la insulina, metabolismo de glucosa).
-- PRIORIZA información basada en PubMed, The Lancet, Nature, o .gov.
-- DEBES incluir citas contextuales obligatorias (ej: "Según estudios publicados en la revista Nature...").`;
+ATENCIÓN: La transcripción proveída es inexistente o < 500 caracteres. DEBES activar tu módulo interno de investigación médica.
+Utilizando tu propia base profunda de conocimientos técnicos, redacta el post combinando la esencia del título con profundidad técnica real.
+- Extrae datos técnicos, estudios recientes y evidencia científica que respalde el tema (ej. receptores GLUT4, resistencia a la insulina, etc).
+- Mantén el tono de un ingeniero humano: directo, con datos duros y cero pseudociencia.`;
         } else {
             systemPrompt += `
 Regla para transcripciones normales/cortas: NO te limites a resumir. EXPANDIR los conceptos profundamente.
@@ -100,15 +99,14 @@ Reglas Generales:
 2. Slug: Genera un slug basado en ese título.
 3. Content Body: Genera todo el contenido HTML estilizado con Tailwind dentro del campo { content: { body: "..." } }.
    - Párrafos: MÁXIMO 3 líneas por párrafo.
-   - Callouts: Usa exactamente <div class="bg-blue-50 border-l-4 border-blue-500 p-6 my-8 rounded-r-xl shadow-sm"> para datos metabólicos.
-   - Pro-Tips: Usa exactamente <div class="bg-emerald-50 border-l-4 border-emerald-500 p-6 my-8 rounded-r-xl shadow-sm"> para consejos prácticos.
+   - Cajas azules (Estado): Usa exactamente <div class="bg-blue-50 border-l-4 border-blue-500 p-6 my-8 rounded-r-xl shadow-sm"> para datos metabólicos.
+   - Cajas verdes (Pro-Tips): Usa exactly <div class="bg-emerald-50 border-l-4 border-emerald-500 p-6 my-8 rounded-r-xl shadow-sm"> para consejos prácticos.
    - Listas: Estilizalas con círculos de colores y <ul class="space-y-3">.
 4. App Integration: Genera un objeto { app_integration: { callToAction: "Tu CTA aquí", deepLink: "elenaapp://fasting/track" } }.
 5. Metadata: Genera un objeto { metadata: { category, publishedAt, readingTime, seoDescription, seoTitle, slug, thumbnailUrl, youtubeUrl } }.
 6. Quiz: Genera 3 a 5 preguntas de opción múltiple con 'question', 'options', 'correctIndex' (0-3) y 'rationale' científico.
 7. CoverPrompt: Genera un prompt en inglés para Midjourney (ej: "cinematic 3d render of a cell...").
 8. CERO PLACEHOLDERS permitidos. Prohibido usar "Protocolo Extraído IA". Si no puedes generar algo real, falla.
-9. Referencias (Evidencia Científica): Si realizaste investigación web (Grounding), incluye fuentes reales estructuradas en el array 'references' ('[Nombre] - [URL]').
 
 Devuelve EXCLUSIVAMENTE un JSON limpio de backticks y tags de markdown con esta estructura exacta:
 {
@@ -134,8 +132,7 @@ Devuelve EXCLUSIVAMENTE un JSON limpio de backticks y tags de markdown con esta 
   },
   "quiz": [
     { "question": "", "options": ["", "", "", ""], "correctIndex": 0, "rationale": "" }
-  ],
-  "references": []
+  ]
 }`;
 
         const requestBody: any = {
@@ -154,17 +151,8 @@ Devuelve EXCLUSIVAMENTE un JSON limpio de backticks y tags de markdown con esta 
             }
         };
 
-        if (isResearchAugmented) {
-            console.log("Activando herramienta: Google Search Grounding...");
-            requestBody.tools = [
-                {
-                    google_search: {} // Forma estándar y más estable para Grounding en v1beta
-                }
-            ];
-        }
-
-        console.log("Contactando al motor Gemini (Antigravity Protocol)...");
-        let aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+        console.log("Contactando al motor Gemini (Antigravity Protocol API ESTABLE)...");
+        const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -173,36 +161,12 @@ Devuelve EXCLUSIVAMENTE un JSON limpio de backticks y tags de markdown con esta 
         });
 
         if (!aiResponse.ok) {
-            console.warn(">> Falló primera llamada a Gemini con Grounding:", await aiResponse.text());
-            if (isResearchAugmented) {
-                console.log(">> Reintentando sin Grounding Tools como fallback de seguridad...");
-                delete requestBody.tools;
-                aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(requestBody)
-                });
-
-                if (!aiResponse.ok) {
-                    return new Response(JSON.stringify({ success: false, error: 'Error: El motor Gemini rechazó la solicitud o el modelo está saturado' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
-                }
-            } else {
-                return new Response(JSON.stringify({ success: false, error: 'Error: El motor Gemini falló' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
-            }
+            console.warn(">> Falló llamada a Gemini v1:", await aiResponse.text());
+            return new Response(JSON.stringify({ success: false, error: 'Error: El motor Gemini rechazó la solicitud o falló la red' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
 
         const aiData = await aiResponse.json();
         const rawJsonString = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        // Grounding Metadata Extraction (Evidencia Científica)
-        const groundingMetadata = aiData.candidates?.[0]?.groundingMetadata;
-
-        // Extraer links reales de los chunks de búsqueda
-        const metaReferences = groundingMetadata?.searchEntryPoint?.html
-            ? [{ title: "Fuentes verificadas por Google Search", url: "Grounding Activo" }]
-            : [];
 
         if (!rawJsonString) {
             console.error("Respuesta vacía de Gemini:", JSON.stringify(aiData));
@@ -233,7 +197,6 @@ Devuelve EXCLUSIVAMENTE un JSON limpio de backticks y tags de markdown con esta 
             app_integration: parsedContent.app_integration || { callToAction: "Comienza tu protocolo", deepLink: "elenaapp://fasting/track" },
             content: parsedContent.content || { body: "" },
             quiz: parsedContent.quiz || [],
-            references: parsedContent.references?.length > 0 ? parsedContent.references : metaReferences,
             metadata: {
                 ...(parsedContent.metadata || {}),
                 views: 0,
@@ -243,7 +206,7 @@ Devuelve EXCLUSIVAMENTE un JSON limpio de backticks y tags de markdown con esta 
                 slug: finalSlug,
                 category: parsedContent.metadata?.category || "Salud Metabólica",
                 imagePrompt: parsedContent.coverPrompt || "",
-                source_type: isResearchAugmented ? "research_augmented" : "transcription"
+                source_type: isResearchAugmented ? "knowledge_augmented" : "transcription"
             },
             coverImage: parsedContent.thumbnailUrl || coverUrl || "https://images.unsplash.com/photo-1532187863486-abf9db0c2095?q=80&w=1920&auto=format&fit=crop",
             date: parsedContent.metadata?.publishedAt || new Date().toISOString()
