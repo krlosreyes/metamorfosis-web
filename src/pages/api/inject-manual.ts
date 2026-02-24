@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db } from '../../lib/firebaseAdmin';
+import { savePostToFirestore } from '../../lib/firebase/posts-service';
 
 export const prerender = false;
 
@@ -28,7 +28,7 @@ export const POST: APIRoute = async ({ request }) => {
 
         console.log(`[Manual Injector] Initiating emergency database injection for ID: ${slug}`);
 
-        await db.collection('metamorfosis_posts').doc(slug).set(payload);
+        await savePostToFirestore(slug, payload);
 
         console.log(`[Manual Injector] Success. Inserted document ID: ${slug}`);
 

@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db } from '../../lib/firebaseAdmin';
+import { savePostToFirestore } from '../../lib/firebase/posts-service';
 
 export const prerender = false;
 
@@ -191,7 +191,7 @@ Ningún otro campo debe estar en la raíz del JSON. Prohibidos los placeholders.
             return new Response(JSON.stringify({ success: false, error: 'Error: Contenido Generado Insuficiente' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
 
-        await db.collection('metamorfosis_posts').doc(finalSlug).set(postData);
+        await savePostToFirestore(finalSlug, postData);
         console.log(`Inyección ejecutada con éxito. ID Documento: ${finalSlug}`);
 
         return new Response(JSON.stringify({ success: true, postId: finalSlug }), { status: 200, headers: { 'Content-Type': 'application/json' } });
