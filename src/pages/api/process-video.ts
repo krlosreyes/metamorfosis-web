@@ -186,23 +186,22 @@ Devuelve EXCLUSIVAMENTE un JSON limpio de backticks y tags de markdown con esta 
         const finalSlug = parsedContent.metadata?.slug || title.replace(/\s+/g, '-').toLowerCase();
 
         const postData = {
-            title: parsedContent.metadata?.seoTitle || title,
-            slug: finalSlug,
-            app_integration: parsedContent.app_integration || { callToAction: "Comienza tu protocolo", deepLink: "elenaapp://fasting/track" },
+            app_integration: parsedContent.app_integration || { callToAction: "Comienza tu protocolo metabólico", deepLink: "elenaapp://fasting/track" },
             content: parsedContent.content || { body: "" },
-            quiz: parsedContent.quiz || [],
             metadata: {
-                ...(parsedContent.metadata || {}),
+                category: parsedContent.metadata?.category || "Salud Metabólica",
+                publishedAt: parsedContent.metadata?.publishedAt || new Date().toISOString(),
+                readingTime: parsedContent.metadata?.readingTime || "5 min",
+                seoDescription: parsedContent.metadata?.seoDescription || "Descubre todo sobre el control metabólico en este análisis profundo.",
+                seoTitle: parsedContent.metadata?.seoTitle || title,
+                slug: finalSlug,
+                thumbnailUrl: parsedContent.metadata?.thumbnailUrl || coverUrl || "https://images.unsplash.com/photo-1532187863486-abf9db0c2095?q=80&w=1920&auto=format&fit=crop",
+                youtubeUrl: parsedContent.metadata?.youtubeUrl || url,
                 views: 0,
                 conversions: 0,
-                videoUrl: url,
-                youtubeUrl: parsedContent.metadata?.youtubeUrl || url,
-                slug: finalSlug,
-                category: parsedContent.metadata?.category || "Salud Metabólica",
                 source_type: isResearchAugmented ? "knowledge_augmented" : "transcription"
             },
-            coverImage: parsedContent.metadata?.thumbnailUrl || coverUrl || "https://images.unsplash.com/photo-1532187863486-abf9db0c2095?q=80&w=1920&auto=format&fit=crop",
-            date: parsedContent.metadata?.publishedAt || new Date().toISOString()
+            quiz: parsedContent.quiz || []
         };
 
         // Regla de Oro implementada: Inyectar usando el slug como ID del documento
