@@ -142,7 +142,7 @@ Devuelve EXCLUSIVAMENTE un JSON limpio de backticks y tags de markdown con esta 
         };
 
         console.log("Contactando al motor Gemini (Antigravity Protocol API ESTABLE)...");
-        const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${GEMINI_API_KEY}`, {
+        const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
