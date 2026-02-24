@@ -61,7 +61,7 @@ export const POST: APIRoute = async ({ request }) => {
 
         console.log("Longitud de transcripción obtenida:", transcript.length);
 
-        if (transcript.trim().length < 50) {
+        if (transcript.trim().length < 10) {
             console.error("La transcripción es demasiado corta para generar contenido.");
             return new Response(JSON.stringify({ success: false, error: 'Error: El video no tiene subtítulos disponibles para procesar' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
@@ -72,30 +72,38 @@ export const POST: APIRoute = async ({ request }) => {
             return new Response(JSON.stringify({ success: false, error: 'Error de Análisis de Contenido' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
 
-        const systemPrompt = `Actúa como Senior AI Content Engineer en Salud Metabólica.
-Tu tarea es analizar la siguiente transcripción de un video de YouTube y extraer un objeto JSON estricto.
+        const systemPrompt = `Actúa como Senior AI Content Engineer y Especialista en "Ingeniería Humana" Metabólica.
+Tu tarea es analizar la siguiente transcripción de un video corto (Short) y su título, y extraer un objeto JSON estricto.
+
+Regla Crítica para Shorts: NO te limites a resumir. EXPANDIR los conceptos profundamente. 
+Si el video menciona la insulina, usa el concepto de "la llave" y la "cerradura oxidada" (resistencia a la insulina) para explicar los receptores celulares y el exceso de glucosa. Usa exactamente esta estructura de H2 si aplica:
+- El Mecanismo de la Llave: El proceso normal del páncreas.
+- El Error del Sistema (Cerradura Oxidada): Cómo el exceso de azúcar causa resistencia.
+- Consecuencias y Solución: Aumento de peso y cambio de hábitos.
 
 Reglas:
-1. Title: Extrae el título real y atractivo del video.
-2. Slug: Genera un slug basado en ese título (ej: insulina-y-ayuno).
-3. Quiz: Genera 3 preguntas de opción múltiple basadas en los puntos clave discutidos en el video, con explicaciones (rationale) científicas, y 'correctIndex' (0-3).
-4. Sections: Divide el contenido en 3-4 secciones con títulos H2, asegurando que CADA PÁRRAFO de la sección NO SUPERE LAS 3 LÍNEAS.
-5. CERO PLACEHOLDERS permitidos. Prohibido usar "Protocolo Extraído IA" o "Pregunta de seguridad".
+1. Title: Genera un título real y atractivo (ej: ¿Qué es la Insulina? La Llave de tu Metabolismo).
+2. Slug: Genera un slug basado en ese título (ej: que-es-la-insulina-clave-salud).
+3. Quiz: Genera 3 preguntas de opción múltiple basadas en los puntos clave discutidos en la transcripción, con explicaciones (rationale) científicas, y 'correctIndex' (0-3). Mapea bien las respuestas según los tiempos de la transcripción corta.
+4. Sections: Divide el contenido en 3-4 secciones con títulos H2, asegurando que CADA PÁRRAFO NO SUPERE LAS 3 LÍNEAS.
+5. CoverPrompt: Genera un prompt en inglés para Midjourney (ej: "cinematic 3d render of a cell being opened by a cyan energy key, dark technological background, hyper-detailed, 8k").
+6. CERO PLACEHOLDERS. Prohibido usar "Protocolo Extraído IA". Si no puedes generar algo real, falla contundentemente.
 
+Título del video: "${title}"
 Transcripción a analizar:
 """
-${transcript.substring(0, 15000) /* Limitamos a ~15k chars para context window */}
+${transcript.substring(0, 15000)}
 """
 
-Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown de bloques de código:
+Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
 {
   "title": "",
   "slug": "",
+  "coverPrompt": "",
   "content": {
     "introduction": "",
     "sections": [
-       "<h2 class='text-xl font-bold mb-4'>Título de Sección 1</h2><p class='mb-4'>Párrafo corto 1 (max 3 líneas).</p><p class='mb-4'>Párrafo corto 2.</p>",
-       "<h2 class='text-xl font-bold mb-4'>Título de Sección 2</h2><p class='mb-4'>Párrafo corto 1.</p>"
+       "<h2 class='text-xl font-bold mb-4'>Título de Sección 1</h2><p class='mb-4'>Párrafo corto 1 (max 3 líneas).</p><p class='mb-4'>Párrafo corto 2.</p>"
     ]
   },
   "quiz": [
@@ -142,16 +150,17 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown de bloq
         // Mapeo Final de los Datos al Esquema de Firestore
         const postData = {
             title: parsedContent.title || title,
-            slug: parsedContent.slug,
+            slug: parsedContent.slug || title.replace(/\s+/g, '-').toLowerCase(),
             content: parsedContent.content,
             quiz: parsedContent.quiz,
             metadata: {
                 views: 0,
                 conversions: 0,
                 videoUrl: url,
-                category: "Salud Metabólica"
+                category: "Salud Metabólica",
+                imagePrompt: parsedContent.coverPrompt || ""
             },
-            coverImage: coverUrl || "https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=1920&auto=format&fit=crop",
+            coverImage: coverUrl || "https://images.unsplash.com/photo-1532187863486-abf9db0c2095?q=80&w=1920&auto=format&fit=crop", // Tecnológico placeholder
             date: new Date().toISOString()
         };
 
