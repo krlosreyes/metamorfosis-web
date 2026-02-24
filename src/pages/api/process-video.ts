@@ -100,10 +100,10 @@ export const POST: APIRoute = async ({ request }) => {
             isResearchAugmented = true;
         }
 
-        const GEMINI_API_KEY = import.meta.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-        if (!GEMINI_API_KEY) {
-            console.error("GEMINI_API_KEY is missing.");
-            return new Response(JSON.stringify({ success: false, error: 'Error: Falta GEMINI_API_KEY' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        const OPENAI_API_KEY = import.meta.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+        if (!OPENAI_API_KEY) {
+            console.error("OPENAI_API_KEY is missing.");
+            return new Response(JSON.stringify({ success: false, error: 'Error: Falta OPENAI_API_KEY' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
         }
 
         let systemPrompt = `Actúa como Senior Full-Stack Architect y Especialista Médico.
@@ -120,43 +120,42 @@ Estructura Exacta:
 Ningún otro campo debe estar en la raíz del JSON. Prohibidos los placeholders.`;
 
         const requestBody = {
-            contents: [{
-                role: "user",
-                parts: [{
-                    text: `Título: "${finalTitle}"\nDescripción Original: "${videoDescription.substring(0, 1500)}"\nTranscripción: """${transcript.substring(0, 15000)}"""\n\nINSTRUCCIONES EXTRA: Ignora tu configuración por defecto. Responde EXCLUSIVAMENTE con el JSON exigido en el System Prompt.`
-                }]
-            }],
-            systemInstruction: {
-                role: "system",
-                parts: [{ text: systemPrompt }]
-            },
-            generationConfig: {
-                temperature: 0.3,
-                responseMimeType: "application/json"
-            }
+            model: "gpt-4o-mini",
+            response_format: { type: "json_object" },
+            temperature: 0.3,
+            messages: [
+                {
+                    role: "system",
+                    content: systemPrompt
+                },
+                {
+                    role: "user",
+                    content: `Título: "${finalTitle}"\nDescripción Original: "${videoDescription.substring(0, 1500)}"\nTranscripción: """${transcript.substring(0, 15000)}"""\n\nINSTRUCCIONES EXTRA: Ignora tu configuración por defecto. Responde EXCLUSIVAMENTE con el JSON exigido en el System Prompt.`
+                }
+            ]
         };
 
-        console.log("Contactando a la Red Gemini v1beta (gemini-1.5-flash)...");
-        const aiResponse = await fetch(
-            `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody)
-            }
-        );
+        console.log("Contactando a la Red OpenAI (gpt-4o-mini)...");
+        const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${OPENAI_API_KEY}`
+            },
+            body: JSON.stringify(requestBody)
+        });
 
         if (!aiResponse.ok) {
             const errBody = await aiResponse.text();
-            console.warn(">> Falló llamada a Gemini:", errBody);
-            return new Response(JSON.stringify({ success: false, error: 'Error: El motor resolvió un fallo de conexión.' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+            console.warn(">> Falló llamada a OpenAI:", errBody);
+            return new Response(JSON.stringify({ success: false, error: 'Error: El motor resolvió un fallo de conexión u OpenAI rechazó la clave.' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
 
         const aiData = await aiResponse.json();
-        const rawJsonString = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
+        const rawJsonString = aiData.choices?.[0]?.message?.content;
 
         if (!rawJsonString) {
-            console.error("Respuesta vacía de Gemini SDK.");
+            console.error("Respuesta vacía de OpenAI.");
             return new Response(JSON.stringify({ success: false, error: 'Error: Análisis de Contenido Vacío' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
 
