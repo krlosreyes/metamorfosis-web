@@ -102,6 +102,7 @@ Reglas Generales:
 4. Sections: Divide el contenido en 3-4 secciones con títulos H2. CADA PÁRRAFO de la sección NO SUPERE LAS 3 LÍNEAS.
 5. CoverPrompt: Genera un prompt en inglés para Midjourney (ej: "cinematic 3d render of a cell being opened by a cyan energy key, dark technological background, hyper-detailed, 8k").
 6. CERO PLACEHOLDERS permitidos. Prohibido usar "Protocolo Extraído IA". Si no puedes generar algo real, falla.
+7. Referencias (Evidencia Científica): Si realizaste investigación web (Grounding), incluye las fuentes reales estructuradas en el array 'references' con el formato exacto '[Nombre del Estudio/Sitio] - [URL]'.
 
 Título del video: "${title}"
 Transcripción a analizar:
@@ -122,6 +123,9 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
   },
   "quiz": [
     { "question": "", "options": ["", "", "", ""], "correctIndex": 0, "rationale": "" }
+  ],
+  "references": [
+    "[Nombre del Estudio/Sitio] - [URL]"
   ]
 }`;
 
@@ -156,7 +160,7 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
         }
 
         console.log("Contactando al motor Gemini (Antigravity Protocol)...");
-        const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -171,6 +175,15 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
 
         const aiData = await aiResponse.json();
         const rawJsonString = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        // Grounding Metadata Extraction (Evidencia Científica)
+        let metaReferences: string[] = [];
+        const chunks = aiData.candidates?.[0]?.groundingMetadata?.groundingChunks;
+        if (chunks && Array.isArray(chunks)) {
+            metaReferences = chunks
+                .map((c: any) => c.web?.title && c.web?.uri ? `[${c.web.title}] - [${c.web.uri}]` : null)
+                .filter((val: string | null) => val !== null) as string[];
+        }
 
         if (!rawJsonString) {
             console.error("Respuesta vacía de Gemini:", JSON.stringify(aiData));
@@ -197,6 +210,7 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
             slug: parsedContent.slug || title.replace(/\s+/g, '-').toLowerCase(),
             content: parsedContent.content,
             quiz: parsedContent.quiz,
+            references: parsedContent.references?.length > 0 ? parsedContent.references : metaReferences,
             metadata: {
                 views: 0,
                 conversions: 0,
