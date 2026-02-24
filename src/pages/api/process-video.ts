@@ -15,14 +15,55 @@ export const POST: APIRoute = async ({ request }) => {
             return new Response(JSON.stringify({ success: false, error: 'Error: Contenido no generado' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
         }
 
-        const { url, title, transcript, coverUrl } = body;
+        const { url, title, coverUrl } = body;
 
-        // --- EXTRACCIÓN DE CONTENIDO REAL (Lógica IA) ---
-        // Se asume que la transcripción se envía desde el frontend o se extrae previamente.
-        // Si no hay transcripción válida suministrada, la AI no podrá procesar (Regla de "Cero Placeholders")
-        if (!transcript || transcript.trim().length < 50) {
-            console.error("No transcript provided or too short.");
-            return new Response(JSON.stringify({ success: false, error: 'Error de Análisis de Contenido' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        let videoId = '';
+        try {
+            const urlObj = new URL(url);
+            videoId = urlObj.searchParams.get('v') || urlObj.pathname.split('/').pop() || '';
+            if (!videoId) throw new Error("Invalid Video ID");
+        } catch {
+            console.error("URL Invalida:", url);
+            return new Response(JSON.stringify({ success: false, error: 'Error: URL de YouTube Inválida' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        console.log("ID de Video detectado:", videoId);
+
+        // --- EXTRACCIÓN ROBUSTA DE TRANSCRIPCIÓN (Nativa) ---
+        let transcript = '';
+        try {
+            console.log("Descargando subtítulos del video...");
+            const videoPage = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
+            const html = await videoPage.text();
+
+            const captionsJsonText = html.split('"captions":')?.[1]?.split(',"videoDetails"')?.[0];
+            if (!captionsJsonText) throw new Error("Video no tiene subtítulos habilitados.");
+
+            const captions = JSON.parse(captionsJsonText);
+            const tracks = captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
+
+            if (tracks.length === 0) throw new Error("Video no tiene subtítulos habilitados.");
+
+            // Trata de buscar subtítulos en Español explícitamente, si no, agarra el primero
+            const track = tracks.find((t: any) => t.languageCode === 'es' || t.languageCode.includes('es')) || tracks[0];
+
+            console.log(`Usando subtítulo en idioma: ${track.languageCode}`);
+            const xmlResponse = await fetch(track.baseUrl);
+            const xmlText = await xmlResponse.text();
+
+            // Limpiar XML a texto puro
+            transcript = xmlText.replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
+
+        } catch (error) {
+            console.error("Fallo obteniendo la transcripción de YouTube:", error);
+            return new Response(JSON.stringify({ success: false, error: 'Error: El video no tiene subtítulos disponibles para procesar' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        console.log("Longitud de transcripción obtenida:", transcript.length);
+
+        if (transcript.trim().length < 50) {
+            console.error("La transcripción es demasiado corta para generar contenido.");
+            return new Response(JSON.stringify({ success: false, error: 'Error: El video no tiene subtítulos disponibles para procesar' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
 
         const OPENAI_API_KEY = import.meta.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY;
