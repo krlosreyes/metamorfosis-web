@@ -130,18 +130,14 @@ Devuelve EXCLUSIVAMENTE un JSON limpio de backticks y tags de markdown con esta 
 }`;
 
         const requestBody: any = {
-            systemInstruction: {
-                parts: [{ text: systemPrompt }]
-            },
             contents: [{
                 role: "user",
                 parts: [{
-                    text: `Título del video: "${title}"\nTranscripción a analizar:\n"""\n${transcript.substring(0, 15000)}\n"""`
+                    text: `${systemPrompt}\n\nTítulo del video: "${title}"\nTranscripción a analizar:\n"""\n${transcript.substring(0, 15000)}\n"""`
                 }]
             }],
             generationConfig: {
-                temperature: 0.3,
-                responseMimeType: "application/json"
+                temperature: 0.3
             }
         };
 
@@ -170,7 +166,9 @@ Devuelve EXCLUSIVAMENTE un JSON limpio de backticks y tags de markdown con esta 
         // Validamos la salida
         let parsedContent;
         try {
-            parsedContent = JSON.parse(rawJsonString);
+            // Limpieza robusta de backticks markdown en caso de que v1 ignore las instrucciones
+            const cleanedJsonString = rawJsonString.replace(/```json/gi, '').replace(/```/g, '').trim();
+            parsedContent = JSON.parse(cleanedJsonString);
         } catch (parseErr) {
             console.error("JSON Parsing failed from AI output:", rawJsonString);
             return new Response(JSON.stringify({ success: false, error: 'Error de Análisis de Contenido' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
