@@ -151,8 +151,8 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
                 {
                     google_search_retrieval: {
                         dynamic_retrieval_config: {
-                            mode: "unspecified",
-                            dynamic_threshold: 0.06
+                            mode: "DYNAMIC",
+                            dynamic_threshold: 0.3
                         }
                     }
                 }
@@ -177,13 +177,22 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
         const rawJsonString = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
 
         // Grounding Metadata Extraction (Evidencia Científica)
-        let metaReferences: string[] = [];
-        const chunks = aiData.candidates?.[0]?.groundingMetadata?.groundingChunks;
-        if (chunks && Array.isArray(chunks)) {
-            metaReferences = chunks
-                .map((c: any) => c.web?.title && c.web?.uri ? `[${c.web.title}] - [${c.web.uri}]` : null)
-                .filter((val: string | null) => val !== null) as string[];
+        const groundingMetadata = aiData.candidates?.[0]?.groundingMetadata;
+        let metaReferences: any[] = [];
+
+        if (groundingMetadata?.searchEntryPoint?.html) {
+            metaReferences.push({ title: "Fuentes de Google Search", uri: "Grounding activo" });
         }
+
+        const chunks = groundingMetadata?.groundingChunks || [];
+        const webLinks = chunks
+            .filter((chunk: any) => chunk.web)
+            .map((chunk: any) => ({
+                title: chunk.web.title,
+                uri: chunk.web.uri
+            }));
+
+        metaReferences = [...metaReferences, ...webLinks];
 
         if (!rawJsonString) {
             console.error("Respuesta vacía de Gemini:", JSON.stringify(aiData));
