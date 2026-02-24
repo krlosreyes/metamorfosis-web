@@ -149,18 +149,13 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
             console.log("Activando herramienta: Google Search Grounding...");
             requestBody.tools = [
                 {
-                    google_search_retrieval: {
-                        dynamic_retrieval_config: {
-                            mode: "DYNAMIC",
-                            dynamic_threshold: 0.3
-                        }
-                    }
+                    google_search: {} // Forma estándar y más estable para Grounding en v1beta
                 }
             ];
         }
 
         console.log("Contactando al motor Gemini (Antigravity Protocol)...");
-        const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -178,21 +173,12 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
 
         // Grounding Metadata Extraction (Evidencia Científica)
         const groundingMetadata = aiData.candidates?.[0]?.groundingMetadata;
-        let metaReferences: any[] = [];
 
-        if (groundingMetadata?.searchEntryPoint?.html) {
-            metaReferences.push({ title: "Fuentes de Google Search", uri: "Grounding activo" });
-        }
-
-        const chunks = groundingMetadata?.groundingChunks || [];
-        const webLinks = chunks
-            .filter((chunk: any) => chunk.web)
-            .map((chunk: any) => ({
-                title: chunk.web.title,
-                uri: chunk.web.uri
-            }));
-
-        metaReferences = [...metaReferences, ...webLinks];
+        // Extraer links reales de los chunks de búsqueda
+        const metaReferences = groundingMetadata?.groundingChunks?.map((chunk: any) => ({
+            title: chunk.web?.title || "Referencia Médica",
+            url: chunk.web?.uri || "#"
+        })).filter((ref: any) => ref.url !== "#") || [];
 
         if (!rawJsonString) {
             console.error("Respuesta vacía de Gemini:", JSON.stringify(aiData));
