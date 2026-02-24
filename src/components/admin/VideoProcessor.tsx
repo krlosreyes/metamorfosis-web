@@ -5,6 +5,8 @@ type ProcessState = 'IDLE' | 'ANALYZING' | 'GENERATING_COVER' | 'REVIEW' | 'INJE
 const VideoProcessor = () => {
     const [url, setUrl] = useState('');
     const [state, setState] = useState<ProcessState>('IDLE');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [logs, setLogs] = useState<string[]>([]);
 
     // Review Data
@@ -28,6 +30,8 @@ const VideoProcessor = () => {
         e.preventDefault();
         if (!url) return;
 
+        setIsLoading(true);
+        setError(null);
         setState('ANALYZING');
         setLogs([]);
         addLog(`>> INITIALIZING PROTOCOL FOR: ${url}`);
@@ -40,6 +44,11 @@ const VideoProcessor = () => {
                 body: JSON.stringify({ url, title, slug, coverUrl })
             });
             const data = await response.json();
+
+            if (!response.ok) {
+                // Forzar arrojar error para caer en el Catch local
+                throw new Error(data.error || 'Error desconocido en el servidor');
+            }
 
             if (data.success) {
                 setState('SUCCESS');
@@ -55,12 +64,17 @@ const VideoProcessor = () => {
                     addLog('>> Memory cleared.');
                 }, 4000);
             } else {
-                setState('ERROR');
-                addLog(`>> ERROR DEL SERVIDOR: ${data.error}`);
+                throw new Error(data.error || 'Respuesta fallida genérica.');
             }
-        } catch (error) {
+        } catch (err) {
             setState('ERROR');
-            addLog(`>> NETWORK/FALLO DE CONEXIÓN: ${error instanceof Error ? error.message : "Error Desconocido"}`);
+            const msg = err instanceof Error ? err.message : "Error Desconocido";
+            setError(msg);
+            console.error("Pipeline fallido:", err);
+            addLog(`>> NETWORK/FALLO DE CONEXIÓN: ${msg}`);
+        } finally {
+            // Lógica crítica que desbloquea el Dashboard
+            setIsLoading(false);
         }
     };
 
@@ -86,21 +100,56 @@ const VideoProcessor = () => {
                     <input
                         type="url"
                         value={url}
-                        onChange={(e) => setUrl(e.target.value)}
+                        onChange={(e) => {
+                            setUrl(e.target.value);
+                            if (error) {
+                                setError(null);
+                                setState('IDLE');
+                            }
+                        }}
                         placeholder="https://youtu.be/..."
-                        disabled={state !== 'IDLE'}
+                        disabled={isLoading}
                         className="flex-1 bg-black border border-gray-700 rounded-lg px-4 py-3 text-white font-mono text-sm focus:outline-none focus:border-blue-500 disabled:opacity-50 transition-colors"
                         required
                     />
                     <button
                         type="submit"
-                        disabled={state !== 'IDLE'}
+                        disabled={isLoading || !url}
                         className="px-6 py-3 bg-[#00C49A] hover:bg-[#00C49A]/80 text-black font-black uppercase text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Ejecutar
+                        {isLoading ? '...' : 'Ejecutar'}
                     </button>
+                    {error && (
+                        <button
+                            type="button"
+                            onClick={() => { setUrl(''); setError(null); setState('IDLE'); }}
+                            className="px-4 py-3 bg-red-900/40 hover:bg-red-900/60 text-red-500 font-bold uppercase text-sm rounded-lg transition-colors border border-red-500/30"
+                        >
+                            Limpiar
+                        </button>
+                    )}
                 </div>
             </form>
+
+            {/* Error Notification Alert */}
+            {error && (
+                <div className="mb-6 bg-red-900/20 border border-red-500/50 rounded-xl p-4 flex flex-col gap-2 animate-fade-in-up">
+                    <div className="flex items-center gap-2 text-red-400">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <span className="font-bold text-sm uppercase tracking-wider">Error de Pipeline</span>
+                    </div>
+                    <p className="text-gray-300 text-sm">
+                        {error}
+                    </p>
+                    {error.includes("No transcript") || error.toLowerCase().includes("no tiene subtítulos") ? (
+                        <p className="text-yellow-500/90 text-xs mt-1 font-mono">
+                            Sugerencia: ¿Deseas activar la investigación web para este video? Borra el link y pégalo nuevamente para accionar el fallback.
+                        </p>
+                    ) : null}
+                </div>
+            )}
 
             {/* Terminal Console */}
             <div className="flex-1 bg-black rounded-xl border border-gray-800 p-4 font-mono text-xs overflow-y-auto mb-6 min-h-[200px] max-h-[250px] shadow-inner">
