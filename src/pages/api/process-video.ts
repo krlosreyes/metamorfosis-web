@@ -98,35 +98,44 @@ Si el video menciona la insulina, usa el concepto de "la llave" y la "cerradura 
 Reglas Generales:
 1. Title: Genera un título real y atractivo (ej: ¿Qué es la Insulina? La Llave de tu Metabolismo).
 2. Slug: Genera un slug basado en ese título.
-3. Quiz: Genera 3 preguntas de opción múltiple con 'correctIndex' (0-3) y explicaciones (rationale) de alto nivel científico.
-4. Sections: Divide el contenido en 3-4 secciones con títulos H2. CADA PÁRRAFO de la sección NO SUPERE LAS 3 LÍNEAS.
-5. CoverPrompt: Genera un prompt en inglés para Midjourney (ej: "cinematic 3d render of a cell being opened by a cyan energy key, dark technological background, hyper-detailed, 8k").
-6. CERO PLACEHOLDERS permitidos. Prohibido usar "Protocolo Extraído IA". Si no puedes generar algo real, falla.
-7. Referencias (Evidencia Científica): Si realizaste investigación web (Grounding), incluye las fuentes reales estructuradas en el array 'references' con el formato exacto '[Nombre del Estudio/Sitio] - [URL]'.
+3. Content Body: Genera todo el contenido HTML estilizado con Tailwind dentro del campo { content: { body: "..." } }.
+   - Párrafos: MÁXIMO 3 líneas por párrafo.
+   - Callouts: Usa exactamente <div class="bg-blue-50 border-l-4 border-blue-500 p-6 my-8 rounded-r-xl shadow-sm"> para datos metabólicos.
+   - Pro-Tips: Usa exactamente <div class="bg-emerald-50 border-l-4 border-emerald-500 p-6 my-8 rounded-r-xl shadow-sm"> para consejos prácticos.
+   - Listas: Estilizalas con círculos de colores y <ul class="space-y-3">.
+4. App Integration: Genera un objeto { app_integration: { callToAction: "Tu CTA aquí", deepLink: "elenaapp://fasting/track" } }.
+5. Metadata: Genera un objeto { metadata: { category, publishedAt, readingTime, seoDescription, seoTitle, slug, thumbnailUrl, youtubeUrl } }.
+6. Quiz: Genera 3 a 5 preguntas de opción múltiple con 'question', 'options', 'correctIndex' (0-3) y 'rationale' científico.
+7. CoverPrompt: Genera un prompt en inglés para Midjourney (ej: "cinematic 3d render of a cell...").
+8. CERO PLACEHOLDERS permitidos. Prohibido usar "Protocolo Extraído IA". Si no puedes generar algo real, falla.
+9. Referencias (Evidencia Científica): Si realizaste investigación web (Grounding), incluye fuentes reales estructuradas en el array 'references' ('[Nombre] - [URL]').
 
-Título del video: "${title}"
-Transcripción a analizar:
-"""
-${transcript.substring(0, 15000)}
-"""
-
-Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
+Devuelve EXCLUSIVAMENTE un JSON limpio de backticks y tags de markdown con esta estructura exacta:
 {
   "title": "",
   "slug": "",
   "coverPrompt": "",
+  "app_integration": {
+    "callToAction": "",
+    "deepLink": "elenaapp://fasting/track"
+  },
   "content": {
-    "introduction": "",
-    "sections": [
-       "<h2 class='text-xl font-bold mb-4'>Título de Sección 1</h2><p class='mb-4'>Párrafo corto 1 (max 3 líneas).</p><p class='mb-4'>Párrafo corto 2.</p>"
-    ]
+    "body": ""
+  },
+  "metadata": {
+    "category": "",
+    "publishedAt": "",
+    "readingTime": "",
+    "seoDescription": "",
+    "seoTitle": "",
+    "slug": "",
+    "thumbnailUrl": "",
+    "youtubeUrl": ""
   },
   "quiz": [
     { "question": "", "options": ["", "", "", ""], "correctIndex": 0, "rationale": "" }
   ],
-  "references": [
-    "[Nombre del Estudio/Sitio] - [URL]"
-  ]
+  "references": []
 }`;
 
         const requestBody: any = {
@@ -215,31 +224,38 @@ Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta, sin markdown:
         }
 
         // Mapeo Final de los Datos al Esquema de Firestore
+        // Mapeo Final de los Datos al Esquema de Firestore
+        const finalSlug = parsedContent.slug || title.replace(/\s+/g, '-').toLowerCase();
+
         const postData = {
             title: parsedContent.title || title,
-            slug: parsedContent.slug || title.replace(/\s+/g, '-').toLowerCase(),
-            content: parsedContent.content,
-            quiz: parsedContent.quiz,
+            slug: finalSlug,
+            app_integration: parsedContent.app_integration || { callToAction: "Comienza tu protocolo", deepLink: "elenaapp://fasting/track" },
+            content: parsedContent.content || { body: "" },
+            quiz: parsedContent.quiz || [],
             references: parsedContent.references?.length > 0 ? parsedContent.references : metaReferences,
             metadata: {
+                ...(parsedContent.metadata || {}),
                 views: 0,
                 conversions: 0,
                 videoUrl: url,
-                category: "Salud Metabólica",
+                youtubeUrl: parsedContent.metadata?.youtubeUrl || url,
+                slug: finalSlug,
+                category: parsedContent.metadata?.category || "Salud Metabólica",
                 imagePrompt: parsedContent.coverPrompt || "",
                 source_type: isResearchAugmented ? "research_augmented" : "transcription"
             },
-            coverImage: coverUrl || "https://images.unsplash.com/photo-1532187863486-abf9db0c2095?q=80&w=1920&auto=format&fit=crop", // Tecnológico placeholder
-            date: new Date().toISOString()
+            coverImage: parsedContent.thumbnailUrl || coverUrl || "https://images.unsplash.com/photo-1532187863486-abf9db0c2095?q=80&w=1920&auto=format&fit=crop",
+            date: parsedContent.metadata?.publishedAt || new Date().toISOString()
         };
 
-        // Regla de Oro implementada: Inyectar estrictamente en metamorfosis_posts
-        const postRef = await db.collection('metamorfosis_posts').add(postData);
-        console.log(`Inyección exitosa. Documento guardado en metamorfosis_posts con ID: ${postRef.id}`);
+        // Regla de Oro implementada: Inyectar usando el slug como ID del documento
+        await db.collection('metamorfosis_posts').doc(finalSlug).set(postData);
+        console.log(`Inyección exitosa. Documento guardado en metamorfosis_posts con ID (slug): ${finalSlug}`);
 
         return new Response(JSON.stringify({
             success: true,
-            postId: postRef.id
+            postId: finalSlug
         }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
     } catch (error) {
