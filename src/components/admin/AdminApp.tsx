@@ -1,26 +1,26 @@
 import React, { useState } from 'react';
-import VideoProcessor from './VideoProcessor';
+import PromptGenerator from './PromptGenerator';
 import StatsGrid from './StatsGrid';
 import PostList from './PostList';
 import LeadList from './LeadList';
 import ManualPostInjection from './ManualPostInjection';
 
 const AdminApp = () => {
-    const [activeTab, setActiveTab] = useState<'PROCESSOR' | 'ARCHIVE' | 'LEADS' | 'INJECTOR'>('PROCESSOR');
+    const [activeTab, setActiveTab] = useState<'INJECTOR' | 'ARCHIVE' | 'LEADS'>('INJECTOR');
 
     return (
         <div className="flex flex-col lg:flex-row gap-8 min-h-[calc(100vh-8rem)]">
             {/* Sidebar Navigation */}
             <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-2">
                 <button
-                    onClick={() => setActiveTab('PROCESSOR')}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-sm border ${activeTab === 'PROCESSOR'
+                    onClick={() => setActiveTab('INJECTOR')}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-sm border ${activeTab === 'INJECTOR'
                         ? 'bg-[#00C49A]/10 text-[#00C49A] border-[#00C49A]/30 shadow-[0_0_15px_rgba(0,196,154,0.1)]'
                         : 'bg-transparent text-gray-500 border-transparent hover:bg-gray-800/50 hover:text-white'
                         }`}
                 >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    Procesador de Video
+                    <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                    Inyección Manual (JSON)
                 </button>
 
                 <button
@@ -45,21 +45,7 @@ const AdminApp = () => {
                     Gestión de Leads
                 </button>
 
-                <div className="mt-8 mb-2 px-4 flex items-center gap-2 text-xs font-black uppercase text-red-500/80 tracking-widest">
-                    <span>Admin Utils</span>
-                    <div className="h-px bg-red-500/20 flex-1"></div>
-                </div>
 
-                <button
-                    onClick={() => setActiveTab('INJECTOR')}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-sm border ${activeTab === 'INJECTOR'
-                        ? 'bg-red-500/10 text-red-400 border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.1)]'
-                        : 'bg-transparent text-gray-500 border-transparent hover:bg-gray-800/50 hover:text-white'
-                        }`}
-                >
-                    <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
-                    Inyección Manual (JSON)
-                </button>
             </aside>
 
             {/* Main Content Area */}
@@ -67,9 +53,14 @@ const AdminApp = () => {
                 <StatsGrid />
 
                 <div className="flex-1 animate-fade-in-up">
-                    {activeTab === 'PROCESSOR' && (
-                        <div className="h-[600px] lg:h-full">
-                            <VideoProcessor />
+                    {activeTab === 'INJECTOR' && (
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 h-full">
+                            <div className="h-[700px] xl:h-[800px]">
+                                <PromptGenerator />
+                            </div>
+                            <div className="h-[700px] xl:h-[800px]">
+                                <ManualPostInjection />
+                            </div>
                         </div>
                     )}
                     {activeTab === 'ARCHIVE' && (
@@ -82,9 +73,9 @@ const AdminApp = () => {
                             <LeadList />
                         </div>
                     )}
-                    {activeTab === 'INJECTOR' && (
-                        <div className="h-full">
-                            <ManualPostInjection />
+                    {activeTab === 'LEADS' && (
+                        <div className="h-[600px] lg:h-full">
+                            <LeadList />
                         </div>
                     )}
                 </div>
