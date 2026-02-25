@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { validatePostSchema } from '../../lib/validators/json_validator';
+import { validatePostSchema } from '../../lib/validators/postValidator'; // <-- NUEVO PATH
+import { Eraser } from 'lucide-react';
 
 const ManualPostInjection = () => {
     const [jsonInput, setJsonInput] = useState('');
@@ -24,11 +25,7 @@ const ManualPostInjection = () => {
             const { isValid: newIsValid, message: newMessage } = validatePostSchema(jsonInput);
 
             setIsValid(newIsValid);
-            if (newIsValid) {
-                setValidationMessage('Esquema 5-Niveles Correcto ✅');
-            } else {
-                setValidationMessage(newMessage || '');
-            }
+            setValidationMessage(newMessage || '');
         }, 500);
 
         return () => clearTimeout(timer);
@@ -100,7 +97,7 @@ const ManualPostInjection = () => {
                                 title="Limpiar JSON"
                                 className="p-1 text-gray-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded transition-colors"
                             >
-                                <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" /><path d="M22 21H7" /><path d="m5 11 9 9" /></svg>
+                                <Eraser className="w-4 h-4" />
                             </button>
                         </div>
                         <span className={isValid ? 'text-[#00C49A]' : 'hidden'}>
