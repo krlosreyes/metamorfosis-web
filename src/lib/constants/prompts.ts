@@ -21,7 +21,19 @@ Estructura Exacta JSON:
   "content": {
     "body": "HTML de divulgación con comillas simples en atributos..."
   },
-  "metadata": { "seoTitle": "...", "seoDescription": "...", "category": "...", "slug": "...", "thumbnailUrl": "...", "youtubeUrl": "${url}", "publishedAt": "2026-02-25T00:00:00Z", "readingTime": 5, "impact": "Bajo|Medio|Alto", "effort": 3, "biomarker": "Insulina|Glucosa|Cetonas|Triglicéridos" },
+  "metadata": { 
+    "seoTitle": "...", 
+    "seoDescription": "...", 
+    "category": "Ayuno|Nutricion|Ejercicio", 
+    "slug": "...", 
+    "thumbnailUrl": "...", 
+    "youtubeUrl": "${url}", 
+    "publishedAt": "2026-02-25T00:00:00Z", 
+    "readingTime": 5, 
+    "impact": "Bajo|Medio|Alto", 
+    "effort": 3, 
+    "biomarker": "Insulina|Glucosa|Cetonas|Triglicéridos" 
+  },
   "quiz": [
     { "question": "...", "options": ["...","...","...","..."], "correctIndex": 0, "rationale": "Explicación simple y clara..." }
   ],
@@ -31,6 +43,8 @@ Estructura Exacta JSON:
 }
 
 GUARDRAILS ANTI-REGRESIÓN:
+- OBLIGATORIO: category SOLO PUEDE SER UNA DE ESTAS TRES: "Ayuno", "Nutricion" o "Ejercicio". NINGUNA OTRA.
+- OBLIGATORIO: youtubeUrl no puede estar vacío y debe ser ${url}.
 - No alteres el nodo app_integration; los deep links a ElenaApp son estáticos.
 - El array "quiz" debe tener MÍNIMO 4 preguntas desafiantes pero que refuercen lo aprendido.
-- El nodo "references" NO puede estar vacío y debe contener fuentes reales relacionadas con el tema (Evita PubMed id sin título literal).`;
+- El nodo "references" NO puede estar vacío y debe contener fuentes reales (Evita id de PubMed vacíos).`;

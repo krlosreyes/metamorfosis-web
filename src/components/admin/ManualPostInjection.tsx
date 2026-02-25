@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { validatePostSchema } from '../../lib/validators/postValidator'; // <-- NUEVO PATH
 import { sanitizeJsonString } from '../../lib/utils/jsonSanitizer';
-
+import { generateMedicalVisual } from '../../lib/services/imageGen'; // <-- NANO BANANA API
 const ManualPostInjection = () => {
     const [jsonInput, setJsonInput] = useState('');
     const [isValid, setIsValid] = useState(false);
@@ -10,6 +10,10 @@ const ManualPostInjection = () => {
     const [isInjecting, setIsInjecting] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [error, setError] = useState<string | null>(null);
+
+    // Image Gen State
+    const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+    const [imageGenSuccess, setImageGenSuccess] = useState('');
 
     // Debounce validation
     useEffect(() => {
@@ -32,7 +36,23 @@ const ManualPostInjection = () => {
             }
 
             // 2. Capa de Validación sobre el JSON sanitizado
-            const { isValid: newIsValid, message: newMessage } = validatePostSchema(sanitizedJson);
+            let { isValid: newIsValid, message: newMessage } = validatePostSchema(sanitizedJson);
+
+            // 3. Taxonomía Estricta: Validación extra de Categoría
+            if (newIsValid) {
+                try {
+                    const parsed = JSON.parse(sanitizedJson);
+                    const cat = parsed.metadata?.category;
+                    const validCategories = ["Ayuno", "Nutricion", "Ejercicio"];
+                    if (!validCategories.includes(cat)) {
+                        newIsValid = false;
+                        newMessage = `⛔ ERROR DE CATEGORÍA: "${cat}" no permitida.\nDebe ser exclusivamente una de: ${validCategories.join(', ')}`;
+                    } else if (!parsed.metadata?.youtubeUrl) {
+                        newIsValid = false;
+                        newMessage = `⛔ ERROR DE ORIGEN: youtubeUrl es OBLIGATORIO para trazabilidad.`;
+                    }
+                } catch (e) { /* ignored, validation handles syntax */ }
+            }
 
             setIsValid(newIsValid);
             setValidationMessage(newMessage || '');
@@ -40,6 +60,53 @@ const ManualPostInjection = () => {
 
         return () => clearTimeout(timer);
     }, [jsonInput]);
+
+    // ==========================================
+    // NANO BANANA: AUTOMATIC IMAGE GENERATION
+    // ==========================================
+    const handleGenerateVisual = async () => {
+        if (!isValid) return;
+        setIsGeneratingImage(true);
+        setImageGenSuccess('');
+        setError(null);
+
+        try {
+            const { sanitizedJson } = sanitizeJsonString(jsonInput);
+            const parsedJson = JSON.parse(sanitizedJson);
+
+            // Usamos metadata como prompt técnico para la IA
+            const technicalPrompt = parsedJson.metadata.seoDescription || parsedJson.metadata.seoTitle;
+
+            const result = await generateMedicalVisual(technicalPrompt);
+
+            if (result.success && result.url) {
+                // Reemplazamos todos los Placeholders estáticos genéricos (Placehold.co)
+                // de las figuras generadas por el Master Prompt con la nueva imagen real.
+                let modifiedJsonStr = sanitizedJson;
+
+                // Expresión regular para encontrar tags img con placehold.co
+                const imageRegex = /https:\/\/placehold\.co\/[a-zA-Z0-9\/=?+-]+/g;
+                modifiedJsonStr = modifiedJsonStr.replace(imageRegex, result.url);
+
+                // Actualizamos también la portada (thumbnail)
+                if (parsedJson.metadata && !parsedJson.metadata.thumbnailUrl) {
+                    // In case we want to inject it directly into the JSON input visual
+                    const parseToInject = JSON.parse(modifiedJsonStr);
+                    parseToInject.metadata.thumbnailUrl = result.url;
+                    modifiedJsonStr = JSON.stringify(parseToInject, null, 2);
+                }
+
+                setJsonInput(modifiedJsonStr); // Actualizamos el textarea visualmente
+                setImageGenSuccess('¡Visual de alta fidelidad inyectado vía Nano Banana!');
+            } else {
+                throw new Error(result.error || "Fallo en el servicio de imágenes.");
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Error al generar visuales');
+        } finally {
+            setIsGeneratingImage(false);
+        }
+    };
 
     const handleInject = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -154,9 +221,23 @@ const ManualPostInjection = () => {
                 )}
 
                 <div className="mt-auto pt-4 flex gap-4">
+                    {/* Botón Mágico Nano Banana */}
+                    <button
+                        type="button"
+                        onClick={handleGenerateVisual}
+                        disabled={!isValid || isGeneratingImage || isInjecting}
+                        className="flex-1 py-4 bg-blue-900 border border-blue-500 hover:bg-blue-800 text-blue-300 font-bold uppercase tracking-widest text-xs rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {isGeneratingImage ? (
+                            <><span className="animate-spin text-lg">⚙️</span> Procesando Visual...</>
+                        ) : (
+                            <>🍌 Generar Visual Técnico (Nano Banana)</>
+                        )}
+                    </button>
+
                     <button
                         type="submit"
-                        disabled={!isValid || isInjecting}
+                        disabled={!isValid || isInjecting || isGeneratingImage}
                         className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(5,150,105,0.4)]"
                     >
                         {isInjecting ? 'Procesando...' : 'Crear Artículo'}
@@ -165,6 +246,16 @@ const ManualPostInjection = () => {
             </form>
 
             {/* Notificaciones */}
+
+            {imageGenSuccess && (
+                <div className="mt-6 bg-blue-900/30 border border-blue-500/50 rounded-xl p-4 flex items-center gap-3 animate-fade-in-up">
+                    <svg className="w-6 h-6 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="font-mono text-blue-300 text-sm font-bold">{imageGenSuccess}</span>
+                </div>
+            )}
+
             {successMessage && (
                 <div className="mt-6 bg-emerald-900/20 border border-emerald-500/50 rounded-xl p-4 flex items-center gap-3 animate-fade-in-up">
                     <svg className="w-6 h-6 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
