@@ -8,41 +8,10 @@ import Quiz from "../../components/Quiz.astro";
 import Footer from "../../components/Footer.astro";
 import StyleSafelist from "../../components/StyleSafelist.astro";
 import { db } from "../../lib/firebase";
-import { collection, query, where, getDocs, limit, type DocumentData } from "firebase/firestore";
+import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { marked } from "marked";
 import { BookOpen, Clock, Calendar, Link } from "lucide-astro";
-
-// Definición de Interfaz para eliminar líneas rojas de TypeScript
-interface PostData extends DocumentData {
-    id: string;
-    metadata?: {
-        seoTitle?: string;
-        seoDescription?: string;
-        publishedAt?: string;
-        youtubeUrl?: string;
-        slug?: string;
-        category?: string;
-        readingTime?: number;
-        thumbnailUrl?: string;
-    };
-    content?: {
-        body?: string;
-    };
-    quiz?: Array<{
-        question: string;
-        options: string[];
-        correctIndex: number;
-        rationale: string;
-    }>;
-    app_integration?: {
-        callToAction?: string;
-        deepLink?: string;
-    };
-    references?: Array<{
-        title: string;
-        url: string;
-    }>;
-}
+import type { PostData } from "../../lib/types/post";
 
 const { slug } = Astro.params;
 let post: PostData | null = null;
