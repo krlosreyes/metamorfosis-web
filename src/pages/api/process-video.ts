@@ -114,7 +114,7 @@ Estructura Exacta:
 2. content.body: HTML estilizado con Tailwind. Usa MÁXIMO 3 líneas por párrafo.
    - Procesos o Estado Biológico: <div class="bg-blue-50 border-l-4 border-blue-500 p-6 my-8 rounded-r-xl shadow-sm">
    - Consejos o Pro-Tips: <div class="bg-emerald-50 border-l-4 border-emerald-500 p-6 my-8 rounded-r-xl shadow-sm">
-3. metadata: { seoTitle, seoDescription, category, slug, thumbnailUrl, youtubeUrl, publishedAt, readingTime }
+3. metadata: { seoTitle, seoDescription, category, slug, thumbnailUrl, youtubeUrl, publishedAt, readingTime, impactLevel: "Bajo|Medio|Alto", effort: 1..5 }
 4. quiz: Array de 3 a 5 preguntas reales con 'question', 'options' (array de 4 strings), 'correctIndex' (int 0-3), y 'rationale'.
 
 Ningún otro campo debe estar en la raíz del JSON. Prohibidos los placeholders.`;
@@ -182,7 +182,9 @@ Ningún otro campo debe estar en la raíz del JSON. Prohibidos los placeholders.
                 youtubeUrl: parsedContent.metadata?.youtubeUrl || url,
                 views: 0,
                 conversions: 0,
-                source_type: transcript.length < 500 ? "knowledge_augmented" : "transcription"
+                source_type: transcript.length < 500 ? "knowledge_augmented" : "transcription",
+                impactLevel: parsedContent.metadata?.impactLevel || "Análisis Pendiente",
+                effort: parsedContent.metadata?.effort || "N/A"
             },
             quiz: parsedContent.quiz || []
         };

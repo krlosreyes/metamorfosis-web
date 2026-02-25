@@ -1,5 +1,5 @@
 ---
-import { Activity, Zap, Timer, TrendingDown, Wallet, BookOpen } from "lucide-astro";
+import { Activity, Zap, Timer, TrendingDown, Wallet, BookOpen, Flame, Dumbbell } from "lucide-astro";
 
 export interface Props {
     post: {
@@ -12,6 +12,8 @@ export interface Props {
             slug?: string;
             category?: string;
             readingTime?: number;
+            impactLevel?: string;
+            effort?: number | string;
         };
     };
 }
@@ -36,6 +38,17 @@ const publishedDate = post.metadata?.publishedAt
     : "N/A";
 const readingTime = post.metadata?.readingTime || 5;
 const description = post.metadata?.seoDescription || "Sin descripción disponible.";
+
+// Metabolic Metrics
+const impactLevel = post.metadata?.impactLevel || "Análisis Pendiente";
+
+let effortScore: string;
+if (typeof post.metadata?.effort === 'number') {
+    // Generate bars visual representation (e.g. "4/5")
+    effortScore = `${post.metadata.effort}/5`;
+} else {
+    effortScore = post.metadata?.effort || "N/A";
+}
 ---
 
 <a href={postUrl} class="group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100/50 overflow-hidden transition-all duration-300 hover:-translate-y-1 h-full flex flex-col block">
@@ -52,6 +65,18 @@ const description = post.metadata?.seoDescription || "Sin descripción disponibl
     </div>
 
     <div class="p-8 flex-1 flex flex-col">
+        {/* Metabolic Badges */}
+        <div class="flex items-center gap-2 mb-3">
+            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest border border-gray-200 rounded-sm px-1.5 py-0.5">
+                <Flame class="w-3 h-3 text-orange-500" />
+                Impacto: {impactLevel}
+            </span>
+            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest border border-gray-200 rounded-sm px-1.5 py-0.5">
+                <Dumbbell class="w-3 h-3 text-gray-600" />
+                Esfuerzo: {effortScore}
+            </span>
+        </div>
+
         <h3 class="text-xl font-bold mb-3 text-gray-900 group-hover:text-[#007BFF] transition-colors line-clamp-2 leading-tight">
             {postTitle}
         </h3>
