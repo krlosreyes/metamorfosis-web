@@ -2,6 +2,7 @@
 import { getPosts } from "../utils/posts";
 import Layout from "../layouts/Layout.astro";
 import IMXQuiz from "../components/IMXQuiz.tsx";
+import PostCard from "../components/PostCard.astro";
 
 interface Post {
 	id: string;
@@ -145,125 +146,7 @@ const posts = (await getPosts()) as Post[];
 					posts.length > 0 ? (
 						<div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
 							{posts.map((post) => (
-								<article class="group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100/50 overflow-hidden transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
-									{/* Thumbnail Placeholder - To be dynamic later */}
-									<div class="h-48 bg-gradient-to-br from-[#00C49A]/10 to-[#007BFF]/10 flex items-center justify-center relative overflow-hidden">
-										{post.metadata?.thumbnailUrl ? (
-											<img
-												src={post.metadata.thumbnailUrl}
-												alt={post.title}
-												class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-											/>
-										) : (
-											<div class="text-[#007BFF] opacity-20">
-												<svg
-													class="w-16 h-16"
-													fill="currentColor"
-													viewBox="0 0 24 24"
-												>
-													<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
-												</svg>
-											</div>
-										)}
-										<div class="absolute top-4 right-4">
-											<span class="inline-flex items-center px-3 py-1 text-xs font-bold text-[#004d3d] bg-white/90 backdrop-blur-sm rounded-full shadow-sm">
-												{post.metadata?.category ||
-													"Guía"}
-											</span>
-										</div>
-									</div>
-
-									<div class="p-8 flex-1 flex flex-col">
-										<h3 class="text-xl font-bold mb-3 text-gray-900 group-hover:text-[#007BFF] transition-colors line-clamp-2 leading-tight">
-											<a
-												href={`/posts/${
-													post.metadata?.slug ||
-													post.id
-												}`}
-											>
-												{post.metadata?.seoTitle ||
-													post.title ||
-													"Sin Título"}
-											</a>
-										</h3>
-
-										<div class="flex items-center gap-3 text-sm text-gray-400 mb-4">
-											<span class="flex items-center gap-1">
-												<svg
-													class="w-4 h-4"
-													fill="none"
-													stroke="currentColor"
-													viewBox="0 0 24 24"
-												>
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-													/>
-												</svg>
-												{post.metadata?.publishedAt
-													? new Date(
-															post.metadata.publishedAt
-													  ).toLocaleDateString(
-															"es-ES",
-															{
-																month: "short",
-																day: "numeric",
-																year: "numeric",
-															}
-													  )
-													: "N/A"}
-											</span>
-											<span>·</span>
-											<span class="flex items-center gap-1">
-												<svg
-													class="w-4 h-4"
-													fill="none"
-													stroke="currentColor"
-													viewBox="0 0 24 24"
-												>
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-													/>
-												</svg>
-												{post.metadata?.readingTime ||
-													5}{" "}
-												min
-											</span>
-										</div>
-
-										<p class="text-gray-600 mb-6 line-clamp-3 leading-relaxed flex-1">
-											{post.metadata?.seoDescription ||
-												"Sin descripción disponible."}
-										</p>
-
-										<a
-											href={`/posts/${
-												post.metadata?.slug || post.id
-											}`}
-											class="inline-flex items-center text-[#007BFF] font-bold group-hover:underline decoration-2 underline-offset-2 transition-all"
-										>
-											Leer completo
-											<svg
-												class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="2"
-													d="M17 8l4 4m0 0l-4 4m4-4H3"
-												/>
-											</svg>
-										</a>
-									</div>
-								</article>
+								<PostCard post={post} />
 							))}
 						</div>
 					) : (
