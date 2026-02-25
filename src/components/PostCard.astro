@@ -12,8 +12,9 @@ export interface Props {
             slug?: string;
             category?: string;
             readingTime?: number;
-            impactLevel?: string;
+            impact?: string;
             effort?: number | string;
+            biomarker?: string;
         };
     };
 }
@@ -40,7 +41,7 @@ const readingTime = post.metadata?.readingTime || 5;
 const description = post.metadata?.seoDescription || "Sin descripción disponible.";
 
 // Metabolic Metrics
-const impactLevel = post.metadata?.impactLevel || "Análisis Pendiente";
+const impactLevel = post.metadata?.impact || "Análisis Pendiente";
 
 let effortScore: string;
 if (typeof post.metadata?.effort === 'number') {
