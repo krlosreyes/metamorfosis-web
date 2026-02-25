@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { validatePostSchema } from '../../lib/validators/postValidator';
+import { validatePostSchema } from '../../lib/validators/json_validator';
 
 const ManualPostInjection = () => {
     const [jsonInput, setJsonInput] = useState('');
@@ -21,13 +21,13 @@ const ManualPostInjection = () => {
                 return;
             }
 
-            const { isValid: newIsValid, error: newError } = validatePostSchema(jsonInput);
+            const { isValid: newIsValid, message: newMessage } = validatePostSchema(jsonInput);
 
             setIsValid(newIsValid);
             if (newIsValid) {
                 setValidationMessage('Esquema 5-Niveles Correcto ✅');
             } else {
-                setValidationMessage(newError || '');
+                setValidationMessage(newMessage || '');
             }
         }, 500);
 
