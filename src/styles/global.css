@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+@layer components {
+  article.prose figure {
+    @apply flex flex-col items-center justify-center my-10 w-full;
+  }
+  article.prose figure img {
+    @apply rounded-xl shadow-lg border border-gray-200 mb-4 max-w-full h-auto object-cover;
+  }
+  article.prose figcaption {
+    @apply text-sm italic text-gray-500 text-center max-w-2xl px-4;
+  }
+}
