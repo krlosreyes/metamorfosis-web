@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Eraser } from 'lucide-react';
 
 const ManualPostInjection = () => {
     const [jsonInput, setJsonInput] = useState('');
@@ -24,7 +25,7 @@ const ManualPostInjection = () => {
                 const parsed = JSON.parse(jsonInput);
                 const keys = Object.keys(parsed);
 
-                const requiredKeys = ['app_integration', 'content', 'metadata', 'quiz'];
+                const requiredKeys = ['app_integration', 'content', 'metadata', 'quiz', 'references'];
                 const missingKeys = requiredKeys.filter(key => !keys.includes(key));
 
                 if (missingKeys.length > 0) {
@@ -33,9 +34,15 @@ const ManualPostInjection = () => {
                 } else if (!parsed.metadata?.slug) {
                     setIsValid(false);
                     setValidationMessage("El objeto 'metadata' debe contener un 'slug' válido.");
+                } else if (!Array.isArray(parsed.quiz) || parsed.quiz.length < 4) {
+                    setIsValid(false);
+                    setValidationMessage("El array 'quiz' debe contener mínimo 4 preguntas.");
+                } else if (!Array.isArray(parsed.references) || parsed.references.length === 0) {
+                    setIsValid(false);
+                    setValidationMessage("Debe haber al menos 1 referencia en el array 'references'.");
                 } else {
                     setIsValid(true);
-                    setValidationMessage('Esquema 4-Niveles Correcto ✅');
+                    setValidationMessage('Esquema 5-Niveles Correcto ✅');
                 }
             } catch (e) {
                 setIsValid(false);
@@ -80,6 +87,14 @@ const ManualPostInjection = () => {
         }
     };
 
+    const handleClear = () => {
+        setJsonInput('');
+        setIsValid(false);
+        setValidationMessage('');
+        setSuccessMessage('');
+        setError(null);
+    };
+
     return (
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-2xl flex flex-col h-full relative overflow-hidden">
             {/* Terminal Top Bar */}
@@ -95,8 +110,18 @@ const ManualPostInjection = () => {
 
             <form onSubmit={handleInject} className="flex flex-col flex-1 gap-4">
                 <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex justify-between">
-                        <span>Payload JSON (4-Level Schema)</span>
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center justify-between">
+                        <div className="flex gap-4 items-center">
+                            <span>Payload JSON (5-Level Schema)</span>
+                            <button
+                                type="button"
+                                onClick={handleClear}
+                                title="Limpiar JSON"
+                                className="p-1 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                            >
+                                <Eraser className="w-4 h-4" />
+                            </button>
+                        </div>
                         <span className={isValid ? 'text-[#00C49A]' : jsonInput.trim() ? 'text-red-400' : 'text-gray-500'}>
                             {validationMessage}
                         </span>
@@ -115,9 +140,9 @@ const ManualPostInjection = () => {
                     <button
                         type="submit"
                         disabled={!isValid || isInjecting}
-                        className="flex-1 py-4 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(220,38,38,0.4)]"
+                        className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(5,150,105,0.4)]"
                     >
-                        {isInjecting ? 'Inyectando a Base de Datos...' : 'FORZAR INYECCIÓN A FIRESTORE'}
+                        {isInjecting ? 'Procesando...' : 'Crear Artículo'}
                     </button>
                 </div>
             </form>
