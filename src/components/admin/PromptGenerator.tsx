@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Eraser } from 'lucide-react';
 import { METABOLIC_ANALYST_SOP } from '../../lib/constants/prompts';
 
 const PromptGenerator = () => {
@@ -58,7 +57,7 @@ const PromptGenerator = () => {
                             title="Limpiar campos"
                             className="p-1 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
                         >
-                            <Eraser className="w-4 h-4" />
+                            <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" /><path d="M22 21H7" /><path d="m5 11 9 9" /></svg>
                         </button>
                     </label>
                     <div className="flex flex-col sm:flex-row gap-3">
