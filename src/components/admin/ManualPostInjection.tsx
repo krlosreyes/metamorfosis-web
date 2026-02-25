@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { validatePostSchema } from '../../lib/validators/postValidator';
 
 const ManualPostInjection = () => {
     const [jsonInput, setJsonInput] = useState('');
@@ -20,32 +21,13 @@ const ManualPostInjection = () => {
                 return;
             }
 
-            try {
-                const parsed = JSON.parse(jsonInput);
-                const keys = Object.keys(parsed);
+            const { isValid: newIsValid, error: newError } = validatePostSchema(jsonInput);
 
-                const requiredKeys = ['app_integration', 'content', 'metadata', 'quiz', 'references'];
-                const missingKeys = requiredKeys.filter(key => !keys.includes(key));
-
-                if (missingKeys.length > 0) {
-                    setIsValid(false);
-                    setValidationMessage(`Falta nodos raíz: ${missingKeys.join(', ')}`);
-                } else if (!parsed.metadata?.slug) {
-                    setIsValid(false);
-                    setValidationMessage("El objeto 'metadata' debe contener un 'slug' válido.");
-                } else if (!Array.isArray(parsed.quiz) || parsed.quiz.length < 4) {
-                    setIsValid(false);
-                    setValidationMessage("El array 'quiz' debe contener mínimo 4 preguntas.");
-                } else if (!Array.isArray(parsed.references) || parsed.references.length === 0) {
-                    setIsValid(false);
-                    setValidationMessage("Debe haber al menos 1 referencia en el array 'references'.");
-                } else {
-                    setIsValid(true);
-                    setValidationMessage('Esquema 5-Niveles Correcto ✅');
-                }
-            } catch (e) {
-                setIsValid(false);
-                setValidationMessage('JSON Inválido (Revisa la sintaxis).');
+            setIsValid(newIsValid);
+            if (newIsValid) {
+                setValidationMessage('Esquema 5-Niveles Correcto ✅');
+            } else {
+                setValidationMessage(newError || '');
             }
         }, 500);
 
@@ -116,24 +98,36 @@ const ManualPostInjection = () => {
                                 type="button"
                                 onClick={handleClear}
                                 title="Limpiar JSON"
-                                className="p-1 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                                className="p-1 text-gray-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded transition-colors"
                             >
                                 <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" /><path d="M22 21H7" /><path d="m5 11 9 9" /></svg>
                             </button>
                         </div>
-                        <span className={isValid ? 'text-[#00C49A]' : jsonInput.trim() ? 'text-red-400' : 'text-gray-500'}>
-                            {validationMessage}
+                        <span className={isValid ? 'text-[#00C49A]' : 'hidden'}>
+                            {isValid && 'Esquema 5-Niveles Correcto ✅'}
                         </span>
                     </label>
                     <textarea
                         value={jsonInput}
                         onChange={(e) => setJsonInput(e.target.value)}
-                        placeholder="{\n  &quot;metadata&quot;: { ... },\n  &quot;content&quot;: { ... },\n  &quot;app_integration&quot;: { ... },\n  &quot;quiz&quot;: [ ... ]\n}"
+                        placeholder="{\n  &quot;metadata&quot;: { ... },\n  &quot;content&quot;: { ... },\n  &quot;app_integration&quot;: { ... },\n  &quot;quiz&quot;: [ ... ],\n  &quot;references&quot;: [ ... ]\n}"
                         className="w-full h-96 bg-black border border-gray-700 rounded-lg p-4 text-[#00C49A] font-mono text-sm focus:outline-none focus:border-red-500 transition-colors resize-none shadow-inner"
                         spellCheck="false"
                         disabled={isInjecting}
                     />
                 </div>
+
+                {!isValid && validationMessage && (
+                    <div className="bg-red-950/50 border border-red-800 rounded-lg p-4 flex gap-3 shadow-[0_0_10px_rgba(153,27,27,0.3)] animate-fade-in-up">
+                        <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
+                        <div className="flex-1">
+                            <h4 className="text-red-400 font-bold uppercase tracking-wider text-xs mb-1">Error de Validación JSON</h4>
+                            <pre className="text-red-200 font-mono text-xs whitespace-pre-wrap break-words">
+                                {validationMessage}
+                            </pre>
+                        </div>
+                    </div>
+                )}
 
                 <div className="mt-auto pt-4 flex gap-4">
                     <button
