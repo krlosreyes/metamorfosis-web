@@ -29,13 +29,13 @@ const posts = (await getPosts()) as Post[];
 >
 	<!-- Hero Section -->
 	<section
-		class="relative h-[85vh] min-h-[650px] flex items-center overflow-hidden bg-gray-950 pb-16"
+		class="relative min-h-[85vh] flex justify-center items-start overflow-hidden bg-gray-950 pb-16 pt-32"
 	>
 		<!-- Slider Container -->
 		<div class="absolute inset-0 z-0 select-none pointer-events-none">
 			<div
 				id="hero-slide-0"
-				class="hero-slide absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out opacity-100 mix-blend-overlay"
+				class="hero-slide absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ease-in-out opacity-100 mix-blend-overlay"
 				style="background-image: url('https://images.unsplash.com/photo-1550853024-fae8cd4be47f?auto=format&fit=crop&q=80&w=1920');"
 			>
 			</div>
@@ -49,9 +49,9 @@ const posts = (await getPosts()) as Post[];
 
 		<!-- Content -->
 		<div
-			class="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center h-full text-center"
+			class="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-start items-center text-center w-full"
 		>
-			<div class="mb-8 max-w-4xl pt-10">
+			<div class="mb-12 max-w-4xl flex flex-col items-center">
 				<span
 					class="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-[#007BFF]/10 text-[#007BFF] text-xs font-bold uppercase tracking-widest border border-[#007BFF]/20 mb-6 backdrop-blur-sm"
 				>
@@ -61,7 +61,7 @@ const posts = (await getPosts()) as Post[];
 					Metabolic Engineering Hub
 				</span>
 				<h1
-					class="text-5xl sm:text-7xl font-black tracking-tighter text-white mb-6 text-balance leading-[1.1]"
+					class="text-5xl sm:text-7xl font-black tracking-tighter text-white mb-6 text-balance leading-[1.1] min-h-[120px]"
 				>
 					De la ciencia en video a la<br />
 					<span
@@ -72,14 +72,16 @@ const posts = (await getPosts()) as Post[];
 				</h1>
 
 				<p
-					class="text-lg sm:text-2xl text-gray-400 mb-10 max-w-2xl mx-auto font-medium"
+					class="text-lg sm:text-2xl text-gray-400 max-w-2xl font-medium"
 				>
 					Explora protocolos clínicos convertidos en sistemas de la vida real. Calcula tu IMX y activa el cambio hoy.
 				</p>
 			</div>
 
-			<!-- Quiz Component -->
-			<IMXQuiz client:load />
+			<!-- Quiz Component Wrapper -->
+			<div class="w-full flex justify-center min-h-[350px]">
+				<IMXQuiz client:load />
+			</div>
 
 			<div class="mt-12 flex items-center justify-center gap-6 opacity-60">
                 <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Powered by</span>
