@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { validatePostSchema } from '../../lib/validators/postValidator'; // <-- NUEVO PATH
+import { sanitizeJsonString } from '../../lib/utils/jsonSanitizer';
 
 const ManualPostInjection = () => {
     const [jsonInput, setJsonInput] = useState('');
     const [isValid, setIsValid] = useState(false);
     const [validationMessage, setValidationMessage] = useState('');
+    const [sanitizationAlerts, setSanitizationAlerts] = useState<string[]>([]);
     const [isInjecting, setIsInjecting] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [error, setError] = useState<string | null>(null);
@@ -14,6 +16,7 @@ const ManualPostInjection = () => {
         const timer = setTimeout(() => {
             setSuccessMessage('');
             setError(null);
+            setSanitizationAlerts([]); // Reset sanitizer alerts
 
             if (!jsonInput.trim()) {
                 setIsValid(false);
@@ -21,7 +24,15 @@ const ManualPostInjection = () => {
                 return;
             }
 
-            const { isValid: newIsValid, message: newMessage } = validatePostSchema(jsonInput);
+            // 1. Capa de Auto-Sanitización
+            const { sanitizedJson, wasModified, modifications } = sanitizeJsonString(jsonInput);
+
+            if (wasModified) {
+                setSanitizationAlerts(modifications);
+            }
+
+            // 2. Capa de Validación sobre el JSON sanitizado
+            const { isValid: newIsValid, message: newMessage } = validatePostSchema(sanitizedJson);
 
             setIsValid(newIsValid);
             setValidationMessage(newMessage || '');
@@ -39,7 +50,9 @@ const ManualPostInjection = () => {
         setSuccessMessage('');
 
         try {
-            const parsedJson = JSON.parse(jsonInput);
+            // Asegurarse de usar la versión sanitarizada si hace click rápido
+            const { sanitizedJson } = sanitizeJsonString(jsonInput);
+            const parsedJson = JSON.parse(sanitizedJson);
 
             const response = await fetch('/api/inject-manual', {
                 method: 'POST',
@@ -54,6 +67,7 @@ const ManualPostInjection = () => {
             if (response.ok && data.success) {
                 setSuccessMessage('¡Inyección Directa Exitosa! Módulo subido a Firestore.');
                 setJsonInput(''); // Limpiar tras éxito
+                setSanitizationAlerts([]);
             } else {
                 throw new Error(data.error || 'Fallo desconocido en la inyección.');
             }
@@ -113,8 +127,22 @@ const ManualPostInjection = () => {
                     />
                 </div>
 
+                {sanitizationAlerts.length > 0 && (
+                    <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-3 flex gap-3 shadow-[0_0_10px_rgba(59,130,246,0.2)] animate-fade-in-up mt-2">
+                        <svg className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <div className="flex-1">
+                            <h4 className="text-blue-400 font-bold uppercase tracking-wider text-[10px] mb-1">Auto-Sanitizer Activo</h4>
+                            <ul className="text-blue-200 font-mono text-xs list-disc pl-4">
+                                {sanitizationAlerts.map((alert, i) => <li key={i}>{alert}</li>)}
+                            </ul>
+                        </div>
+                    </div>
+                )}
+
                 {!isValid && validationMessage && (
-                    <div className="bg-red-950/50 border border-red-800 rounded-lg p-4 flex gap-3 shadow-[0_0_10px_rgba(153,27,27,0.3)] animate-fade-in-up">
+                    <div className="bg-red-950/50 border border-red-800 rounded-lg p-4 flex gap-3 shadow-[0_0_10px_rgba(153,27,27,0.3)] animate-fade-in-up mt-2">
                         <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
                         <div className="flex-1">
                             <h4 className="text-red-400 font-bold uppercase tracking-wider text-xs mb-1">Error de Validación JSON</h4>
