@@ -41,112 +41,104 @@ export const POST: APIRoute = async ({ request }) => {
         // Hacemos el fetch en serie o paralelo. Paralelo es más rápido.
         const promises = image_prompts.map(async (prompt, index) => {
             const startTime = Date.now();
-            const modelName = 'imagen-3';
-            try {
-                // Diccionarios Metabólicos Base
-                const metabolicKeys: Record<string, string[]> = {
-                    "Ayuno": ["reloj", "tiempo", "célula", "ayuno", "fasting", "time", "clock", "cell", "autophagy", "water", "window", "hour", "empty"],
-                    "Nutricion": ["comida", "plato", "proteína", "glucosa", "food", "plate", "protein", "glucose", "insulin", "diet", "nutrition", "meal", "avocado", "meat", "veg"],
-                    "Ejercicio": ["músculo", "pesa", "fuerza", "sudor", "muscle", "weight", "strength", "sweat", "gym", "exercise", "workout", "tension", "dumbell", "barbell", "tape"]
-                };
 
-                // Validación Semántica Sensible (Pilares o Título)
-                const cleanTitleWords = title.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter((w: string) => w.length > 3);
-                const promptWords = prompt.toLowerCase();
-                const activeCategoryKeys = category && metabolicKeys[category] ? metabolicKeys[category] : [];
+            // Declaración de Diccionarios Metabólicos
+            const metabolicKeys: Record<string, string[]> = {
+                "Ayuno": ["reloj", "tiempo", "célula", "ayuno", "fasting", "time", "clock", "cell", "autophagy", "water", "window", "hour", "empty"],
+                "Nutricion": ["comida", "plato", "proteína", "glucosa", "food", "plate", "protein", "glucose", "insulin", "diet", "nutrition", "meal", "avocado", "meat", "veg"],
+                "Ejercicio": ["músculo", "pesa", "fuerza", "sudor", "muscle", "weight", "strength", "sweat", "gym", "exercise", "workout", "tension", "dumbell", "barbell", "tape"]
+            };
 
-                let semanticMatches = 0;
+            const cleanTitleWords = title.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter((w: string) => w.length > 3);
+            const promptWords = prompt.toLowerCase();
+            const activeCategoryKeys = category && metabolicKeys[category] ? metabolicKeys[category] : [];
 
-                // 1. Check vs Título
-                cleanTitleWords.forEach((word: string) => {
-                    if (promptWords.includes(word)) semanticMatches++;
-                });
+            let semanticMatches = 0;
+            cleanTitleWords.forEach((word: string) => { if (promptWords.includes(word)) semanticMatches++; });
+            activeCategoryKeys.forEach((key: string) => { if (promptWords.includes(key.toLowerCase())) semanticMatches++; });
 
-                // 2. Check vs Pilar
-                activeCategoryKeys.forEach((key: string) => {
-                    if (promptWords.includes(key.toLowerCase())) semanticMatches++;
-                });
-
-                let finalPromptText = prompt;
-                const strictVisualRule = " No text, no labels, high-quality metabolic health metaphor, minimalist 3D isometric style, professional lighting. Focus on visual communication only.";
-
-                // Si no hay correspondencia directa (Alucinación detectada)
-                if (semanticMatches < 1) {
-                    console.warn(`⚠️ [Metamorfosis-Log] Rechazo Semántico Suave para slug: ${slug}. Prompt original ("${prompt.substring(0, 30)}...") no coincide con Pilar ni Título.`);
-                    console.warn(`⚠️ [Metamorfosis-Log] Activando Fallback Heroico: Usando Título Original del SEO.`);
-
-                    // FALLBACK AL TíTULO
-                    finalPromptText = `A conceptual metaphor representing: ${title}`;
-                }
-
-                console.log(`[Metamorfosis-Log] Generating image for slug: ${slug} using model: ${modelName}`);
-
-                const finalPrompt = finalPromptText + strictVisualRule;
-
-                console.log(`[Img ${index + 1}] Solicitando a Imagen 3... Prompt truncado: ${finalPrompt.substring(0, 40)}...`);
-
-                // LLamada a Gemini (Imagen 3) mediante REST
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${googleAiApiKey}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        instances: [
-                            {
-                                prompt: finalPrompt
-                            }
-                        ],
-                        parameters: {
-                            sampleCount: 1
-                        }
-                    })
-                });
-
-                if (!res.ok) {
-                    const errorData = await res.json();
-                    throw new Error(`Error Gemini: ${errorData.error?.message || res.statusText}`);
-                }
-
-                const data = await res.json();
-
-                // Imagen 3 devuelve base64 en predictions[0].bytesBase64Encoded
-                if (!data.predictions || data.predictions.length === 0) {
-                    throw new Error('Gemini no devolvió la imagen.');
-                }
-                const b64Json = data.predictions[0].bytesBase64Encoded;
-
-                // Convertir b64 a Buffer
-                const buffer = Buffer.from(b64Json, 'base64');
-                console.log(`[Img ${index + 1}] Generada con éxito. Subiendo a Firebase Storage...`);
-
-                // Subir a Firebase
-                const firebasePublicUrl = await uploadImageBuffer(buffer, slug, index);
-                console.log(`[Img ${index + 1}] Subida a Firebase en: ${firebasePublicUrl}`);
-
-                const timeMs = Date.now() - startTime;
-
-                return {
-                    url: firebasePublicUrl,
-                    path: `articles/${slug}/visual-${index}.png`,
-                    model: modelName,
-                    timeMs
-                };
-            } catch (err: any) {
-                console.error(`❌ Error en imagen ${index + 1}:`, err.message);
-
-                // FALLBACK DE RESILIENCIA: Si Gemini o Firebase fallan, devolvemos un placeholder funcional
-                // Esto evita que Dashboard.tsx reviente y permite inyectar el texto
-                const fallbackUrl = `https://placehold.co/1024x1024/2f3336/ffffff?text=Imagen+${index + 1}+Fallback`;
-                console.warn(`⚠️ [Metamorfosis-Log] Usando fallback estático para imagen ${index + 1}`);
-
-                return {
-                    url: fallbackUrl,
-                    path: `articles/${slug}/visual-${index}-fallback.png`,
-                    model: 'placeholder-fallback',
-                    timeMs: Date.now() - startTime
-                };
+            let finalPromptText = prompt;
+            if (semanticMatches < 1) {
+                console.warn(`⚠️ [Metamorfosis-Log] Activando Fallback Heurístico para Prompt: Usando Título Original del SEO.`);
+                finalPromptText = `A conceptual metaphor representing: ${title}`;
             }
+
+            const strictVisualRule = " No text, no labels, high-quality metabolic health metaphor, minimalist 3D isometric style, professional lighting. Focus on visual communication only.";
+            const primaryPrompt = finalPromptText + strictVisualRule;
+
+            // El prompt simplificado se usará si el primaryPrompt choca (error 400 por filtro de seguridad) o colapsa el modelo
+            const simplifiedPrompt = `Aesthetically pleasing minimalist 3D render representing: ${title}. High quality graphic design, conceptual, no letters, no text.`;
+
+            // Secuencia Jerárquica de Modelos (Cascada Anti-Fallos)
+            const modelCascade = ['imagen-3.0-generate-001', 'imagen-3.0-generate-002', 'image-generation-006'];
+
+            let lastGoogleError = null;
+
+            for (const targetModel of modelCascade) {
+                console.log(`[Img ${index + 1}] Solicitando a Google Vertex/AI (${targetModel})...`);
+
+                // Intento 1: Primary Pipeline
+                try {
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/${targetModel}:predict?key=${googleAiApiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            instances: [{ prompt: primaryPrompt }],
+                            parameters: { sampleCount: 1 }
+                        })
+                    });
+
+                    if (!res.ok) {
+                        const errOutput = await res.json();
+                        throw new Error(`Primary Reject ${targetModel}: ${errOutput.error?.message || res.statusText}`);
+                    }
+
+                    const data = await res.json();
+                    if (!data.predictions || data.predictions.length === 0) throw new Error('Cero predicciones devueltas.');
+
+                    const buffer = Buffer.from(data.predictions[0].bytesBase64Encoded, 'base64');
+                    const firebasePublicUrl = await uploadImageBuffer(buffer, slug, index);
+
+                    return { url: firebasePublicUrl, path: `articles/${slug}/visual-${index}.png`, model: targetModel, timeMs: Date.now() - startTime };
+
+                } catch (e: any) {
+                    console.warn(`⚠️ [Img ${index + 1}] Falló Primary (${targetModel}): ${e.message}`);
+
+                    // Intento 2: Prompt Simplificadísimo al mismo Modelo
+                    console.log(`[Img ${index + 1}] Reintentando con Simplified Prompt Heurístico...`);
+                    try {
+                        const resFallback = await fetch(`https://generativelanguage.googleapis.com/v1/models/${targetModel}:predict?key=${googleAiApiKey}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                instances: [{ prompt: simplifiedPrompt }],
+                                parameters: { sampleCount: 1 }
+                            })
+                        });
+
+                        if (!resFallback.ok) {
+                            const errOutput = await resFallback.json();
+                            throw new Error(`Fallback Reject ${targetModel}: ${errOutput.error?.message || resFallback.statusText}`);
+                        }
+
+                        const dataFallback = await resFallback.json();
+                        if (!dataFallback.predictions || dataFallback.predictions.length === 0) throw new Error('Cero predicciones de Fallback devueltas.');
+
+                        const bufferFallback = Buffer.from(dataFallback.predictions[0].bytesBase64Encoded, 'base64');
+                        const firebasePublicUrlFallback = await uploadImageBuffer(bufferFallback, slug, index);
+
+                        return { url: firebasePublicUrlFallback, path: `articles/${slug}/visual-${index}.png`, model: targetModel + ' (Simplified)', timeMs: Date.now() - startTime };
+
+                    } catch (errFallback: any) {
+                        console.warn(`⚠️ [Img ${index + 1}] Falló Simplified (${targetModel}). Avanzando al siguiente en cascada...`);
+                        lastGoogleError = errFallback.message;
+                    }
+                }
+            }
+
+            // Si los 3 Modelos x 2 Prompts = 6 Intentos fallaron, rompemos esa solicitud específicamente sin "placeholders" falsos.
+            console.error(`❌ [Img ${index + 1}] Fallo general crítico de Generacion Visual. Causas terminales: ${lastGoogleError}`);
+            return null; // El frontend interpretará un array URLs disparado comparado con image_prompts originales, ajustando `status`
         });
 
         const results = await Promise.all(promises);

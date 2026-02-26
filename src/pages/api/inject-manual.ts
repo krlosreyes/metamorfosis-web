@@ -26,6 +26,23 @@ export const POST: APIRoute = async ({ request }) => {
             }), { status: 400, headers: { 'Content-Type': 'application/json' } });
         }
 
+        const status = payload.metadata.status;
+        if (!status) {
+            return new Response(JSON.stringify({
+                success: false,
+                error: `Validation Error: Missing metadata.status indicator. Must be 'published' or 'pending_verification'.`
+            }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        const bodyRaw = payload.content?.body || '';
+        // Proteccion Antifallos: Verificar ausencia de html attrs con comillas dobles
+        if (bodyRaw && bodyRaw.includes('="')) {
+            return new Response(JSON.stringify({
+                success: false,
+                error: `Validation Error: Illegal double-quotes found in content.body HTML attributes. Please use single quotes for all HTML properties to maintain Atomicity.`
+            }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        }
+
         console.log(`[Manual Injector] Initiating emergency database injection for ID: ${slug}`);
 
         await savePostToFirestore(slug, payload);

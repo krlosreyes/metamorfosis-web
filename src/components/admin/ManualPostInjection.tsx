@@ -148,11 +148,24 @@ const ManualPostInjection = () => {
                         return match; // Si no hay suficientes URLs, conserva el placeholder
                     });
 
+                    // Anti-fallos: Garantizar atomicidad cambiando comillas dobles residuales a simples.
+                    bodyStr = bodyStr.replace(/="([^"]*)"/g, "='$1'");
+
                     parsedJson.content.body = bodyStr;
+
+                    // Lógica de Estatus Automático
+                    if (firebaseUrls.length === parsedJson.image_prompts.length) {
+                        parsedJson.metadata.status = 'published';
+                    } else {
+                        parsedJson.metadata.status = 'pending_verification';
+                    }
 
                     // Actualizar UI con el super JSON inyectado final
                     setJsonInput(JSON.stringify(parsedJson, null, 2));
                 }
+            } else {
+                // Si no hay prompts visuales, definimos como publicado directo
+                parsedJson.metadata.status = 'published';
             }
 
             setInjectionPhase('Guardando artículo en Base de Datos...');
@@ -242,6 +255,9 @@ const ManualPostInjection = () => {
                     }
                     return match;
                 });
+
+                // Anti-fallos: Garantizar atomicidad cambiando comillas dobles residuales a simples.
+                bodyStr = bodyStr.replace(/="([^"]*)"/g, "='$1'");
 
                 parsedJson.content.body = bodyStr;
 
