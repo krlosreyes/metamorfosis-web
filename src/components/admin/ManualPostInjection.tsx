@@ -123,15 +123,21 @@ const ManualPostInjection = () => {
 
                 const imageData = await imageRes.json();
 
+                let firebaseUrls: string[] = [];
                 if (!imageRes.ok || !imageData.success) {
-                    throw new Error(imageData.error || 'Falló la generación automática de imágenes.');
+                    console.warn('Falló la generación automática de imágenes. Activando placeholders de emergencia.', imageData.error);
+                } else {
+                    if (imageData.telemetry) {
+                        setQaLogs(imageData.telemetry);
+                    }
+                    firebaseUrls = imageData.urls || [];
                 }
 
-                if (imageData.telemetry) {
-                    setQaLogs(imageData.telemetry);
+                // Asegurar que siempre haya la misma cantidad de URLs que prompts, llenando los faltantes con el Placeholder de Emergencia
+                const expectedCount = parsedJson.image_prompts.length;
+                while (firebaseUrls.length < expectedCount) {
+                    firebaseUrls.push('https://placehold.co/600x400?text=Metamorfosis+Real');
                 }
-
-                const firebaseUrls: string[] = imageData.urls;
 
                 // Reemplazar los placeholders estáticos en el body HTML
                 if (parsedJson.content?.body && firebaseUrls.length > 0) {
@@ -231,15 +237,20 @@ const ManualPostInjection = () => {
 
             const imageData = await imageRes.json();
 
+            let firebaseUrls: string[] = [];
             if (!imageRes.ok || !imageData.success) {
-                throw new Error(imageData.error || 'Falló la regeneración de imágenes en Gemini.');
+                console.warn('Falló la regeneración de imágenes en Gemini.', imageData.error);
+            } else {
+                if (imageData.telemetry) {
+                    setQaLogs(imageData.telemetry);
+                }
+                firebaseUrls = imageData.urls || [];
             }
 
-            if (imageData.telemetry) {
-                setQaLogs(imageData.telemetry);
+            const expectedCount = parsedJson.image_prompts.length;
+            while (firebaseUrls.length < expectedCount) {
+                firebaseUrls.push('https://placehold.co/600x400?text=Metamorfosis+Real');
             }
-
-            const firebaseUrls: string[] = imageData.urls;
 
             setInjectionPhase('🔄 Sustituyendo placeholders e Inyectando Atomización a Firestore...');
 
