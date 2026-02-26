@@ -113,7 +113,18 @@ export const POST: APIRoute = async ({ request }) => {
                 };
             } catch (err: any) {
                 console.error(`❌ Error en imagen ${index + 1}:`, err.message);
-                return null; // En caso de fallo devolvemos null para no romper el resto del batch
+
+                // FALLBACK DE RESILIENCIA: Si Gemini o Firebase fallan, devolvemos un placeholder funcional
+                // Esto evita que Dashboard.tsx reviente y permite inyectar el texto
+                const fallbackUrl = `https://placehold.co/1024x1024/2f3336/ffffff?text=Imagen+${index + 1}+Fallback`;
+                console.warn(`⚠️ [Metamorfosis-Log] Usando fallback estático para imagen ${index + 1}`);
+
+                return {
+                    url: fallbackUrl,
+                    path: `articles/${slug}/visual-${index}-fallback.png`,
+                    model: 'placeholder-fallback',
+                    timeMs: Date.now() - startTime
+                };
             }
         });
 
