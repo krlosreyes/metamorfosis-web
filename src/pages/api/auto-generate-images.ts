@@ -79,7 +79,7 @@ export const POST: APIRoute = async ({ request }) => {
 
                 // Intento 1: Primary Pipeline
                 try {
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/${targetModel}:predict?key=${googleAiApiKey}`, {
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:predict?key=${googleAiApiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -89,11 +89,16 @@ export const POST: APIRoute = async ({ request }) => {
                     });
 
                     if (!res.ok) {
-                        const errOutput = await res.json();
-                        throw new Error(`Primary Reject ${targetModel}: ${errOutput.error?.message || res.statusText}`);
+                        const rawText = await res.text();
+                        let errOutput = { error: { message: '' } };
+                        try { errOutput = JSON.parse(rawText); } catch (e) { }
+                        throw new Error(`Primary Reject ${targetModel}: ${errOutput.error?.message || res.statusText || rawText}`);
                     }
 
-                    const data = await res.json();
+                    const rawText = await res.text();
+                    let data;
+                    try { data = JSON.parse(rawText); } catch (e) { throw new Error(`Invalid JSON Response: ${rawText}`); }
+
                     if (!data.predictions || data.predictions.length === 0) throw new Error('Cero predicciones devueltas.');
 
                     const buffer = Buffer.from(data.predictions[0].bytesBase64Encoded, 'base64');
@@ -107,7 +112,7 @@ export const POST: APIRoute = async ({ request }) => {
                     // Intento 2: Prompt Simplificadísimo al mismo Modelo
                     console.log(`[Img ${index + 1}] Reintentando con Simplified Prompt Heurístico...`);
                     try {
-                        const resFallback = await fetch(`https://generativelanguage.googleapis.com/v1/models/${targetModel}:predict?key=${googleAiApiKey}`, {
+                        const resFallback = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:predict?key=${googleAiApiKey}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -117,11 +122,16 @@ export const POST: APIRoute = async ({ request }) => {
                         });
 
                         if (!resFallback.ok) {
-                            const errOutput = await resFallback.json();
-                            throw new Error(`Fallback Reject ${targetModel}: ${errOutput.error?.message || resFallback.statusText}`);
+                            const rawTextFb = await resFallback.text();
+                            let errOutputFb = { error: { message: '' } };
+                            try { errOutputFb = JSON.parse(rawTextFb); } catch (e) { }
+                            throw new Error(`Fallback Reject ${targetModel}: ${errOutputFb.error?.message || resFallback.statusText || rawTextFb}`);
                         }
 
-                        const dataFallback = await resFallback.json();
+                        const rawTextFb = await resFallback.text();
+                        let dataFallback;
+                        try { dataFallback = JSON.parse(rawTextFb); } catch (e) { throw new Error(`Invalid JSON Response Fallback: ${rawTextFb}`); }
+
                         if (!dataFallback.predictions || dataFallback.predictions.length === 0) throw new Error('Cero predicciones de Fallback devueltas.');
 
                         const bufferFallback = Buffer.from(dataFallback.predictions[0].bytesBase64Encoded, 'base64');
