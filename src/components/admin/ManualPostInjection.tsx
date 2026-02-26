@@ -108,6 +108,7 @@ const ManualPostInjection = () => {
 
                 const slug = parsedJson.metadata?.slug || 'draft';
                 const seoTitle = parsedJson.metadata?.seoTitle || 'Untitled';
+                const category = parsedJson.metadata?.category || 'Sin Clasificar';
 
                 const imageRes = await fetch('/api/auto-generate-images', {
                     method: 'POST',
@@ -115,7 +116,8 @@ const ManualPostInjection = () => {
                     body: JSON.stringify({
                         image_prompts: parsedJson.image_prompts,
                         slug: slug,
-                        title: seoTitle
+                        title: seoTitle,
+                        category: category
                     })
                 });
 
@@ -199,6 +201,7 @@ const ManualPostInjection = () => {
 
             const slug = parsedJson.metadata?.slug || 'draft';
             const seoTitle = parsedJson.metadata?.seoTitle || 'Untitled';
+            const category = parsedJson.metadata?.category || 'Sin Clasificar';
 
             setInjectionPhase('🔄 Llamando a Gemini imagen-3 para reescribir visuales...');
 
@@ -208,7 +211,8 @@ const ManualPostInjection = () => {
                 body: JSON.stringify({
                     image_prompts: parsedJson.image_prompts,
                     slug: slug,
-                    title: seoTitle
+                    title: seoTitle,
+                    category: category
                 })
             });
 

@@ -4,7 +4,7 @@ import { uploadImageBuffer } from '../../lib/firebase/storage-admin';
 export const POST: APIRoute = async ({ request }) => {
     try {
         const body = await request.json();
-        const { image_prompts, slug, title } = body;
+        const { image_prompts, slug, title, category } = body;
 
         if (!slug || typeof slug !== 'string') {
             return new Response(JSON.stringify({ error: "El campo 'slug' es obligatorio." }), {
@@ -43,24 +43,45 @@ export const POST: APIRoute = async ({ request }) => {
             const startTime = Date.now();
             const modelName = 'imagen-3';
             try {
-                // Validación Semántica Estricta
-                const cleanTitleWords = title.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 3);
-                const promptWords = prompt.toLowerCase();
+                // Diccionarios Metabólicos Base
+                const metabolicKeys: Record<string, string[]> = {
+                    "Ayuno": ["reloj", "tiempo", "célula", "ayuno", "fasting", "time", "clock", "cell", "autophagy", "water", "window", "hour", "empty"],
+                    "Nutricion": ["comida", "plato", "proteína", "glucosa", "food", "plate", "protein", "glucose", "insulin", "diet", "nutrition", "meal", "avocado", "meat", "veg"],
+                    "Ejercicio": ["músculo", "pesa", "fuerza", "sudor", "muscle", "weight", "strength", "sweat", "gym", "exercise", "workout", "tension", "dumbell", "barbell", "tape"]
+                };
 
-                let matches = 0;
+                // Validación Semántica Sensible (Pilares o Título)
+                const cleanTitleWords = title.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter((w: string) => w.length > 3);
+                const promptWords = prompt.toLowerCase();
+                const activeCategoryKeys = category && metabolicKeys[category] ? metabolicKeys[category] : [];
+
+                let semanticMatches = 0;
+
+                // 1. Check vs Título
                 cleanTitleWords.forEach((word: string) => {
-                    if (promptWords.includes(word)) matches++;
+                    if (promptWords.includes(word)) semanticMatches++;
                 });
 
-                if (matches < 3 && cleanTitleWords.length >= 3) {
-                    console.warn(`⚠️ [Metamorfosis-Log] Rechazo Semántico para slug: ${slug}. Prompt no coincide con el título.`);
-                    throw new Error(`Rechazo Semántico: El prompt carece de contexto del título ("${title}").`);
+                // 2. Check vs Pilar
+                activeCategoryKeys.forEach((key: string) => {
+                    if (promptWords.includes(key.toLowerCase())) semanticMatches++;
+                });
+
+                let finalPromptText = prompt;
+                const strictVisualRule = " No text, no labels, high-quality metabolic health metaphor, minimalist 3D isometric style, professional lighting. Focus on visual communication only.";
+
+                // Si no hay correspondencia directa (Alucinación detectada)
+                if (semanticMatches < 1) {
+                    console.warn(`⚠️ [Metamorfosis-Log] Rechazo Semántico Suave para slug: ${slug}. Prompt original ("${prompt.substring(0, 30)}...") no coincide con Pilar ni Título.`);
+                    console.warn(`⚠️ [Metamorfosis-Log] Activando Fallback Heroico: Usando Título Original del SEO.`);
+
+                    // FALLBACK AL TíTULO
+                    finalPromptText = `A conceptual metaphor representing: ${title}`;
                 }
 
                 console.log(`[Metamorfosis-Log] Generating image for slug: ${slug} using model: ${modelName}`);
 
-                const strictVisualRule = " No text, no labels, high-quality metabolic health metaphor, minimalist 3D isometric style, professional lighting. Focus on visual communication only.";
-                const finalPrompt = prompt + strictVisualRule;
+                const finalPrompt = finalPromptText + strictVisualRule;
 
                 console.log(`[Img ${index + 1}] Solicitando a Imagen 3... Prompt truncado: ${finalPrompt.substring(0, 40)}...`);
 
