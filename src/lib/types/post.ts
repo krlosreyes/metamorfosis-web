@@ -18,6 +18,17 @@ export interface PostData extends DocumentData {
     content?: {
         body?: string;
     };
+    image_prompts?: string[];
+    comparisons?: Array<{
+        concept: string;
+        myth: string;
+        reality: string;
+    }>;
+    steps?: Array<{
+        title: string;
+        description: string;
+        time?: string;
+    }>;
     quiz?: Array<{
         question: string;
         options: string[];

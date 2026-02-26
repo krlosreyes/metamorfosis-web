@@ -73,6 +73,25 @@ export const validatePostSchema = (jsonInput: string): ValidationResult => {
         };
     }
 
+    // C. Data Tables opcionales: Validation for comparisons and steps arrays
+    if ('comparisons' in parsed) {
+        if (!Array.isArray(parsed.comparisons)) {
+            return {
+                isValid: false,
+                message: '[Esquema Editorial] El nodo opcional "comparisons" existe pero NO es un Arreglo ([]).'
+            };
+        }
+    }
+
+    if ('steps' in parsed) {
+        if (!Array.isArray(parsed.steps)) {
+            return {
+                isValid: false,
+                message: '[Esquema Editorial] El nodo opcional "steps" existe pero NO es un Arreglo ([]).'
+            };
+        }
+    }
+
     // 4. Si pasa todas las validaciones
     return {
         isValid: true,

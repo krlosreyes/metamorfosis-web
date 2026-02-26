@@ -7,6 +7,8 @@ import Navbar from "../../components/Navbar.astro";
 import Quiz from "../../components/Quiz.astro";
 import Footer from "../../components/Footer.astro";
 import StyleSafelist from "../../components/StyleSafelist.astro";
+import ComparisonTable from "../../components/editorial/ComparisonTable.astro";
+import ProtocolStepper from "../../components/editorial/ProtocolStepper.astro";
 import { db } from "../../lib/firebase";
 import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { marked } from "marked";
@@ -116,6 +118,20 @@ const formatDate = (dateString?: string) => {
                     class="prose prose-lg max-w-none prose-headings:font-bold prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6 prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-4 prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-emerald-600 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-ul:my-6 prose-li:my-2 prose-blockquote:border-l-4 prose-blockquote:border-emerald-500 prose-blockquote:bg-emerald-50 prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:rounded-r-lg prose-img:rounded-xl prose-img:shadow-xl prose-img:object-cover prose-img:mx-auto prose-figure:my-10 prose-figcaption:text-center prose-figcaption:text-sm prose-figcaption:italic prose-figcaption:text-gray-500"
                     set:html={content}
                 />
+
+                {/* --- Dynamic Editorial Engine --- */}
+                {post.steps && post.steps.length > 0 && (
+                    <div class="mt-8 mb-12">
+                        <ProtocolStepper steps={post.steps} />
+                    </div>
+                )}
+                
+                {post.comparisons && post.comparisons.length > 0 && (
+                    <div class="mt-8 mb-12">
+                        <ComparisonTable comparisons={post.comparisons} />
+                    </div>
+                )}
+                {/* ------------------------------- */}
 
                 {post.quiz && post.quiz.length > 0 && (
                     <div class="mt-16">
