@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import ControlPanel from './ControlPanel';
+import MorphingSilhouette from './MorphingSilhouette';
 
 // U.S. Navy Standard Math Engine functions
 const calculateBodyFat = (gender: 'male' | 'female', waist: number, neck: number, height: number, hip: number): number => {
@@ -94,56 +96,29 @@ const MetamorfosisCalculator = () => {
         <div className="min-h-screen bg-[#030712] text-white flex flex-col md:flex-row p-6 md:p-12 font-sans relative overflow-hidden">
 
             {/* Left Column: Sliders Data */}
-            <div className="w-full md:w-1/2 flex flex-col gap-6 z-10">
-                <h2 className="text-3xl font-black uppercase tracking-tighter text-teal-400 mb-4">Cockpit Biométrico</h2>
-
-                <div className="flex gap-4 mb-4">
-                    <button
-                        className={`flex-1 py-3 rounded-xl border ${gender === 'male' ? 'bg-teal-500/20 border-teal-500 text-teal-400' : 'bg-gray-900 border-gray-700 text-gray-400'} uppercase font-bold tracking-widest transition-all`}
-                        onClick={() => setGender('male')}
-                    >Masculino</button>
-                    <button
-                        className={`flex-1 py-3 rounded-xl border ${gender === 'female' ? 'bg-teal-500/20 border-teal-500 text-teal-400' : 'bg-gray-900 border-gray-700 text-gray-400'} uppercase font-bold tracking-widest transition-all`}
-                        onClick={() => setGender('female')}
-                    >Femenino</button>
-                </div>
-
-                <div className="space-y-6">
-                    <SliderField label="Peso" value={weight} min={40} max={150} unit="kg" setter={setWeight} activeColor={textColor} />
-                    <SliderField label="Altura" value={height} min={140} max={220} unit="cm" setter={setHeight} activeColor={textColor} />
-                    <SliderField label="Cintura" value={waist} min={50} max={150} unit="cm" setter={setWaist} activeColor={textColor} />
-                    <SliderField label="Cadera" value={hip} min={50} max={160} unit="cm" setter={setHip} activeColor={textColor} />
-                    <SliderField label="Cuello" value={neck} min={25} max={60} unit="cm" setter={setNeck} activeColor={textColor} />
-                </div>
+            <div className="w-full md:w-1/2 flex flex-col justify-center z-10 md:pr-8">
+                <ControlPanel
+                    gender={gender} setGender={setGender}
+                    weight={weight} setWeight={setWeight}
+                    height={height} setHeight={setHeight}
+                    waist={waist} setWaist={setWaist}
+                    hip={hip} setHip={setHip}
+                    neck={neck} setNeck={setNeck}
+                    textColor={textColor}
+                />
             </div>
 
             {/* Right Column: Visual Reactive Avatar */}
             <div className="w-full md:w-1/2 flex flex-col items-center justify-center relative mt-12 md:mt-0 z-10">
 
-                {/* SVG Silhouette */}
-                <motion.div
-                    animate={{ scale: [0.98, 1, 0.98] }}
-                    transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                    className="relative w-64 h-96 flex justify-center"
-                    style={{ filter: `drop-shadow(0 0 25px ${avatarShadowColor})` }}
-                >
-                    <svg viewBox="0 0 100 200" className="w-full h-full text-gray-800" fill="currentColor">
-                        {/* Simplified Abstract Core Avatar */}
-                        <circle cx="50" cy="20" r="12" className={textColor} />
-                        <path d={`M35 40 Q 50 ${isHighVisceralFat ? 80 : 35} 65 40 L 70 90 Q 50 ${isHighVisceralFat ? 130 : 95} 30 90 Z`} className="text-gray-900 transition-all duration-500" stroke="currentColor" strokeWidth="2" />
-                        <rect x="40" y="90" width="8" height="60" rx="4" />
-                        <rect x="52" y="90" width="8" height="60" rx="4" />
-                    </svg>
-
-                    {/* Aura Indicator */}
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center w-full">
-                        {isHighVisceralFat && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute -top-16 left-1/2 transform -translate-x-1/2 w-48 text-center bg-amber-500/20 border border-amber-500/50 p-2 rounded text-xs text-amber-500 uppercase tracking-widest font-bold backdrop-blur-md">
-                                Alerta Visceral
-                            </motion.div>
-                        )}
-                    </div>
-                </motion.div>
+                {/* Reactive SVG Silhouette Morphing Engine */}
+                <MorphingSilhouette
+                    waist={waist}
+                    hip={hip}
+                    height={height}
+                    gender={gender}
+                    whr={whr}
+                />
 
                 {/* Metric Readouts */}
                 <div className="grid grid-cols-2 gap-4 mt-8 w-full max-w-sm">
@@ -207,24 +182,6 @@ const MetamorfosisCalculator = () => {
     );
 };
 
-// Subcomponent for Sliders to reduce boilerplate
-const SliderField = ({ label, value, min, max, unit, setter, activeColor }: { label: string, value: number, min: number, max: number, unit: string, setter: (val: number) => void, activeColor: string }) => {
-    return (
-        <div className="w-full">
-            <div className="flex justify-between items-end mb-1">
-                <label className="text-gray-400 font-mono text-[10px] uppercase tracking-widest">{label}</label>
-                <div className={`font-black text-xl ${activeColor} transition-colors`}>{value}<span className="text-gray-500 text-sm ml-1">{unit}</span></div>
-            </div>
-            <input
-                type="range"
-                min={min}
-                max={max}
-                value={value}
-                onChange={(e) => setter(Number(e.target.value))}
-                className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-teal-500 hover:accent-teal-400 transition-all focus:outline-none"
-            />
-        </div>
-    );
-};
+
 
 export default MetamorfosisCalculator;
