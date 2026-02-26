@@ -41,7 +41,7 @@ export const POST: APIRoute = async ({ request }) => {
         // Hacemos el fetch en serie o paralelo. Paralelo es más rápido.
         const promises = image_prompts.map(async (prompt, index) => {
             const startTime = Date.now();
-            const modelName = 'imagen-3.0-generate-001';
+            const modelName = 'imagen-3';
             try {
                 // Validación Semántica Estricta
                 const cleanTitleWords = title.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 3);

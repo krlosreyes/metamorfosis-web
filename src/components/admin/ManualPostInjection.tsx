@@ -7,6 +7,7 @@ const ManualPostInjection = () => {
     const [validationMessage, setValidationMessage] = useState('');
     const [sanitizationAlerts, setSanitizationAlerts] = useState<string[]>([]);
     const [isInjecting, setIsInjecting] = useState(false);
+    const [isRegenerating, setIsRegenerating] = useState(false);
     const [injectionPhase, setInjectionPhase] = useState<string>('');
     const [qaLogs, setQaLogs] = useState<{ path: string, model: string, timeMs: number }[]>([]);
     const [successMessage, setSuccessMessage] = useState('');
@@ -179,6 +180,97 @@ const ManualPostInjection = () => {
         }
     };
 
+    const handleRegenerateImages = async () => {
+        if (!isValid) return;
+
+        setIsRegenerating(true);
+        setInjectionPhase('🔄 Extrayendo Prompts Visules del documento en memoria...');
+        setError(null);
+        setSuccessMessage('');
+        setQaLogs([]);
+
+        try {
+            const { sanitizedJson } = sanitizeJsonString(jsonInput);
+            let parsedJson = JSON.parse(sanitizedJson);
+
+            if (!parsedJson.image_prompts || !Array.isArray(parsedJson.image_prompts) || parsedJson.image_prompts.length === 0) {
+                throw new Error('No hay prompts de imagen en este JSON para regenerar.');
+            }
+
+            const slug = parsedJson.metadata?.slug || 'draft';
+            const seoTitle = parsedJson.metadata?.seoTitle || 'Untitled';
+
+            setInjectionPhase('🔄 Llamando a Gemini imagen-3 para reescribir visuales...');
+
+            const imageRes = await fetch('/api/auto-generate-images', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    image_prompts: parsedJson.image_prompts,
+                    slug: slug,
+                    title: seoTitle
+                })
+            });
+
+            const imageData = await imageRes.json();
+
+            if (!imageRes.ok || !imageData.success) {
+                throw new Error(imageData.error || 'Falló la regeneración de imágenes en Gemini.');
+            }
+
+            if (imageData.telemetry) {
+                setQaLogs(imageData.telemetry);
+            }
+
+            const firebaseUrls: string[] = imageData.urls;
+
+            setInjectionPhase('🔄 Sustituyendo placeholders e Inyectando Atomización a Firestore...');
+
+            if (parsedJson.content?.body && firebaseUrls.length > 0) {
+                let bodyStr = parsedJson.content.body;
+                let urlIndex = 0;
+
+                bodyStr = bodyStr.replace(/https:\/\/placehold\.co\/[^\s'"]+/g, (match: string) => {
+                    const nextUrl = firebaseUrls[urlIndex];
+                    if (nextUrl) {
+                        urlIndex++;
+                        return nextUrl;
+                    }
+                    return match;
+                });
+
+                parsedJson.content.body = bodyStr;
+
+                // POST de Inyección Atómica: ¡SOLO el TEXTO HTML MODIFICADO!
+                const updateRes = await fetch('/api/update-post-body', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        slug,
+                        body: bodyStr
+                    })
+                });
+
+                const updateData = await updateRes.json();
+
+                if (!updateRes.ok || !updateData.success) {
+                    throw new Error(updateData.error || 'Falló la persistencia atómica en Firestore.');
+                }
+
+                setJsonInput(JSON.stringify(parsedJson, null, 2));
+                setSuccessMessage('¡Visuales actualizados correctamente en el Ecosistema!');
+            } else {
+                throw new Error('No se encontró campo content.body para incrustar las imágenes.');
+            }
+
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Error al regenerar imágenes atómicas');
+        } finally {
+            setIsRegenerating(false);
+            setInjectionPhase('');
+        }
+    };
+
     const handleClear = () => {
         setJsonInput('');
         setIsValid(false);
@@ -256,17 +348,17 @@ const ManualPostInjection = () => {
                 )}
 
                 {/* CAJA DE MONITOREO QA EN TIEMPO REAL */}
-                {(isInjecting || qaLogs.length > 0) && (
+                {(isInjecting || isRegenerating || qaLogs.length > 0) && (
                     <div className="bg-black/80 border border-gray-700/80 rounded-lg p-4 font-mono text-[10px] sm:text-xs">
                         <div className="flex items-center gap-2 mb-2 text-gray-500 uppercase tracking-widest border-b border-gray-800 pb-2">
                             <span className="relative flex h-2 w-2">
-                                {isInjecting && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
-                                <span className={`relative inline-flex rounded-full h-2 w-2 ${isInjecting ? 'bg-emerald-500' : 'bg-gray-500'}`}></span>
+                                {(isInjecting || isRegenerating) && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
+                                <span className={`relative inline-flex rounded-full h-2 w-2 ${(isInjecting || isRegenerating) ? 'bg-emerald-500' : 'bg-gray-500'}`}></span>
                             </span>
-                            System Telemetry
+                            System Telemetry {isRegenerating && "(Atomic Sync)"}
                         </div>
-                        {isInjecting && (
-                            <div className="text-emerald-400 mb-2 animate-pulse">
+                        {(isInjecting || isRegenerating) && (
+                            <div className={`${isRegenerating ? 'text-indigo-400' : 'text-emerald-400'} mb-2 animate-pulse`}>
                                 Status: {injectionPhase}
                             </div>
                         )}
@@ -325,8 +417,16 @@ const ManualPostInjection = () => {
 
                 <div className="mt-auto pt-4 flex gap-4">
                     <button
+                        type="button"
+                        onClick={handleRegenerateImages}
+                        disabled={!isValid || isInjecting || isRegenerating}
+                        className="flex-1 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(79,70,229,0.4)]"
+                    >
+                        {isRegenerating ? 'Sincronizando...' : '🔄 Regenerar Imágenes'}
+                    </button>
+                    <button
                         type="submit"
-                        disabled={!isValid || isInjecting}
+                        disabled={!isValid || isInjecting || isRegenerating}
                         className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(5,150,105,0.4)]"
                     >
                         {isInjecting ? injectionPhase : 'Crear Artículo'}
