@@ -8,6 +8,7 @@ const ManualPostInjection = () => {
     const [sanitizationAlerts, setSanitizationAlerts] = useState<string[]>([]);
     const [isInjecting, setIsInjecting] = useState(false);
     const [injectionPhase, setInjectionPhase] = useState<string>('');
+    const [qaLogs, setQaLogs] = useState<{ path: string, model: string, timeMs: number }[]>([]);
     const [successMessage, setSuccessMessage] = useState('');
     const [error, setError] = useState<string | null>(null);
 
@@ -91,6 +92,7 @@ const ManualPostInjection = () => {
         setInjectionPhase('Iniciando procesamiento...');
         setError(null);
         setSuccessMessage('');
+        setQaLogs([]);
 
         try {
             // Asegurarse de usar la versión sanitarizada si hace click rápido
@@ -104,13 +106,15 @@ const ManualPostInjection = () => {
                 setInjectionPhase('Generando y subiendo imágenes (esto puede tardar 60s)...');
 
                 const slug = parsedJson.metadata?.slug || 'draft';
+                const seoTitle = parsedJson.metadata?.seoTitle || 'Untitled';
 
                 const imageRes = await fetch('/api/auto-generate-images', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         image_prompts: parsedJson.image_prompts,
-                        slug: slug
+                        slug: slug,
+                        title: seoTitle
                     })
                 });
 
@@ -118,6 +122,10 @@ const ManualPostInjection = () => {
 
                 if (!imageRes.ok || !imageData.success) {
                     throw new Error(imageData.error || 'Falló la generación automática de imágenes.');
+                }
+
+                if (imageData.telemetry) {
+                    setQaLogs(imageData.telemetry);
                 }
 
                 const firebaseUrls: string[] = imageData.urls;
@@ -244,6 +252,35 @@ const ManualPostInjection = () => {
                                 {validationMessage}
                             </pre>
                         </div>
+                    </div>
+                )}
+
+                {/* CAJA DE MONITOREO QA EN TIEMPO REAL */}
+                {(isInjecting || qaLogs.length > 0) && (
+                    <div className="bg-black/80 border border-gray-700/80 rounded-lg p-4 font-mono text-[10px] sm:text-xs">
+                        <div className="flex items-center gap-2 mb-2 text-gray-500 uppercase tracking-widest border-b border-gray-800 pb-2">
+                            <span className="relative flex h-2 w-2">
+                                {isInjecting && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
+                                <span className={`relative inline-flex rounded-full h-2 w-2 ${isInjecting ? 'bg-emerald-500' : 'bg-gray-500'}`}></span>
+                            </span>
+                            System Telemetry
+                        </div>
+                        {isInjecting && (
+                            <div className="text-emerald-400 mb-2 animate-pulse">
+                                Status: {injectionPhase}
+                            </div>
+                        )}
+                        {qaLogs.length > 0 && (
+                            <div className="mt-3 space-y-1">
+                                {qaLogs.map((log, idx) => (
+                                    <div key={idx} className="flex flex-col sm:flex-row gap-1 sm:gap-4 text-emerald-300/80">
+                                        <span className="text-purple-400">[{log.model}]</span>
+                                        <span className="text-gray-400 truncate">{log.path}</span>
+                                        <span className="sm:ml-auto text-yellow-400/80">{log.timeMs}ms</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
 

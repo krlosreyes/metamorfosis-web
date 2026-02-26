@@ -4,10 +4,17 @@ import { uploadImageBuffer } from '../../lib/firebase/storage-admin';
 export const POST: APIRoute = async ({ request }) => {
     try {
         const body = await request.json();
-        const { image_prompts, slug } = body;
+        const { image_prompts, slug, title } = body;
 
         if (!slug || typeof slug !== 'string') {
             return new Response(JSON.stringify({ error: "El campo 'slug' es obligatorio." }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        if (!title || typeof title !== 'string') {
+            return new Response(JSON.stringify({ error: "El campo 'title' es obligatorio para la validación semántica." }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -33,7 +40,25 @@ export const POST: APIRoute = async ({ request }) => {
 
         // Hacemos el fetch en serie o paralelo. Paralelo es más rápido.
         const promises = image_prompts.map(async (prompt, index) => {
+            const startTime = Date.now();
+            const modelName = 'imagen-3.0-generate-001';
             try {
+                // Validación Semántica Estricta
+                const cleanTitleWords = title.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 3);
+                const promptWords = prompt.toLowerCase();
+
+                let matches = 0;
+                cleanTitleWords.forEach((word: string) => {
+                    if (promptWords.includes(word)) matches++;
+                });
+
+                if (matches < 3 && cleanTitleWords.length >= 3) {
+                    console.warn(`⚠️ [Metamorfosis-Log] Rechazo Semántico para slug: ${slug}. Prompt no coincide con el título.`);
+                    throw new Error(`Rechazo Semántico: El prompt carece de contexto del título ("${title}").`);
+                }
+
+                console.log(`[Metamorfosis-Log] Generating image for slug: ${slug} using model: ${modelName}`);
+
                 const strictVisualRule = " No text, no labels, high-quality metabolic health metaphor, minimalist 3D isometric style, professional lighting. Focus on visual communication only.";
                 const finalPrompt = prompt + strictVisualRule;
 
@@ -78,7 +103,14 @@ export const POST: APIRoute = async ({ request }) => {
                 const firebasePublicUrl = await uploadImageBuffer(buffer, slug, index);
                 console.log(`[Img ${index + 1}] Subida a Firebase en: ${firebasePublicUrl}`);
 
-                return firebasePublicUrl;
+                const timeMs = Date.now() - startTime;
+
+                return {
+                    url: firebasePublicUrl,
+                    path: `articles/${slug}/visual-${index}.png`,
+                    model: modelName,
+                    timeMs
+                };
             } catch (err: any) {
                 console.error(`❌ Error en imagen ${index + 1}:`, err.message);
                 return null; // En caso de fallo devolvemos null para no romper el resto del batch
@@ -88,11 +120,13 @@ export const POST: APIRoute = async ({ request }) => {
         const results = await Promise.all(promises);
 
         // Filtramos nulos (fallos)
-        const successfulUrls = results.filter((url) => url !== null) as string[];
+        const successfulResults = results.filter((res) => res !== null) as any[];
+        const successfulUrls = successfulResults.map(r => r.url);
 
         return new Response(JSON.stringify({
             success: true,
-            urls: successfulUrls
+            urls: successfulUrls,
+            telemetry: successfulResults
         }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
