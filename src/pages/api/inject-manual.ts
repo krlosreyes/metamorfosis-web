@@ -28,22 +28,24 @@ export const POST: APIRoute = async ({ request }) => {
 
         const status = payload.metadata.status;
         if (!status) {
-            return new Response(JSON.stringify({
-                success: false,
-                error: `Validation Error: Missing metadata.status indicator. Must be 'published' or 'pending_verification'.`
-            }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+            payload.metadata.status = 'pending_verification';
         }
 
-        const bodyRaw = payload.content?.body || '';
-        // Proteccion Antifallos: Verificar ausencia de html attrs con comillas dobles
-        if (bodyRaw && bodyRaw.includes('="')) {
-            return new Response(JSON.stringify({
-                success: false,
-                error: `Validation Error: Illegal double-quotes found in content.body HTML attributes. Please use single quotes for all HTML properties to maintain Atomicity.`
-            }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        let bodyRaw = payload.content?.body || '';
+        // Proteccion Antifallos: Autocorregir attrs HTML con comillas dobles en vez de lanzar Error 400
+        if (bodyRaw.includes('="')) {
+            bodyRaw = bodyRaw.replace(/="([^"]*)"/g, "='$1'");
         }
 
-        console.log(`[Manual Injector] Initiating emergency database injection for ID: ${slug}`);
+        // Reemplazar fallos visuales / placeholders con el URL de emergencia exacto requerido para re-synchronización
+        if (bodyRaw.includes('https://placehold.co/')) {
+            bodyRaw = bodyRaw.replace(/https:\/\/placehold\.co\/[^\s'"]+/g, 'https://placehold.co/600x400?text=Metamorfosis+Real');
+            payload.metadata.status = 'pending_verification';
+        }
+
+        payload.content.body = bodyRaw;
+
+        console.log(`[Manual Injector] Initiating emergency database injection for ID: ${slug} with status ${payload.metadata.status}`);
 
         await savePostToFirestore(slug, payload);
 

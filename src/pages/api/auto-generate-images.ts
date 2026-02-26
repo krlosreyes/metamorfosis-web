@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { uploadImageBuffer } from '../../lib/firebase/storage-admin';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const POST: APIRoute = async ({ request }) => {
     try {
@@ -35,6 +36,8 @@ export const POST: APIRoute = async ({ request }) => {
             });
         }
 
+        const genAI = new GoogleGenerativeAI(googleAiApiKey);
+
         console.log(`🚀 Iniciando generación de ${image_prompts.length} imágenes vía Gemini (Imagen 3)...`);
         const generatedUrls: string[] = [];
 
@@ -69,86 +72,62 @@ export const POST: APIRoute = async ({ request }) => {
             // El prompt simplificado se usará si el primaryPrompt choca (error 400 por filtro de seguridad) o colapsa el modelo
             const simplifiedPrompt = `Aesthetically pleasing minimalist 3D render representing: ${title}. High quality graphic design, conceptual, no letters, no text.`;
 
-            // Secuencia Jerárquica de Modelos (Cascada Anti-Fallos)
-            const modelCascade = ['imagen-3.0-generate-001', 'imagen-3.0-generate-002', 'image-generation-006'];
+            // Inicializar el modelo con el ID estándar de Imagen 3 (Requisito User)
+            const targetModel = 'imagen-3';
+            const model = genAI.getGenerativeModel({ model: targetModel });
 
-            let lastGoogleError = null;
+            console.log(`[Img ${index + 1}] Solicitando generación vía SDK genAI (${targetModel})...`);
 
-            for (const targetModel of modelCascade) {
-                console.log(`[Img ${index + 1}] Solicitando a Google Vertex/AI (${targetModel})...`);
+            // Intento 1: Primary Pipeline
+            try {
+                // Generando a través de la interfaz oficial SDK (Unified endpoint format)
+                const result = await model.generateContent(primaryPrompt);
 
-                // Intento 1: Primary Pipeline
+                // Mapeo defensivo a la posible estructura que retorne el SDK de Node para imágenes
+                const rawResponseResponse = result.response;
+                // La metadata viaja en inlineData.data (SDK standard) o como bytesBase64Encoded (Raw Vertex fallback en SDK)
+                const base64Candidate =
+                    rawResponseResponse?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data ||
+                    (rawResponseResponse as any)?.candidates?.[0]?.bytesBase64Encoded ||
+                    (rawResponseResponse as any)?.predictions?.[0]?.bytesBase64Encoded;
+
+                if (!base64Candidate) {
+                    throw new Error(`Imagen generada pero la estructura Base64 del SDK no era legible. Raw: ${JSON.stringify(rawResponseResponse)}`);
+                }
+
+                const buffer = Buffer.from(base64Candidate, 'base64');
+                const firebasePublicUrl = await uploadImageBuffer(buffer, slug, index);
+
+                return { url: firebasePublicUrl, path: `articles/${slug}/visual-${index}.png`, model: targetModel, timeMs: Date.now() - startTime };
+
+            } catch (e: any) {
+                console.warn(`⚠️ [Img ${index + 1}] Falló Primary SDK (${targetModel}): ${e.message}`);
+
+                // Intento 2: Prompt Simplificadísimo al mismo Modelo a través de SDK
+                console.log(`[Img ${index + 1}] Reintentando con Simplified Prompt Heurístico en SDK...`);
                 try {
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:predict?key=${googleAiApiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            instances: [{ prompt: primaryPrompt }],
-                            parameters: { sampleCount: 1 }
-                        })
-                    });
+                    const resultFallback = await model.generateContent(simplifiedPrompt);
+                    const rawResponseFallback = resultFallback.response;
 
-                    if (!res.ok) {
-                        const rawText = await res.text();
-                        let errOutput = { error: { message: '' } };
-                        try { errOutput = JSON.parse(rawText); } catch (e) { }
-                        throw new Error(`Primary Reject ${targetModel}: ${errOutput.error?.message || res.statusText || rawText}`);
+                    const base64CandidateFb =
+                        rawResponseFallback?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data ||
+                        (rawResponseFallback as any)?.candidates?.[0]?.bytesBase64Encoded ||
+                        (rawResponseFallback as any)?.predictions?.[0]?.bytesBase64Encoded;
+
+                    if (!base64CandidateFb) {
+                        throw new Error('Estructura Base64 ilegible en el Fallback SDK.');
                     }
 
-                    const rawText = await res.text();
-                    let data;
-                    try { data = JSON.parse(rawText); } catch (e) { throw new Error(`Invalid JSON Response: ${rawText}`); }
+                    const bufferFallback = Buffer.from(base64CandidateFb, 'base64');
+                    const firebasePublicUrlFallback = await uploadImageBuffer(bufferFallback, slug, index);
 
-                    if (!data.predictions || data.predictions.length === 0) throw new Error('Cero predicciones devueltas.');
+                    return { url: firebasePublicUrlFallback, path: `articles/${slug}/visual-${index}.png`, model: targetModel + ' (Simplified SDK)', timeMs: Date.now() - startTime };
 
-                    const buffer = Buffer.from(data.predictions[0].bytesBase64Encoded, 'base64');
-                    const firebasePublicUrl = await uploadImageBuffer(buffer, slug, index);
-
-                    return { url: firebasePublicUrl, path: `articles/${slug}/visual-${index}.png`, model: targetModel, timeMs: Date.now() - startTime };
-
-                } catch (e: any) {
-                    console.warn(`⚠️ [Img ${index + 1}] Falló Primary (${targetModel}): ${e.message}`);
-
-                    // Intento 2: Prompt Simplificadísimo al mismo Modelo
-                    console.log(`[Img ${index + 1}] Reintentando con Simplified Prompt Heurístico...`);
-                    try {
-                        const resFallback = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:predict?key=${googleAiApiKey}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                instances: [{ prompt: simplifiedPrompt }],
-                                parameters: { sampleCount: 1 }
-                            })
-                        });
-
-                        if (!resFallback.ok) {
-                            const rawTextFb = await resFallback.text();
-                            let errOutputFb = { error: { message: '' } };
-                            try { errOutputFb = JSON.parse(rawTextFb); } catch (e) { }
-                            throw new Error(`Fallback Reject ${targetModel}: ${errOutputFb.error?.message || resFallback.statusText || rawTextFb}`);
-                        }
-
-                        const rawTextFb = await resFallback.text();
-                        let dataFallback;
-                        try { dataFallback = JSON.parse(rawTextFb); } catch (e) { throw new Error(`Invalid JSON Response Fallback: ${rawTextFb}`); }
-
-                        if (!dataFallback.predictions || dataFallback.predictions.length === 0) throw new Error('Cero predicciones de Fallback devueltas.');
-
-                        const bufferFallback = Buffer.from(dataFallback.predictions[0].bytesBase64Encoded, 'base64');
-                        const firebasePublicUrlFallback = await uploadImageBuffer(bufferFallback, slug, index);
-
-                        return { url: firebasePublicUrlFallback, path: `articles/${slug}/visual-${index}.png`, model: targetModel + ' (Simplified)', timeMs: Date.now() - startTime };
-
-                    } catch (errFallback: any) {
-                        console.warn(`⚠️ [Img ${index + 1}] Falló Simplified (${targetModel}). Avanzando al siguiente en cascada...`);
-                        lastGoogleError = errFallback.message;
-                    }
+                } catch (errFallback: any) {
+                    console.error(`❌ [Img ${index + 1}] Fallo general crítico de Generacion Visual SDK. Causas terminales: ${errFallback.message}`);
+                    return null; // Frontend interpreta array y avanza a "pending_verification" preventivo
                 }
             }
-
-            // Si los 3 Modelos x 2 Prompts = 6 Intentos fallaron, rompemos esa solicitud específicamente sin "placeholders" falsos.
-            console.error(`❌ [Img ${index + 1}] Fallo general crítico de Generacion Visual. Causas terminales: ${lastGoogleError}`);
-            return null; // El frontend interpretará un array URLs disparado comparado con image_prompts originales, ajustando `status`
         });
 
         const results = await Promise.all(promises);
