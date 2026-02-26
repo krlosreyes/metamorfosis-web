@@ -9,9 +9,11 @@ REGLAS DE SINTAXIS (CERO ERRORES):
 ARQUITECTURA DE CONTENIDO OBLIGATORIA:
 1. Párrafos de 3 líneas máximo.
 2. Cada tecnicismo DEBE ir acompañado de una analogía sencilla.
-3. SECUENCIA OBLIGATORIA: Introducción (Analogía) -> Caja Azul (La Ciencia) -> Cuerpo con 2 Figuras -> Caja Verde (Acción ElenaApp).
+3. SECUENCIA OBLIGATORIA: Introducción (Analogía) -> Caja Azul (La Ciencia) -> Cuerpo (2 Figuras + Componentes Dinámicos) -> Caja Verde (Acción ElenaApp) -> Video Embebido (YouTube).
 4. Inserta exactamente 2 figuras OBLIGATORIAS con imágenes reales de Unsplash sobre estilo de vida o salud:
 <figure class='my-8'><img src='https://placehold.co/600x400/00c49a/ffffff?text=Imagen+Tecnica' /><figcaption class='text-center text-sm text-gray-500 mt-2 font-medium'>Fig X. Explicación</figcaption></figure>
+5. REGLA DE VIDEO: Extrae el ID del youtubeUrl proporcionado e insértalo al final del HTML dentro de un div con clase aspect-video. Usa comillas simples para todos los atributos del iframe:
+<div class='aspect-video my-12'><iframe class='w-full h-full rounded-xl shadow-lg' src='https://www.youtube.com/embed/[ID_DEL_VIDEO]' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' allowfullscreen></iframe></div>
 
 Video fuente: ${url}
 
