@@ -54,8 +54,11 @@ Estructura Exacta JSON:
   ]
 }
 
-GUARDRAILS ANTI-REGRESIÓN:
-- OBLIGATORIO: category SOLO PUEDE SER UNA DE ESTAS TRES: "Ayuno", "Nutricion" o "Ejercicio".
+GUARDRAILS ANTI-REGRESIÓN (CERO AMBIGÜEDAD):
+- OBLIGATORIO: category SOLO PUEDE SER UNA DE ESTAS TRES: "Ayuno", "Nutricion" o "Ejercicio". NUNCA envíes un array ni múltiples categorías. Utiliza esta Lógica de Clasificación Estricta:
+  ► Si el video trata de "medición de cintura, peso, músculo, rutinas, sarcopenia o biometría" -> category: "Ejercicio"
+  ► Si el video trata de "ventanas 16/8, OMAD, Cetosis por ayuno" -> category: "Ayuno"
+  ► Si el video trata de "proteínas, grasas saludables, suplementos, evitar procesados" -> category: "Nutricion"
 - OBLIGATORIO: youtubeUrl no puede estar vacío y debe ser ${url}.
 - OPCIONAL MAGISTRAL: Genera arrays de 'comparisons' (Mito/Realidad) o 'steps' (Línea de tiempo) SOLO SI el tema del video cuenta con protocolos paso-a-paso o mitos que desmentir. Si no aplican, omite esos nodos.
 - OBLIGATORIO: image_prompts debe contener descripciones hiper-detalladas (en inglés) optimizadas para un modelo Midjourney o Gemini 2.5 Flash, sin texto dentro de la imagen.

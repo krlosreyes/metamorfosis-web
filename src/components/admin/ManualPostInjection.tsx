@@ -43,9 +43,13 @@ const ManualPostInjection = () => {
                     const parsed = JSON.parse(sanitizedJson);
                     const cat = parsed.metadata?.category;
                     const validCategories = ["Ayuno", "Nutricion", "Ejercicio"];
-                    if (!validCategories.includes(cat)) {
+
+                    if (typeof cat !== 'string') {
                         newIsValid = false;
-                        newMessage = `⛔ ERROR DE CATEGORÍA: "${cat}" no permitida.\nDebe ser exclusivamente una de: ${validCategories.join(', ')}`;
+                        newMessage = `⛔ ERROR DE TAXONOMÍA (AMBIGÜEDAD): La categoría no puede ser un arreglo ni múltiple. Debe ser una única palabra oficial.`;
+                    } else if (!validCategories.includes(cat)) {
+                        newIsValid = false;
+                        newMessage = `⛔ ERROR DE CATEGORÍA: "${cat}" no permitida.\nDebe ser EXCLUSIVAMENTE UNA (1) de: ${validCategories.join(', ')}`;
                     } else if (!parsed.metadata?.youtubeUrl) {
                         newIsValid = false;
                         newMessage = `⛔ ERROR DE ORIGEN: youtubeUrl es OBLIGATORIO para trazabilidad.`;
@@ -208,8 +212,8 @@ const ManualPostInjection = () => {
                                         type="button"
                                         onClick={() => handleCopyPrompt(prompt, idx)}
                                         className={`shrink-0 px-3 py-1.5 text-xs font-bold tracking-widest uppercase rounded flex items-center gap-1.5 justify-center transition-all ${copiedIndex === idx
-                                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
-                                                : 'bg-gray-800 text-gray-400 hover:text-white border border-gray-700 hover:border-purple-500/50 hover:bg-purple-900/30'
+                                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
+                                            : 'bg-gray-800 text-gray-400 hover:text-white border border-gray-700 hover:border-purple-500/50 hover:bg-purple-900/30'
                                             }`}
                                     >
                                         {copiedIndex === idx ? (
