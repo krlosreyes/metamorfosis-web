@@ -103,10 +103,15 @@ const ManualPostInjection = () => {
             if (parsedJson.image_prompts && Array.isArray(parsedJson.image_prompts) && parsedJson.image_prompts.length > 0) {
                 setInjectionPhase('Generando y subiendo imágenes (esto puede tardar 60s)...');
 
+                const slug = parsedJson.metadata?.slug || 'draft';
+
                 const imageRes = await fetch('/api/auto-generate-images', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image_prompts: parsedJson.image_prompts })
+                    body: JSON.stringify({
+                        image_prompts: parsedJson.image_prompts,
+                        slug: slug
+                    })
                 });
 
                 const imageData = await imageRes.json();

@@ -2,7 +2,7 @@ import { getStorage } from 'firebase-admin/storage';
 import crypto from 'crypto';
 import '../firebaseAdmin';
 
-export async function uploadImageBuffer(buffer: Buffer): Promise<string> {
+export async function uploadImageBuffer(buffer: Buffer, slug: string, index: number): Promise<string> {
     const bucketName = import.meta.env.PUBLIC_FIREBASE_STORAGE_BUCKET;
 
     if (!bucketName) {
@@ -11,7 +11,7 @@ export async function uploadImageBuffer(buffer: Buffer): Promise<string> {
 
     const bucket = getStorage().bucket(bucketName);
     const uuid = crypto.randomUUID();
-    const filePath = `article-images/${uuid}.png`;
+    const filePath = `articles/${slug}/${index}-${uuid}.png`;
     const file = bucket.file(filePath);
 
     await file.save(buffer, {

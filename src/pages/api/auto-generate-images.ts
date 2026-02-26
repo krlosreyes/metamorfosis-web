@@ -4,7 +4,14 @@ import { uploadImageBuffer } from '../../lib/firebase/storage-admin';
 export const POST: APIRoute = async ({ request }) => {
     try {
         const body = await request.json();
-        const { image_prompts } = body;
+        const { image_prompts, slug } = body;
+
+        if (!slug || typeof slug !== 'string') {
+            return new Response(JSON.stringify({ error: "El campo 'slug' es obligatorio." }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
 
         if (!image_prompts || !Array.isArray(image_prompts)) {
             return new Response(JSON.stringify({ error: "El array 'image_prompts' es obligatorio." }), {
@@ -57,7 +64,7 @@ export const POST: APIRoute = async ({ request }) => {
                 console.log(`[Img ${index + 1}] Generada con éxito. Subiendo a Firebase Storage...`);
 
                 // Subir a Firebase
-                const firebasePublicUrl = await uploadImageBuffer(buffer);
+                const firebasePublicUrl = await uploadImageBuffer(buffer, slug, index);
                 console.log(`[Img ${index + 1}] Subida a Firebase en: ${firebasePublicUrl}`);
 
                 return firebasePublicUrl;
