@@ -34,6 +34,10 @@ Estructura Exacta JSON:
     "effort": 3, 
     "biomarker": "Insulina|Glucosa|Cetonas|Triglicéridos" 
   },
+  "image_prompts": [
+    "A highly technical, aesthetic medical representation of...",
+    "Vector art showing the mechanism of..."
+  ],
   "quiz": [
     { "question": "...", "options": ["...","...","...","..."], "correctIndex": 0, "rationale": "Explicación simple y clara..." }
   ],
@@ -45,6 +49,7 @@ Estructura Exacta JSON:
 GUARDRAILS ANTI-REGRESIÓN:
 - OBLIGATORIO: category SOLO PUEDE SER UNA DE ESTAS TRES: "Ayuno", "Nutricion" o "Ejercicio". NINGUNA OTRA.
 - OBLIGATORIO: youtubeUrl no puede estar vacío y debe ser ${url}.
+- OBLIGATORIO: image_prompts debe contener descripciones hiper-detalladas (en inglés) optimizadas para un modelo Midjourney o Gemini 2.5 Flash, sin texto dentro de la imagen.
 - No alteres el nodo app_integration; los deep links a ElenaApp son estáticos.
 - El array "quiz" debe tener MÍNIMO 4 preguntas desafiantes pero que refuercen lo aprendido.
 - El nodo "references" NO puede estar vacío y debe contener fuentes reales (Evita id de PubMed vacíos).`;

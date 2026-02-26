@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { validatePostSchema } from '../../lib/validators/postValidator'; // <-- NUEVO PATH
 import { sanitizeJsonString } from '../../lib/utils/jsonSanitizer';
-import { generateMedicalVisual } from '../../lib/services/imageGen'; // <-- NANO BANANA API
 const ManualPostInjection = () => {
     const [jsonInput, setJsonInput] = useState('');
     const [isValid, setIsValid] = useState(false);
@@ -11,9 +10,9 @@ const ManualPostInjection = () => {
     const [successMessage, setSuccessMessage] = useState('');
     const [error, setError] = useState<string | null>(null);
 
-    // Image Gen State
-    const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-    const [imageGenSuccess, setImageGenSuccess] = useState('');
+    // Manual Dispatch Prompts
+    const [extractedPrompts, setExtractedPrompts] = useState<string[]>([]);
+    const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
     // Debounce validation
     useEffect(() => {
@@ -50,8 +49,17 @@ const ManualPostInjection = () => {
                     } else if (!parsed.metadata?.youtubeUrl) {
                         newIsValid = false;
                         newMessage = `⛔ ERROR DE ORIGEN: youtubeUrl es OBLIGATORIO para trazabilidad.`;
+                    } else {
+                        // Extracción de Image Prompts para Dispatch Manual
+                        if (parsed.image_prompts && Array.isArray(parsed.image_prompts)) {
+                            setExtractedPrompts(parsed.image_prompts);
+                        } else {
+                            setExtractedPrompts([]);
+                        }
                     }
                 } catch (e) { /* ignored, validation handles syntax */ }
+            } else {
+                setExtractedPrompts([]); // Limpiar prompts si el JSON se rompe
             }
 
             setIsValid(newIsValid);
@@ -62,50 +70,12 @@ const ManualPostInjection = () => {
     }, [jsonInput]);
 
     // ==========================================
-    // NANO BANANA: AUTOMATIC IMAGE GENERATION
+    // MANUAL DISPATCH: COPY PROMPTS
     // ==========================================
-    const handleGenerateVisual = async () => {
-        if (!isValid) return;
-        setIsGeneratingImage(true);
-        setImageGenSuccess('');
-        setError(null);
-
-        try {
-            const { sanitizedJson } = sanitizeJsonString(jsonInput);
-            const parsedJson = JSON.parse(sanitizedJson);
-
-            // Usamos metadata como prompt técnico para la IA
-            const technicalPrompt = parsedJson.metadata.seoDescription || parsedJson.metadata.seoTitle;
-
-            const result = await generateMedicalVisual(technicalPrompt);
-
-            if (result.success && result.url) {
-                // Reemplazamos todos los Placeholders estáticos genéricos (Placehold.co)
-                // de las figuras generadas por el Master Prompt con la nueva imagen real.
-                let modifiedJsonStr = sanitizedJson;
-
-                // Expresión regular para encontrar tags img con placehold.co
-                const imageRegex = /https:\/\/placehold\.co\/[a-zA-Z0-9\/=?+-]+/g;
-                modifiedJsonStr = modifiedJsonStr.replace(imageRegex, result.url);
-
-                // Actualizamos también la portada (thumbnail)
-                if (parsedJson.metadata && !parsedJson.metadata.thumbnailUrl) {
-                    // In case we want to inject it directly into the JSON input visual
-                    const parseToInject = JSON.parse(modifiedJsonStr);
-                    parseToInject.metadata.thumbnailUrl = result.url;
-                    modifiedJsonStr = JSON.stringify(parseToInject, null, 2);
-                }
-
-                setJsonInput(modifiedJsonStr); // Actualizamos el textarea visualmente
-                setImageGenSuccess('¡Visual de alta fidelidad inyectado vía Nano Banana!');
-            } else {
-                throw new Error(result.error || "Fallo en el servicio de imágenes.");
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Error al generar visuales');
-        } finally {
-            setIsGeneratingImage(false);
-        }
+    const handleCopyPrompt = (promptDesc: string, idx: number) => {
+        navigator.clipboard.writeText(promptDesc);
+        setCopiedIndex(idx);
+        setTimeout(() => setCopiedIndex(null), 2000);
     };
 
     const handleInject = async (e: React.FormEvent) => {
@@ -151,6 +121,7 @@ const ManualPostInjection = () => {
         setValidationMessage('');
         setSuccessMessage('');
         setError(null);
+        setExtractedPrompts([]);
     };
 
     return (
@@ -220,24 +191,49 @@ const ManualPostInjection = () => {
                     </div>
                 )}
 
-                <div className="mt-auto pt-4 flex gap-4">
-                    {/* Botón Mágico Nano Banana */}
-                    <button
-                        type="button"
-                        onClick={handleGenerateVisual}
-                        disabled={!isValid || isGeneratingImage || isInjecting}
-                        className="flex-1 py-4 bg-blue-900 border border-blue-500 hover:bg-blue-800 text-blue-300 font-bold uppercase tracking-widest text-xs rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                        {isGeneratingImage ? (
-                            <><span className="animate-spin text-lg">⚙️</span> Procesando Visual...</>
-                        ) : (
-                            <>🍌 Generar Visual Técnico (Nano Banana)</>
-                        )}
-                    </button>
+                {/* INTERFAZ DEL HUB DE DESPACHO MANUAL */}
+                {isValid && extractedPrompts.length > 0 && (
+                    <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 mt-2 animate-fade-in">
+                        <h4 className="flex items-center gap-2 text-white font-bold uppercase tracking-widest text-xs mb-3">
+                            <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            Prompts Visuales Asistidos
+                        </h4>
+                        <div className="space-y-2">
+                            {extractedPrompts.map((prompt, idx) => (
+                                <div key={idx} className="flex flex-col sm:flex-row gap-2 bg-gray-900 border border-gray-800 rounded-lg p-3 group hover:border-purple-500/30 transition-colors">
+                                    <p className="flex-1 text-gray-300 font-mono text-xs line-clamp-2" title={prompt}>
+                                        {prompt}
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleCopyPrompt(prompt, idx)}
+                                        className={`shrink-0 px-3 py-1.5 text-xs font-bold tracking-widest uppercase rounded flex items-center gap-1.5 justify-center transition-all ${copiedIndex === idx
+                                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
+                                                : 'bg-gray-800 text-gray-400 hover:text-white border border-gray-700 hover:border-purple-500/50 hover:bg-purple-900/30'
+                                            }`}
+                                    >
+                                        {copiedIndex === idx ? (
+                                            <>
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                                                Copiado
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                                Copiar
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
+                <div className="mt-auto pt-4 flex gap-4">
                     <button
                         type="submit"
-                        disabled={!isValid || isInjecting || isGeneratingImage}
+                        disabled={!isValid || isInjecting}
                         className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(5,150,105,0.4)]"
                     >
                         {isInjecting ? 'Procesando...' : 'Crear Artículo'}
@@ -246,15 +242,6 @@ const ManualPostInjection = () => {
             </form>
 
             {/* Notificaciones */}
-
-            {imageGenSuccess && (
-                <div className="mt-6 bg-blue-900/30 border border-blue-500/50 rounded-xl p-4 flex items-center gap-3 animate-fade-in-up">
-                    <svg className="w-6 h-6 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span className="font-mono text-blue-300 text-sm font-bold">{imageGenSuccess}</span>
-                </div>
-            )}
 
             {successMessage && (
                 <div className="mt-6 bg-emerald-900/20 border border-emerald-500/50 rounded-xl p-4 flex items-center gap-3 animate-fade-in-up">

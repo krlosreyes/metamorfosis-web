@@ -105,11 +105,11 @@ const posts = (await getPosts()) as Post[];
                     <h2 class="text-xl font-black text-gray-900 tracking-tight whitespace-nowrap min-w-max">
                         Colecciones Centrales
                     </h2>
-                    <div class="flex gap-2 min-w-max">
-                        <button class="px-4 py-2 bg-gray-900 text-white rounded-full text-sm font-bold shadow-sm">Todos</button>
-                        <button class="px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-full text-sm font-bold transition-colors">🔥 Ayuno</button>
-                        <button class="px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-full text-sm font-bold transition-colors">🩸 Insulina</button>
-                        <button class="px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-full text-sm font-bold transition-colors">💪 Sarcopenia</button>
+					<div class="flex gap-2 min-w-max" id="category-filters">
+                        <button data-filter="all" class="filter-btn px-4 py-2 bg-gray-900 text-white rounded-full text-sm font-bold shadow-sm transition-colors">Todos</button>
+                        <button data-filter="ayuno" class="filter-btn px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-full text-sm font-bold transition-colors">🔥 Ayuno</button>
+                        <button data-filter="nutricion" class="filter-btn px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-full text-sm font-bold transition-colors">🩸 Nutrición</button>
+                        <button data-filter="ejercicio" class="filter-btn px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-full text-sm font-bold transition-colors">💪 Ejercicio</button>
                     </div>
                 </div>
 			</div>
@@ -119,9 +119,11 @@ const posts = (await getPosts()) as Post[];
 			<div class="max-w-7xl mx-auto">
 				{
 					posts.length > 0 ? (
-						<div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+						<div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3" id="posts-grid">
 							{posts.map((post) => (
-								<PostCard post={post} />
+                                <div class="post-item transition-all duration-300 transform scale-100 opacity-100" data-category={(post.metadata?.category || '').toLowerCase()}>
+								    <PostCard post={post} />
+                                </div>
 							))}
 						</div>
 					) : (
@@ -153,4 +155,43 @@ const posts = (await getPosts()) as Post[];
 			</div>
 		</div>
 	</section>
+
+    <script>
+        // Vanilla JS for Category Filtering
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const postItems = document.querySelectorAll('.post-item');
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filterValue = btn.getAttribute('data-filter');
+
+                // 1. Update Active Button Styles
+                filterBtns.forEach(b => {
+                    b.classList.remove('bg-gray-900', 'text-white');
+                    b.classList.add('bg-white', 'text-gray-600');
+                });
+                btn.classList.add('bg-gray-900', 'text-white');
+                btn.classList.remove('bg-white', 'text-gray-600');
+
+                // 2. Filter Posts
+                postItems.forEach((item) => {
+                    const el = item as HTMLElement;
+                    if (filterValue === 'all' || el.getAttribute('data-category') === filterValue) {
+                        el.style.display = 'block';
+                        // Tiny timeout to allow display:block to apply before animating opacity
+                        setTimeout(() => {
+                            el.classList.remove('opacity-0', 'scale-95');
+                            el.classList.add('opacity-100', 'scale-100');
+                        }, 10);
+                    } else {
+                        el.classList.remove('opacity-100', 'scale-100');
+                        el.classList.add('opacity-0', 'scale-95');
+                        setTimeout(() => {
+                            el.style.display = 'none';
+                        }, 300); // Wait for transition
+                    }
+                });
+            });
+        });
+    </script>
 </Layout>
