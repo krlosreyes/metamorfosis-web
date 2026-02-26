@@ -11,7 +11,7 @@ export async function uploadImageBuffer(buffer: Buffer, slug: string, index: num
 
     const bucket = getStorage().bucket(bucketName);
     const uuid = crypto.randomUUID();
-    const filePath = `articles/${slug}/${index}-${uuid}.png`;
+    const filePath = `articles/${slug}/visual-${index}.png`;
     const file = bucket.file(filePath);
 
     await file.save(buffer, {

@@ -20,44 +20,55 @@ export const POST: APIRoute = async ({ request }) => {
             });
         }
 
-        const openAiApiKey = import.meta.env.OPENAI_API_KEY;
-        if (!openAiApiKey) {
-            return new Response(JSON.stringify({ error: "Falta OPENAI_API_KEY en el servidor." }), {
+        const googleAiApiKey = import.meta.env.GOOGLE_AI_API_KEY || import.meta.env.GEMINI_API_KEY;
+        if (!googleAiApiKey) {
+            return new Response(JSON.stringify({ error: "Falta GOOGLE_AI_API_KEY en el servidor." }), {
                 status: 500,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
 
-        console.log(`🚀 Iniciando generación de ${image_prompts.length} imágenes vía DALL-E 3...`);
+        console.log(`🚀 Iniciando generación de ${image_prompts.length} imágenes vía Gemini (Imagen 3)...`);
         const generatedUrls: string[] = [];
 
         // Hacemos el fetch en serie o paralelo. Paralelo es más rápido.
         const promises = image_prompts.map(async (prompt, index) => {
             try {
-                console.log(`[Img ${index + 1}] Solicitando a DALL-E 3... Prompt truncado: ${prompt.substring(0, 30)}...`);
-                // LLamada a DALL-E 3 mediante REST nativo
-                const res = await fetch('https://api.openai.com/v1/images/generations', {
+                const strictVisualRule = " No text, no labels, high-quality metabolic health metaphor, minimalist 3D isometric style, professional lighting. Focus on visual communication only.";
+                const finalPrompt = prompt + strictVisualRule;
+
+                console.log(`[Img ${index + 1}] Solicitando a Imagen 3... Prompt truncado: ${finalPrompt.substring(0, 40)}...`);
+
+                // LLamada a Gemini (Imagen 3) mediante REST
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${googleAiApiKey}`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${openAiApiKey}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        model: "dall-e-3",
-                        prompt: prompt,
-                        n: 1,
-                        size: "1024x1024",
-                        response_format: "b64_json" // Pedimos base64 para no depender de URLs efímeras
+                        instances: [
+                            {
+                                prompt: finalPrompt
+                            }
+                        ],
+                        parameters: {
+                            sampleCount: 1
+                        }
                     })
                 });
 
                 if (!res.ok) {
                     const errorData = await res.json();
-                    throw new Error(`Error OpenAI: ${errorData.error?.message || res.statusText}`);
+                    throw new Error(`Error Gemini: ${errorData.error?.message || res.statusText}`);
                 }
 
                 const data = await res.json();
-                const b64Json = data.data[0].b64_json;
+
+                // Imagen 3 devuelve base64 en predictions[0].bytesBase64Encoded
+                if (!data.predictions || data.predictions.length === 0) {
+                    throw new Error('Gemini no devolvió la imagen.');
+                }
+                const b64Json = data.predictions[0].bytesBase64Encoded;
 
                 // Convertir b64 a Buffer
                 const buffer = Buffer.from(b64Json, 'base64');
