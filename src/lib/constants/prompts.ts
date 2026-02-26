@@ -61,7 +61,7 @@ GUARDRAILS ANTI-REGRESIÓN (CERO AMBIGÜEDAD):
   ► Si el video trata de "proteínas, grasas saludables, suplementos, evitar procesados" -> category: "Nutricion"
 - OBLIGATORIO: youtubeUrl no puede estar vacío y debe ser ${url}.
 - OPCIONAL MAGISTRAL: Genera arrays de 'comparisons' (Mito/Realidad) o 'steps' (Línea de tiempo) SOLO SI el tema del video cuenta con protocolos paso-a-paso o mitos que desmentir. Si no aplican, omite esos nodos.
-- OBLIGATORIO: image_prompts debe contener descripciones hiper-detalladas (en inglés) optimizadas para un modelo Midjourney o Gemini 2.5 Flash, sin texto dentro de la imagen.
+- REGLA DE ORO VISUAL (image_prompts): Genera descripciones para DALL-E 3 en inglés. ESTRICTAMENTE PROHIBIDO INCLUIR TEXTO, LETRAS O ETIQUETAS en la imagen. Deben ser metáforas visuales limpias, estilo 'render 3D isométrico minimalista' o 'fotografía conceptual de estudio'. Usa códigos de color (ej. rojo=mal, azul=bien) para explicar conceptos sin palabras.
 - No alteres el nodo app_integration; los deep links a ElenaApp son estáticos.
 - El array "quiz" debe tener MÍNIMO 4 preguntas desafiantes pero que refuercen lo aprendido.
 - El nodo "references" NO puede estar vacío y debe contener fuentes reales (Evita id de PubMed vacíos).`;

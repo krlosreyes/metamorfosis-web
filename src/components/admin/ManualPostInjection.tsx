@@ -7,6 +7,7 @@ const ManualPostInjection = () => {
     const [validationMessage, setValidationMessage] = useState('');
     const [sanitizationAlerts, setSanitizationAlerts] = useState<string[]>([]);
     const [isInjecting, setIsInjecting] = useState(false);
+    const [injectionPhase, setInjectionPhase] = useState<string>('');
     const [successMessage, setSuccessMessage] = useState('');
     const [error, setError] = useState<string | null>(null);
 
@@ -87,13 +88,58 @@ const ManualPostInjection = () => {
         if (!isValid) return;
 
         setIsInjecting(true);
+        setInjectionPhase('Iniciando procesamiento...');
         setError(null);
         setSuccessMessage('');
 
         try {
             // Asegurarse de usar la versión sanitarizada si hace click rápido
             const { sanitizedJson } = sanitizeJsonString(jsonInput);
-            const parsedJson = JSON.parse(sanitizedJson);
+            let parsedJson = JSON.parse(sanitizedJson);
+
+            // ==========================================
+            // NUEVO FLUJO: AUTOMATIZACIÓN DE IMÁGENES
+            // ==========================================
+            if (parsedJson.image_prompts && Array.isArray(parsedJson.image_prompts) && parsedJson.image_prompts.length > 0) {
+                setInjectionPhase('Generando y subiendo imágenes (esto puede tardar 60s)...');
+
+                const imageRes = await fetch('/api/auto-generate-images', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image_prompts: parsedJson.image_prompts })
+                });
+
+                const imageData = await imageRes.json();
+
+                if (!imageRes.ok || !imageData.success) {
+                    throw new Error(imageData.error || 'Falló la generación automática de imágenes.');
+                }
+
+                const firebaseUrls: string[] = imageData.urls;
+
+                // Reemplazar los placeholders estáticos en el body HTML
+                if (parsedJson.content?.body && firebaseUrls.length > 0) {
+                    let bodyStr = parsedJson.content.body;
+                    let urlIndex = 0;
+
+                    // Reemplaza cada aparición de https://placehold.co/... con la siguiente URL generada
+                    bodyStr = bodyStr.replace(/https:\/\/placehold\.co\/[^\s'"]+/g, (match: string) => {
+                        const nextUrl = firebaseUrls[urlIndex];
+                        if (nextUrl) {
+                            urlIndex++;
+                            return nextUrl;
+                        }
+                        return match; // Si no hay suficientes URLs, conserva el placeholder
+                    });
+
+                    parsedJson.content.body = bodyStr;
+
+                    // Actualizar UI con el super JSON inyectado final
+                    setJsonInput(JSON.stringify(parsedJson, null, 2));
+                }
+            }
+
+            setInjectionPhase('Guardando artículo en Base de Datos...');
 
             const response = await fetch('/api/inject-manual', {
                 method: 'POST',
@@ -116,6 +162,7 @@ const ManualPostInjection = () => {
             setError(err instanceof Error ? err.message : 'Error al inyectar JSON');
         } finally {
             setIsInjecting(false);
+            setInjectionPhase('');
         }
     };
 
@@ -240,7 +287,7 @@ const ManualPostInjection = () => {
                         disabled={!isValid || isInjecting}
                         className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(5,150,105,0.4)]"
                     >
-                        {isInjecting ? 'Procesando...' : 'Crear Artículo'}
+                        {isInjecting ? injectionPhase : 'Crear Artículo'}
                     </button>
                 </div>
             </form>
