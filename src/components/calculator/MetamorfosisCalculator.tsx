@@ -137,10 +137,10 @@ const MetamorfosisCalculator = () => {
                             </div>
 
                             {/* ── Telemetry Gauges row (DIGITAL REPLACEMENT) ── */}
-                            <div className="grid grid-cols-2 gap-4 flex-shrink-0 mt-auto pt-4 border-t border-white/5 relative z-10 w-full min-h-[120px]">
+                            <div className="grid grid-cols-2 gap-3 flex-shrink-0 mt-auto pt-4 border-t border-white/5 relative z-10 w-full min-h-[90px] mx-2">
                                 {/* IMC Card */}
                                 <div
-                                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-[#0B1829] border shadow-lg transition-colors duration-300"
+                                    className="flex flex-col items-center justify-center p-3 rounded-2xl bg-[#0B1829] border shadow-lg transition-colors duration-300"
                                     style={{
                                         borderColor: bmi >= 25 ? '#F59E0B' : '#2DD4BF',
                                         boxShadow: `0 0 15px ${bmi >= 25 ? 'rgba(245,158,11,0.15)' : 'rgba(45,212,191,0.15)'}`
@@ -148,7 +148,7 @@ const MetamorfosisCalculator = () => {
                                 >
                                     <span className="text-[10px] md:text-xs font-bold text-gray-400 tracking-widest uppercase mb-1 text-center leading-tight">Masa Corporal (IMC)</span>
                                     <span
-                                        className="text-3xl md:text-4xl font-mono font-black transition-colors duration-300"
+                                        className="text-2xl md:text-3xl font-mono font-black transition-colors duration-300"
                                         style={{ color: bmi >= 25 ? '#F59E0B' : '#FFFFFF' }}
                                     >
                                         {bmi.toFixed(1)}
@@ -157,7 +157,7 @@ const MetamorfosisCalculator = () => {
 
                                 {/* ICC Card */}
                                 <div
-                                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-[#0B1829] border shadow-lg transition-colors duration-300"
+                                    className="flex flex-col items-center justify-center p-3 rounded-2xl bg-[#0B1829] border shadow-lg transition-colors duration-300"
                                     style={{
                                         borderColor: isHighRisk ? '#F59E0B' : '#2DD4BF',
                                         boxShadow: `0 0 15px ${isHighRisk ? 'rgba(245,158,11,0.15)' : 'rgba(45,212,191,0.15)'}`
@@ -165,7 +165,7 @@ const MetamorfosisCalculator = () => {
                                 >
                                     <span className="text-[10px] md:text-xs font-bold text-gray-400 tracking-widest uppercase mb-1 text-center leading-tight">Cintura-Cadera (ICC)</span>
                                     <span
-                                        className="text-3xl md:text-4xl font-mono font-black transition-colors duration-300"
+                                        className="text-2xl md:text-3xl font-mono font-black transition-colors duration-300"
                                         style={{ color: isHighRisk ? '#F59E0B' : '#FFFFFF' }}
                                     >
                                         {whr.toFixed(2)}
