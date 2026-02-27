@@ -61,6 +61,8 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
 
             {/* Silueta Base (Holographic Wireframe) */}
             <motion.svg
+                width="100%"
+                height="100%"
                 viewBox="0 0 200 400"
                 preserveAspectRatio="xMidYMid meet"
                 className="relative z-10 w-full h-full"
@@ -73,20 +75,22 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                 {/* Cabeza (Proporcionada) */}
                 <motion.circle
                     cx="100" cy="40" r="22"
-                    fill="transparent"
+                    fill={targetColor}
+                    fillOpacity={0.05}
                     stroke={targetColor}
-                    strokeWidth="1.5"
-                    animate={{ stroke: targetColor }}
+                    strokeWidth="0.5"
+                    animate={{ stroke: targetColor, fill: targetColor }}
                     transition={{ type: "spring", stiffness: 100, damping: 20 }}
                 />
 
                 {/* Torso Mutante (Wireframe Estético) */}
                 <motion.path
                     d={morphingPath}
-                    fill="transparent"
+                    fill={targetColor}
+                    fillOpacity={0.05}
                     stroke={targetColor}
-                    strokeWidth="1.5"
-                    animate={{ stroke: targetColor }}
+                    strokeWidth="0.5"
+                    animate={{ stroke: targetColor, fill: targetColor }}
                     transition={{ type: "spring", stiffness: 80, damping: 15 }}
                 />
 
@@ -96,7 +100,7 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                     style={{ filter: `drop-shadow(0 0 8px ${targetColor})` }}
                     animate={{
                         y: [30, 380, 30],
-                        opacity: [0, 0.8, 0],
+                        opacity: [0, 0.6, 0], // Semi-transparent effect
                         fill: targetColor
                     }}
                     transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
