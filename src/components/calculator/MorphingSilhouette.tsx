@@ -12,8 +12,8 @@ interface MorphingSilhouetteProps {
 const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, height, gender, whr }) => {
     // 1. Metabolic Risk Logic
     const isHighVisceralFat = whr > (gender === 'male' ? 0.90 : 0.85);
-    const targetColor = isHighVisceralFat ? '#F59E0B' : '#2DD4BF';
-    const auraColor = isHighVisceralFat ? 'rgba(245, 158, 11, 0.4)' : 'rgba(45, 212, 191, 0.15)';
+    const targetColor = isHighVisceralFat ? '#ff9f1c' : '#00f5d4';
+    const auraColor = isHighVisceralFat ? 'rgba(255, 159, 28, 0.4)' : 'rgba(0, 245, 212, 0.15)';
 
     // 2. Physical Proportion (Y Axis)
     const baseHeight = 175;
@@ -63,7 +63,7 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                 preserveAspectRatio="xMidYMid meet"
                 className="relative z-10 w-full h-full"
                 animate={{
-                    filter: `drop-shadow(0 0 15px ${isHighVisceralFat ? 'rgba(245, 158, 11, 0.5)' : 'rgba(45, 212, 191, 0.5)'})`
+                    filter: `drop-shadow(0 0 15px ${isHighVisceralFat ? 'rgba(255, 159, 28, 0.5)' : 'rgba(0, 245, 212, 0.5)'})`
                 }}
                 transition={{ type: "spring", stiffness: 80, damping: 15 }}
             >
@@ -72,23 +72,23 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                     <radialGradient id="body-glow" cx="50%" cy="50%" r="50%">
                         <stop offset="0%" stopColor={targetColor} stopOpacity={0.3} />
                         <stop offset="60%" stopColor={targetColor} stopOpacity={0.1} />
-                        <stop offset="95%" stopColor="#0B1120" stopOpacity={0.8} />
-                        <stop offset="100%" stopColor="#030712" stopOpacity={1} />
+                        <stop offset="95%" stopColor="#0c1f31" stopOpacity={0.8} />
+                        <stop offset="100%" stopColor="#0b1e2d" stopOpacity={1} />
                     </radialGradient>
 
                     {/* 3D Geometric Mesh Texture */}
                     <pattern id="mesh-pattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
-                        <path d="M 8 0 L 0 8 M 0 0 L 8 8" fill="none" stroke="rgba(45,212,191,0.25)" strokeWidth="0.5" />
+                        <path d="M 8 0 L 0 8 M 0 0 L 8 8" fill="none" stroke="rgba(0,245,212,0.25)" strokeWidth="0.5" />
                     </pattern>
                 </defs>
 
                 {/* Background Sonar / Targeting Grid */}
                 <g className="opacity-30">
-                    <circle cx="100" cy="190" r="140" fill="none" stroke="#2DD4BF" strokeWidth="0.5" />
-                    <circle cx="100" cy="190" r="100" fill="none" stroke="#2DD4BF" strokeWidth="0.5" />
-                    <circle cx="100" cy="190" r="60" fill="none" stroke="#2DD4BF" strokeWidth="0.5" />
-                    <line x1="0" y1="190" x2="200" y2="190" stroke="#2DD4BF" strokeWidth="0.5" />
-                    <line x1="100" y1="0" x2="100" y2="400" stroke="#2DD4BF" strokeWidth="0.5" />
+                    <circle cx="100" cy="190" r="140" fill="none" stroke="#00f5d4" strokeWidth="0.5" />
+                    <circle cx="100" cy="190" r="100" fill="none" stroke="#00f5d4" strokeWidth="0.5" />
+                    <circle cx="100" cy="190" r="60" fill="none" stroke="#00f5d4" strokeWidth="0.5" />
+                    <line x1="0" y1="190" x2="200" y2="190" stroke="#00f5d4" strokeWidth="0.5" />
+                    <line x1="100" y1="0" x2="100" y2="400" stroke="#00f5d4" strokeWidth="0.5" />
                 </g>
 
                 {/* Scaled Avatar Group */}
@@ -126,41 +126,43 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                     />
 
                     {/* Anatomical Glowing Joints (To simulate mapped 3D data points) */}
+                    {/* Orange glowing nodes perfectly mapped as per prompt on Shoulders, Chest (Sternum), Abdomen, Knees, Wrists. Waist is Neo Cyan. */}
                     <g>
                         {/* Head - Forehead (Cyan) */}
-                        <circle cx="100" cy="25" r="2.5" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
+                        <circle cx="100" cy="25" r="2.5" fill="#00f5d4" style={{ filter: 'drop-shadow(0 0 4px #00f5d4)' }} />
 
                         {/* Neck Base (Orange) */}
-                        <circle cx="100" cy="65" r="2.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 6px #F59E0B)' }} />
+                        <circle cx="100" cy="65" r="2.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 6px #ff9f1c)' }} />
 
-                        {/* Shoulders (Orange/Gold) */}
-                        <circle cx="65" cy="80" r="3.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 8px #F59E0B)' }} />
-                        <circle cx="135" cy="80" r="3.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 8px #F59E0B)' }} />
+                        {/* Shoulders (Orange) */}
+                        <circle cx="65" cy="80" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} />
+                        <circle cx="135" cy="80" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} />
 
-                        {/* Sternum (Cyan) */}
-                        <circle cx="100" cy="115" r="2.5" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
+                        {/* Chest/Sternum (Orange per spec) */}
+                        <circle cx="100" cy="115" r="3" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 6px #ff9f1c)' }} />
 
-                        {/* Belly Button / Waist Center (Cyan) */}
-                        <circle cx="100" cy="170" r="2.5" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
+                        {/* Abdomen (Orange per spec) */}
+                        <circle cx="100" cy="190" r="3" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 6px #ff9f1c)' }} />
 
-                        {/* Waist Edges (Orange) */}
-                        <motion.circle cx={100 - (wFactor / 1.5)} cy="170" r="3" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 6px #F59E0B)' }} animate={{ cx: 100 - (wFactor / 1.5) }} />
-                        <motion.circle cx={100 + (wFactor / 1.5)} cy="170" r="3" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 6px #F59E0B)' }} animate={{ cx: 100 + (wFactor / 1.5) }} />
+                        {/* Waist Edges and Center (Neon Cyan ring) */}
+                        <motion.ellipse cx="100" cy="170" rx={wFactor} ry="6" fill="transparent" stroke="#00f5d4" strokeWidth="2" style={{ filter: 'drop-shadow(0 0 6px #00f5d4)' }} />
+                        <motion.circle cx={100 - wFactor} cy="170" r="2.5" fill="#00f5d4" style={{ filter: 'drop-shadow(0 0 6px #00f5d4)' }} animate={{ cx: 100 - wFactor }} />
+                        <motion.circle cx={100 + wFactor} cy="170" r="2.5" fill="#00f5d4" style={{ filter: 'drop-shadow(0 0 6px #00f5d4)' }} animate={{ cx: 100 + wFactor }} />
 
                         {/* Hands / Wrists (Orange) */}
-                        <motion.circle cx={100 - (hFactor * 1.1)} cy="260" r="2.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 6px #F59E0B)' }} animate={{ cx: 100 - (hFactor * 1.1) }} />
-                        <motion.circle cx={100 + (hFactor * 1.1)} cy="260" r="2.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 6px #F59E0B)' }} animate={{ cx: 100 + (hFactor * 1.1) }} />
+                        <motion.circle cx={100 - (hFactor * 1.1)} cy="260" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} animate={{ cx: 100 - (hFactor * 1.1) }} />
+                        <motion.circle cx={100 + (hFactor * 1.1)} cy="260" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} animate={{ cx: 100 + (hFactor * 1.1) }} />
 
                         {/* Hips (Orange/Gold) */}
-                        <motion.circle cx={100 - (hFactor * 0.7)} cy="225" r="3.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 8px #F59E0B)' }} animate={{ cx: 100 - (hFactor * 0.7) }} />
-                        <motion.circle cx={100 + (hFactor * 0.7)} cy="225" r="3.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 8px #F59E0B)' }} animate={{ cx: 100 + (hFactor * 0.7) }} />
+                        <motion.circle cx={100 - (hFactor * 0.7)} cy="225" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} animate={{ cx: 100 - (hFactor * 0.7) }} />
+                        <motion.circle cx={100 + (hFactor * 0.7)} cy="225" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} animate={{ cx: 100 + (hFactor * 0.7) }} />
 
                         {/* Pelvic Center (Cyan) */}
-                        <motion.circle cx="100" cy="225" r="2.5" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
+                        <motion.circle cx="100" cy="225" r="2.5" fill="#00f5d4" style={{ filter: 'drop-shadow(0 0 4px #00f5d4)' }} />
 
                         {/* Knees / Lower limbs (Orange/Gold) */}
-                        <circle cx="85" cy="350" r="3" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 6px #F59E0B)' }} />
-                        <circle cx="115" cy="350" r="3" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 6px #F59E0B)' }} />
+                        <circle cx="85" cy="350" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} />
+                        <circle cx="115" cy="350" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} />
                     </g>
                 </motion.g>
 
@@ -173,7 +175,11 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                         opacity: [0, 0.7, 0],
                         fill: targetColor
                     }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                    transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "linear"
+                    }}
                 />
             </motion.svg>
         </div>

@@ -32,16 +32,16 @@ export const SliderField: React.FC<SliderFieldProps> = ({ label, value, min, max
                 />
 
                 {/* Custom Track */}
-                <div className="absolute w-full h-[2px] bg-slate-800 rounded-full overflow-hidden">
+                <div className="absolute w-full h-[2px] bg-[#07131f] rounded-full overflow-hidden">
                     <div
-                        className="h-full bg-teal-500 transition-all duration-150 ease-out"
+                        className="h-full bg-[#00f5d4] transition-all duration-150 ease-out"
                         style={{ width: `${((value - min) / (max - min)) * 100}%` }}
                     />
                 </div>
 
                 {/* Custom Thumb */}
                 <div
-                    className="absolute w-3 h-3 bg-teal-400 rounded-full shadow-[0_0_8px_rgba(45,212,191,0.8)] pointer-events-none transition-all duration-150 ease-out"
+                    className="absolute w-3 h-3 bg-[#00f5d4] rounded-full shadow-[0_0_12px_rgba(0,245,212,1)] pointer-events-none transition-all duration-150 ease-out"
                     style={{ left: `calc(${((value - min) / (max - min)) * 100}% - 6px)` }}
                 />
             </div>
@@ -68,15 +68,15 @@ interface ControlPanelProps {
 const ControlPanel: React.FC<ControlPanelProps> = (props) => {
     return (
         <div className="w-full flex flex-col z-10 relative">
-            <h2 className="text-lg md:text-xl font-black uppercase tracking-widest text-[#2DD4BF] mb-4 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)]">BIOMETRÍA</h2>
+            <h2 className="text-lg md:text-xl font-black uppercase tracking-widest text-[#00f5d4] mb-4 drop-shadow-[0_0_8px_rgba(0,245,212,0.5)]">BIOMETRÍA</h2>
 
             <div className="flex gap-4 mb-4 md:mb-6">
                 <button
-                    className={`flex-1 py-2 rounded-xl border ${props.gender === 'male' ? 'bg-[#0F172A] border-[#2DD4BF] text-[#2DD4BF]' : 'bg-transparent border-[#1E293B] text-gray-500'} uppercase text-sm font-bold tracking-widest transition-all`}
+                    className={`flex-1 py-2 rounded-xl border ${props.gender === 'male' ? 'bg-gradient-to-r from-[#00ebcb] to-[#00f5d4] border-transparent text-[#0c1f31] shadow-[0_0_15px_rgba(0,245,212,0.4)]' : 'bg-[#050c14] border-gray-700 text-gray-500'} uppercase text-sm font-bold tracking-widest transition-all duration-300`}
                     onClick={() => props.setGender('male')}
                 >MASCULINO</button>
                 <button
-                    className={`flex-1 py-2 rounded-xl border ${props.gender === 'female' ? 'bg-[#0F172A] border-[#2DD4BF] text-[#2DD4BF]' : 'bg-transparent border-[#1E293B] text-gray-500'} uppercase text-sm font-bold tracking-widest transition-all`}
+                    className={`flex-1 py-2 rounded-xl border ${props.gender === 'female' ? 'bg-gradient-to-r from-[#00ebcb] to-[#00f5d4] border-transparent text-[#0c1f31] shadow-[0_0_15px_rgba(0,245,212,0.4)]' : 'bg-[#050c14] border-gray-700 text-gray-500'} uppercase text-sm font-bold tracking-widest transition-all duration-300`}
                     onClick={() => props.setGender('female')}
                 >FEMENINO</button>
             </div>

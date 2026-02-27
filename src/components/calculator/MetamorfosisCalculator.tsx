@@ -80,16 +80,16 @@ const MetamorfosisCalculator = () => {
     };
 
     return (
-        <div className="fixed top-[80px] left-0 right-0 bottom-0 overflow-hidden bg-[#030712] text-white p-2 md:p-4 lg:p-6 font-sans flex items-center justify-center">
+        <div className="fixed top-[80px] left-0 right-0 bottom-0 overflow-hidden bg-[radial-gradient(circle_at_30%_30%,_#0b1e2d_0%,_#07131f_60%,_#050c14_100%)] text-white p-[40px] font-sans flex items-center justify-center">
 
             {/* Inner Cockpit Container - Pure dark UI */}
             <div className="w-full h-full flex overflow-hidden">
 
                 {/* exactly proportional grid adapting to mobile sizes gracefully */}
-                <div className="w-full h-full grid grid-cols-1 grid-rows-[minmax(200px,1fr)_auto] md:grid-cols-[1.1fr_1fr] md:grid-rows-1 items-stretch gap-4 md:gap-6 z-10 w-full">
+                <div className="w-full h-full grid grid-cols-1 grid-rows-[minmax(200px,1fr)_auto] md:grid-cols-[1.1fr_0.9fr] md:grid-rows-1 items-stretch gap-[56px] z-10">
 
                     {/* Visual Reactive Avatar / Left Panel */}
-                    <div className="w-full h-full flex flex-col items-center justify-center relative order-1 md:order-1 border-2 border-[#2DD4BF] rounded-[32px] overflow-hidden shadow-[0_0_40px_rgba(45,212,191,0.2)] bg-[#0B1120]/60 backdrop-blur-3xl">
+                    <div className="w-full h-full flex flex-col items-center justify-center relative order-1 md:order-1 rounded-[28px] overflow-hidden shadow-[0_0_20px_rgba(0,245,212,0.1)] bg-[#0c1f31] p-[32px]">
 
                         {/* Background Sonar / Targeting Grid */}
                         <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none opacity-40">
@@ -119,10 +119,10 @@ const MetamorfosisCalculator = () => {
                     </div>
 
                     {/* Sliders Data & Gauges / Right Panel */}
-                    <div className="w-full h-full flex flex-col justify-between order-2 md:order-2 overflow-hidden gap-4 md:gap-6 relative min-h-0">
+                    <div className="w-full h-full flex flex-col justify-between order-2 md:order-2 overflow-hidden gap-[32px] relative min-h-0">
 
                         {/* Unified Dark Data Container */}
-                        <div className="w-full flex-1 flex flex-col bg-[#0B1120] rounded-[24px] md:rounded-[32px] border border-[#1E293B] shadow-2xl p-4 md:p-6 overflow-hidden min-h-0">
+                        <div className="w-full flex-1 flex flex-col bg-[#0c1f31] rounded-[24px] border border-[rgba(0,245,212,0.25)] shadow-[0_0_20px_rgba(0,245,212,0.1)] p-[32px] overflow-hidden min-h-0">
                             <div className="flex-shrink-0">
                                 <ControlPanel
                                     gender={gender} setGender={setGender}
@@ -158,9 +158,9 @@ const MetamorfosisCalculator = () => {
                             {/* Neon CTA Button */}
                             <button
                                 onClick={() => alert('Generando Diagnóstico...')}
-                                className="w-full bg-[#2DD4BF] hover:bg-teal-400 text-[#030712] text-sm md:text-lg font-black uppercase tracking-widest py-3 md:py-4 rounded-[16px] md:rounded-[20px] transition-all hover:scale-[1.02] relative shadow-[0_0_20px_rgba(45,212,191,0.3)] hover:shadow-[0_0_30px_rgba(45,212,191,0.6)]"
+                                className="w-full bg-[#00f5d4] hover:bg-[#00e3c5] text-[#0c1f31] text-sm md:text-lg font-black uppercase tracking-widest h-[64px] rounded-[16px] transition-all hover:scale-[1.02] relative shadow-[0_0_20px_rgba(0,245,212,0.3)] hover:shadow-[0_0_30px_rgba(0,245,212,0.6)]"
                             >
-                                <motion.div className="absolute inset-0 bg-[#2DD4BF] opacity-20 rounded-[16px] md:rounded-[20px]" animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} />
+                                <motion.div className="absolute inset-0 bg-[#00f5d4] opacity-20 rounded-[16px]" animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} />
                                 VER MI DIAGNÓSTICO INICIAL
                             </button>
 
@@ -168,12 +168,12 @@ const MetamorfosisCalculator = () => {
                             <form onSubmit={handleCheckout} className="flex gap-3 md:gap-4">
 
                                 {/* ePayco Red Bold Button */}
-                                <button type="submit" className="flex-1 bg-[#E02A2A] hover:bg-red-500 text-white font-black py-3 md:py-4 rounded-[16px] md:rounded-[20px] transition-all hover:scale-[1.02] shadow-lg flex justify-center items-center border border-red-500/50 hover:shadow-[0_0_15px_rgba(224,42,42,0.4)]">
+                                <button type="submit" className="flex-1 bg-[#E02A2A] hover:bg-red-500 text-white font-black h-[56px] rounded-[16px] transition-all hover:scale-[1.02] shadow-lg flex justify-center items-center border border-red-500/50 hover:shadow-[0_0_15px_rgba(224,42,42,0.4)]">
                                     <span className="text-xl md:text-2xl italic tracking-tighter">ePayco</span>
                                 </button>
 
                                 {/* GPay / Apple Pay RESTYLED to Black/Gray */}
-                                <div className="flex-1 bg-black text-white border border-[#1E293B] hover:border-gray-600 rounded-[16px] md:rounded-[20px] flex justify-center items-center gap-4 md:gap-6 shadow-lg cursor-pointer hover:bg-gray-900 transition-all font-black hover:scale-[1.02]">
+                                <div className="flex-1 bg-black text-white border border-[#1E293B] hover:border-gray-600 rounded-[16px] flex justify-center items-center gap-4 md:gap-6 shadow-lg cursor-pointer hover:bg-gray-900 transition-all font-black hover:scale-[1.02]">
                                     <svg className="h-5 md:h-6" viewBox="0 0 50 20" fill="currentColor">
                                         <text x="0" y="15" fontSize="16" fontWeight="bold">G Pay</text>
                                     </svg>

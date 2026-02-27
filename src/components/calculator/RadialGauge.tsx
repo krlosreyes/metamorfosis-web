@@ -14,7 +14,7 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
     min,
     max,
     label,
-    targetColor = '#2DD4BF'
+    targetColor = '#00f5d4'
 }) => {
     const isWHR = max <= 2;
     // Math for Gauge
@@ -64,9 +64,9 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
             <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size * 0.85}`} className="relative z-10 drop-shadow-2xl overflow-visible">
                 <defs>
                     <linearGradient id={`gradient-arc-${label}`} x1="0%" y1="100%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#2DD4BF" />
-                        <stop offset="50%" stopColor="#2DD4BF" stopOpacity={0.5} />
-                        <stop offset="100%" stopColor="#F59E0B" />
+                        <stop offset="0%" stopColor="#00f5d4" />
+                        <stop offset="50%" stopColor="#00f5d4" stopOpacity={0.5} />
+                        <stop offset="100%" stopColor="#ff9f1c" />
                     </linearGradient>
                 </defs>
 
@@ -134,22 +134,22 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
                     <line
                         x1={center} y1={center}
                         x2={center} y2={center - radius + 4}
-                        stroke="#2DD4BF"
+                        stroke="#00f5d4"
                         strokeWidth="3"
                         strokeLinecap="round"
-                        style={{ filter: `drop-shadow(0 0 6px #2DD4BF)` }}
+                        style={{ filter: `drop-shadow(0 0 6px #00f5d4)` }}
                     />
                 </motion.g>
 
                 {/* Central glowing pivot base (luxury feel) */}
-                <circle cx={center} cy={center} r="10" fill="#0B1120" stroke="#2DD4BF" strokeWidth="3" style={{ filter: `drop-shadow(0 0 8px #2DD4BF)` }} />
-                <circle cx={center} cy={center} r="4" fill="#2DD4BF" />
+                <circle cx={center} cy={center} r="10" fill="#0B1120" stroke="#00f5d4" strokeWidth="3" style={{ filter: `drop-shadow(0 0 8px #00f5d4)` }} />
+                <circle cx={center} cy={center} r="4" fill="#00f5d4" />
 
                 {/* Central Value Readout */}
                 <text x={center} y={center + 45} textAnchor="middle" fill="#FFFFFF" fontSize="26" fontWeight="900" style={{ filter: `drop-shadow(0 2px 4px rgba(0,0,0,0.5))` }}>
                     {isWHR ? clampedValue.toFixed(2) : Math.round(clampedValue)}
                 </text>
-                <text x={center} y={center + 60} textAnchor="middle" fill="#2DD4BF" fontSize="12" fontWeight="bold" letterSpacing="1" className="uppercase">
+                <text x={center} y={center + 60} textAnchor="middle" fill="#00f5d4" fontSize="12" fontWeight="bold" letterSpacing="1" className="uppercase">
                     {label}
                 </text>
             </svg>
