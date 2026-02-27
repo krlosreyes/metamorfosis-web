@@ -9,281 +9,301 @@ interface MorphingSilhouetteProps {
     whr: number;
 }
 
-// Organic spline generator: Catmull-Rom to Cubic Bezier
-const catmullRom2bezier = (points: number[][], tension = 1) => {
-    if (points.length < 3) return "";
-    let d = `M ${points[0][0]} ${points[0][1]} `;
-    for (let i = 0; i < points.length - 1; i++) {
-        const p0 = points[Math.max(0, i - 1)];
-        const p1 = points[i];
-        const p2 = points[i + 1];
-        const p3 = points[Math.min(points.length - 1, i + 2)];
-
+// Catmull-Rom → Cubic Bezier spline
+const catmullRom2bezier = (pts: number[][], tension = 1): string => {
+    if (pts.length < 3) return '';
+    let d = `M ${pts[0][0]} ${pts[0][1]} `;
+    for (let i = 0; i < pts.length - 1; i++) {
+        const p0 = pts[Math.max(0, i - 1)];
+        const p1 = pts[i];
+        const p2 = pts[i + 1];
+        const p3 = pts[Math.min(pts.length - 1, i + 2)];
         const cp1x = p1[0] + (p2[0] - p0[0]) / 6 * tension;
         const cp1y = p1[1] + (p2[1] - p0[1]) / 6 * tension;
-
         const cp2x = p2[0] - (p3[0] - p1[0]) / 6 * tension;
         const cp2y = p2[1] - (p3[1] - p1[1]) / 6 * tension;
-
         d += `C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2[0]} ${p2[1]} `;
     }
     return d;
 };
 
 const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, height, gender, whr }) => {
-    // 1. Metabolic Risk Logic
-    const isHighVisceralFat = whr > (gender === 'male' ? 0.90 : 0.85);
-    const targetColor = isHighVisceralFat ? '#ff9f1c' : '#00f5d4';
-    const auraColor = isHighVisceralFat ? 'rgba(255, 159, 28, 0.4)' : 'rgba(0, 245, 212, 0.15)';
+    // ── 1. Metabolic Risk ─────────────────────────────────────────────────
+    const isHighRisk = whr > (gender === 'male' ? 0.90 : 0.85);
+    const targetColor = isHighRisk ? '#F59E0B' : '#2DD4BF';
+    const auraColor = isHighRisk ? 'rgba(245,158,11,0.3)' : 'rgba(45,212,191,0.12)';
 
-    // 2. Physical Proportion (Y Axis)
-    const baseHeight = 175;
-    const heightScale = Math.max(0.85, Math.min(1.15, height / baseHeight));
+    // ── 2. Proportional Scaling ───────────────────────────────────────────
+    const heightScale = Math.max(0.85, Math.min(1.15, height / 170));
 
-    // 3. Endocrine Deformation Math (X Axis)
-    const wOffset = (waist * 0.45) - 27;     // Baseline waist 60
-    const hOffset = (hip * 0.45) - 40.5;     // Baseline hip 90
+    // ── 3. Parametric Deformation  ────────────────────────────────────────
+    // Calibrated: baseline waist=70, hip=95
+    const wOff = (waist - 70) * 0.35;   // ±cm from baseline
+    const hOff = (hip - 95) * 0.38;
 
-    // Prevent arms from clipping torso
-    const bodySpread = Math.max(0, wOffset, hOffset);
+    const maleShift = gender === 'male' ? 6 : 0; // broader shoulders for male
 
-    // 4. Mathematical Anatomy Engine (Torso/Legs Only Configuration based on User Request)
-    const shoulderShift = gender === 'male' ? 5 : 0;
+    // ── 4. RIGHT-HALF Anatomy (viewBox: center = x=100) ───────────────────
+    // Arms hang naturally at ~15° from body (A-pose)
+    // X values: distance from center line (0 = center)
+    const pts: number[][] = [
+        // HEAD
+        [0, 10],   // crown center
+        [9, 12],   // top-right skull
+        [14, 22],   // temple
+        [13, 33],   // cheekbone
+        [9, 43],   // jaw
+        [7, 50],   // chin
 
-    const pointsRight = [
-        [0, 15],       // 0: Head Top
-        [10, 16],      // 1: Top Right
-        [16, 25],      // 2: Head Upper Side
-        [16, 35],      // 3: Cheek
-        [12, 45],      // 4: Jaw
-        [10, 52],      // 5: Neck
-        [18, 55],      // 6: Traps
-        [32, 62],      // 7: Upper Shoulder
-        [40 + shoulderShift, 70],  // 8: Outer Shoulder
-        // -- Arms Removed --
-        [35 + shoulderShift * 0.5, 90], // 9: Outer Chest Curve
-        [32 + wOffset * 0.2, 110],            // 10: Upper Lat / Ribs
-        [28 + wOffset * 0.5, 135],            // 11: Mid Torso
-        [22 + wOffset, 165],                // 12: Waist
-        [28 + wOffset * 0.3 + hOffset * 0.3, 190], // 13: Upper Hip
-        [38 + hOffset, 220],                // 14: Hip / Outer Thigh High
-        [36 + hOffset * 0.8, 260],            // 15: Outer Thigh Mid
-        [24 + hOffset * 0.2, 300],            // 16: Outer Knee
-        [27 + hOffset * 0.1, 340],            // 17: Outer Calf
-        [18, 380],                          // 18: Outer Ankle
-        [22, 390],                          // 19: Outer Foot
-        [8, 395],                           // 20: Foot Bottom
-        [0, 385],                           // 21: Inner Foot (Touch center)
-        [0, 375],                           // 22: Inner Ankle (Touch center)
-        [0, 340],                           // 23: Inner Calf (Touch center)
-        [0, 300],                           // 24: Inner Knee (Touch center)
-        [0, 260],                           // 25: Inner Thigh Mid (Touch center)
-        [0, 230],                           // 26: Inner Thigh High (Touch center)
-        [0, 210],                           // 27: Crotch curve (Touch center)
-        [0, 205]                            // 28: Center Crotch
+        // NECK & SHOULDER
+        [7, 56],   // neck right
+        [16, 60],   // neck base
+        [28 + maleShift, 65],   // medial shoulder
+        [40 + maleShift, 72],   // deltoid peak
+
+        // ARM OUTER (A-pose — arm angled ~15° outward)
+        [45 + maleShift, 92],   // bicep outer high
+        [48 + maleShift, 118],  // bicep outer low / elbow
+        [47 + maleShift + wOff * 0.15, 148], // forearm outer high
+        [49 + maleShift + wOff * 0.2, 178], // forearm outer low
+        [47 + maleShift + wOff * 0.25, 204], // wrist outer
+        [50 + maleShift + wOff * 0.25, 218], // hand outer knuckle
+        [46 + maleShift + wOff * 0.25, 232], // fingertip
+
+        // ARM INNER (going back up)
+        [42 + maleShift + wOff * 0.25, 230], // inner fingertip
+        [40 + maleShift + wOff * 0.25, 216], // inner hand
+        [38 + maleShift + wOff * 0.2, 202], // inner wrist
+        [37 + maleShift + wOff * 0.15, 175], // inner forearm
+        [35 + maleShift, 145],  // inner elbow
+        [31 + maleShift, 116],  // inner bicep
+        [28 + maleShift, 98],   // armpit
+
+        // TORSO
+        [24, 118],   // pec/lat curve
+        [22 + wOff * 0.2, 142], // rib cage
+        [18 + wOff * 0.6, 168], // waist indent
+        [22 + wOff * 0.4 + hOff * 0.3, 192], // iliac crest
+        [34 + hOff, 220],        // hip max width (trochanter)
+
+        // LEG OUTER
+        [32 + hOff * 0.85, 258], // upper outer thigh
+        [26 + hOff * 0.4, 298], // knee outer
+        [20 + hOff * 0.1, 336], // calf peak
+        [15, 372], // ankle outer
+        [18, 388], // heel outer
+        [8, 396], // toe
+
+        // LEG INNER (natural gap — legs are NOT fused)
+        [3, 390], // inner toe
+        [4, 378], // inner heel
+        [8, 366], // inner ankle
+        [12, 330], // inner calf
+        [10 + hOff * 0.15, 296], // inner knee
+        [14 + hOff * 0.4, 258], // inner thigh mid
+        [8, 228], // inner thigh high
+        [3, 212], // crotch curve
+        [0, 205], // center crotch
     ];
 
-    // 5. Symmetric Mirroring Engine
-    const rightSide = pointsRight.map(p => [100 + p[0], p[1]]);
-    const leftSide = pointsRight.slice().reverse().map(p => [100 - p[0], p[1]]);
-    const fullPoints = [...rightSide, ...leftSide];
+    // ── 5. Symmetric Mirror ────────────────────────────────────────────────
+    const right = pts.map(p => [100 + p[0], p[1]]);
+    const left = pts.slice().reverse().map(p => [100 - p[0], p[1]]);
+    const full = [...right, ...left];
 
-    // 6. Generate the ultra-smooth hyper-realistic continuous path
-    const morphingPath = catmullRom2bezier(fullPoints, 1) + " Z";
+    const morphPath = catmullRom2bezier(full, 1) + ' Z';
 
-    // Dynamic Nodes coordinate tracking
-    const rightShoulderX = 100 + 40 + shoulderShift;
-    const leftShoulderX = 100 - (40 + shoulderShift);
-    const rightKneeX = 100 + 24 + hOffset * 0.2;
-    const leftKneeX = 100 - (24 + hOffset * 0.2);
-    const rightHipX = 100 + 38 + hOffset;
-    const leftHipX = 100 - (38 + hOffset);
-    const waistRadius = Math.max(10, 22 + wOffset);
+    // ── 6. Dynamic Joint Positions ────────────────────────────────────────
+    const rShoulderX = 100 + 40 + maleShift;
+    const lShoulderX = 100 - (40 + maleShift);
+    const rHipX = 100 + 34 + hOff;
+    const lHipX = 100 - (34 + hOff);
+    const rKneeX = 100 + 14 + hOff * 0.1;
+    const lKneeX = 100 - (14 + hOff * 0.1);
+    const waistRx = Math.max(12, 18 + wOff);
+
+    const spring = { type: 'spring' as const, stiffness: 80, damping: 16 };
 
     return (
         <div className="relative w-full h-full min-h-0 flex items-center justify-center pointer-events-none overflow-hidden">
 
-            {/* Metabolic Aura */}
+            {/* Metabolic Ambient Aura */}
             <motion.div
-                className="absolute w-64 h-64 rounded-full blur-3xl opacity-30"
-                animate={{
-                    backgroundColor: auraColor,
-                    scale: [1, 1.15, 1],
-                }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute w-56 h-56 rounded-full blur-3xl opacity-20"
+                animate={{ backgroundColor: auraColor, scale: [1, 1.12, 1] }}
+                transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
             />
 
-            {/* Holographic Wireframe SVG */}
+            {/* Holographic SVG */}
             <motion.svg
-                width="100%"
-                height="100%"
-                viewBox="0 0 200 400"
+                width="100%" height="100%"
+                viewBox="0 0 200 410"
                 preserveAspectRatio="xMidYMid meet"
                 className="relative z-10 w-full h-full"
-                animate={{
-                    filter: `drop-shadow(0 0 15px ${isHighVisceralFat ? 'rgba(255, 159, 28, 0.5)' : 'rgba(0, 245, 212, 0.5)'})`
-                }}
-                transition={{ type: "spring", stiffness: 80, damping: 15 }}
+                animate={{ filter: `drop-shadow(0 0 14px ${isHighRisk ? 'rgba(245,158,11,0.45)' : 'rgba(45,212,191,0.45)'})` }}
+                transition={spring}
             >
                 <defs>
-                    <radialGradient id="body-glow" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stopColor={targetColor} stopOpacity={0.3} />
-                        <stop offset="60%" stopColor={targetColor} stopOpacity={0.1} />
-                        <stop offset="95%" stopColor="#0c1f31" stopOpacity={0.8} />
-                        <stop offset="100%" stopColor="#0b1e2d" stopOpacity={1} />
+                    {/* Hologram body radial gradient (translucent center, bright edge) */}
+                    <radialGradient id="ms-body-fill" cx="50%" cy="45%" r="55%">
+                        <stop offset="0%" stopColor={targetColor} stopOpacity="0.06" />
+                        <stop offset="70%" stopColor={targetColor} stopOpacity="0.12" />
+                        <stop offset="100%" stopColor={targetColor} stopOpacity="0.22" />
                     </radialGradient>
 
-                    <pattern id="mesh-pattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
-                        <path d="M 8 0 L 0 8 M 0 0 L 8 8" fill="none" stroke="rgba(0,245,212,0.25)" strokeWidth="0.5" />
+                    {/* Diagonal mesh pattern */}
+                    <pattern id="ms-mesh" x="0" y="0" width="7" height="7" patternUnits="userSpaceOnUse">
+                        <path d="M 7 0 L 0 7 M 0 0 L 7 7" fill="none" stroke={targetColor} strokeWidth="0.35" opacity="0.35" />
                     </pattern>
 
-                    {/* SVG Implementation of WebGL Fragment Shader */}
-                    <filter id="hologram-shader" x="-50%" y="-50%" width="200%" height="200%">
-                        {/* 1. Procedural Noise Modulation (fract(sin(dot...))) */}
-                        <feTurbulence type="fractalNoise" baseFrequency="0.1" numOctaves="2" result="noise" />
-                        <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0   0 0.96 0 0 0   0 0.83 0 0 0   0 0 0 0.05 0" result="coloredNoise" />
-
-                        {/* 2. Base Hologram Soft Translucency (baseColor * 0.4) */}
-                        <feComponentTransfer in="SourceGraphic" result="baseTranslucent">
-                            <feFuncA type="linear" slope="0.4" />
-                        </feComponentTransfer>
-
-                        {/* 3. Fresnel Edge Glow */}
-                        <feMorphology in="SourceAlpha" operator="erode" radius="0.75" result="eroded" />
-                        <feComposite in="SourceAlpha" in2="eroded" operator="out" result="fresnelEdgeAlpha" />
-                        <feComposite in="SourceGraphic" in2="fresnelEdgeAlpha" operator="in" result="fresnelEdge" />
-                        <feGaussianBlur in="fresnelEdge" stdDeviation="1.5" result="fresnelGlow" />
-
-                        {/* 4. Soft Volumetric Bloom */}
-                        <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="bloomModerate" />
-                        <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="bloomHeavy" />
-
-                        {/* 5. Composite Final Output */}
-                        <feMerge>
-                            <feMergeNode in="bloomHeavy" />
-                            <feMergeNode in="bloomModerate" />
-                            <feMergeNode in="coloredNoise" />
-                            <feMergeNode in="baseTranslucent" />
-                            <feMergeNode in="fresnelGlow" />
-                        </feMerge>
-                    </filter>
-
-                    <pattern id="scanlines" patternUnits="userSpaceOnUse" width="4" height="4">
-                        <rect width="4" height="1" fill="#00f5d4" fillOpacity="0.2" />
+                    {/* Scanlines */}
+                    <pattern id="ms-scanlines" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+                        <rect width="4" height="1" fill={targetColor} fillOpacity="0.1" />
                     </pattern>
 
-                    <linearGradient id="sweep-gradient" x1="0" y1="0" x2="0" y2="1">
+                    {/* Sweep gradient */}
+                    <linearGradient id="ms-sweep" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="transparent" />
-                        <stop offset="50%" stopColor={targetColor} stopOpacity="0.6" />
+                        <stop offset="50%" stopColor={targetColor} stopOpacity="0.7" />
                         <stop offset="100%" stopColor="transparent" />
                     </linearGradient>
 
-                    <clipPath id="hologram-clip">
-                        <motion.path d={morphingPath} animate={{ d: morphingPath }} transition={{ type: "spring", stiffness: 80, damping: 15 }} />
+                    {/* Clip to silhouette body */}
+                    <clipPath id="ms-clip">
+                        <motion.path d={morphPath} animate={{ d: morphPath }} transition={spring} />
                     </clipPath>
+
+                    {/* Edge glow filter (Fresnel) */}
+                    <filter id="ms-fresnel" x="-30%" y="-10%" width="160%" height="120%">
+                        <feMorphology in="SourceAlpha" operator="erode" radius="1" result="eroded" />
+                        <feComposite in="SourceAlpha" in2="eroded" operator="out" result="edge" />
+                        <feGaussianBlur in="edge" stdDeviation="2" result="glow" />
+                        <feColorMatrix in="glow" type="matrix" result="coloredGlow"
+                            values={isHighRisk
+                                ? "0 0 0 0 0.96  0 0 0 0 0.62  0 0 0 0 0.04  0 0 0 1.5 0"
+                                : "0 0 0 0 0.18  0 0 0 0 0.83  0 0 0 0 0.75  0 0 0 1.5 0"} />
+                        <feMerge>
+                            <feMergeNode in="coloredGlow" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+
+                    {/* Volumetric bloom */}
+                    <filter id="ms-bloom" x="-40%" y="-20%" width="180%" height="140%">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b1" />
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="b2" />
+                        <feMerge>
+                            <feMergeNode in="b2" />
+                            <feMergeNode in="b1" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
                 </defs>
 
-                {/* Background Sonar / Targeting Grid */}
-                <g className="opacity-30">
-                    <circle cx="100" cy="190" r="140" fill="none" stroke="#00f5d4" strokeWidth="0.5" />
-                    <circle cx="100" cy="190" r="100" fill="none" stroke="#00f5d4" strokeWidth="0.5" />
-                    <circle cx="100" cy="190" r="60" fill="none" stroke="#00f5d4" strokeWidth="0.5" />
-                    <line x1="0" y1="190" x2="200" y2="190" stroke="#00f5d4" strokeWidth="0.5" />
-                    <line x1="100" y1="0" x2="100" y2="400" stroke="#00f5d4" strokeWidth="0.5" />
-                </g>
-
-                {/* Scaled Avatar Group */}
+                {/* Height-scalable avatar group */}
                 <motion.g
                     animate={{ scaleY: heightScale }}
-                    style={{ originX: "100px", originY: "200px" }}
-                    transition={{ type: "spring", stiffness: 80, damping: 15 }}
+                    style={{ originX: '100px', originY: '205px' }}
+                    transition={spring}
                 >
-                    {/* Core Hologram Body with GLSL-equivalent Filter applied */}
+                    {/* ── BODY BASE — translucent fill + Fresnel edge ── */}
                     <motion.path
-                        d={morphingPath}
-                        fill="url(#body-glow)"
+                        d={morphPath}
+                        fill="url(#ms-body-fill)"
                         stroke={targetColor}
-                        strokeWidth="1.5"
-                        filter="url(#hologram-shader)"
-                        animate={{ stroke: targetColor, d: morphingPath }}
-                        transition={{ type: "spring", stiffness: 80, damping: 15 }}
+                        strokeWidth="1.2"
+                        filter="url(#ms-fresnel)"
+                        animate={{ d: morphPath, stroke: targetColor }}
+                        transition={spring}
                     />
 
-                    {/* Masked Elements strict to Body Contour */}
-                    <g clipPath="url(#hologram-clip)">
-                        {/* Medical Grid Scanlines */}
-                        <rect x="0" y="0" width="200" height="400" fill="url(#scanlines)" style={{ mixBlendMode: 'screen' }} />
+                    {/* ── MESH TEXTURE (clipped) ── */}
+                    <g clipPath="url(#ms-clip)">
+                        <rect x="0" y="0" width="200" height="410" fill="url(#ms-mesh)" style={{ mixBlendMode: 'screen' }} />
+                        <rect x="0" y="0" width="200" height="410" fill="url(#ms-scanlines)" style={{ mixBlendMode: 'screen' }} />
 
                         {/* Animated Radar Sweep */}
                         <motion.rect
-                            x="0" width="200" height="40"
-                            fill="url(#sweep-gradient)"
+                            x="0" width="200" height="30"
+                            fill="url(#ms-sweep)"
                             style={{ mixBlendMode: 'screen' }}
-                            animate={{ y: [-40, 400] }}
-                            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                            animate={{ y: [-30, 420] }}
+                            transition={{ duration: 2.8, repeat: Infinity, ease: 'linear' }}
                         />
                     </g>
 
-                    {/* Inner Dimensional Wireframe Mesh Texture */}
+                    {/* ── VOLUMETRIC EDGE GLOW PATH (bloom) ── */}
                     <motion.path
-                        d={morphingPath}
-                        fill="url(#mesh-pattern)"
-                        animate={{ d: morphingPath }}
-                        transition={{ type: "spring", stiffness: 80, damping: 15 }}
-                        style={{ mixBlendMode: 'screen' }}
-                        opacity={0.6}
+                        d={morphPath}
+                        fill="none"
+                        stroke={targetColor}
+                        strokeWidth="2.5"
+                        opacity="0.25"
+                        filter="url(#ms-bloom)"
+                        animate={{ d: morphPath, stroke: targetColor }}
+                        transition={spring}
                     />
 
-                    {/* Anatomical Glowing Joints perfectly mapped to math engine */}
+                    {/* ── ANATOMICAL JOINT NODES ── */}
                     <g>
-                        {/* Head - Forehead (Cyan) */}
-                        <circle cx="100" cy="25" r="2.5" fill="#00f5d4" style={{ filter: 'drop-shadow(0 0 4px #00f5d4)' }} />
+                        {/* Crown */}
+                        <circle cx="100" cy="20" r="2" fill={targetColor} style={{ filter: `drop-shadow(0 0 4px ${targetColor})` }} />
+                        {/* Neck base */}
+                        <circle cx="100" cy="60" r="2" fill={targetColor} opacity="0.7" style={{ filter: `drop-shadow(0 0 4px ${targetColor})` }} />
 
-                        {/* Neck Base (Orange) */}
-                        <circle cx="100" cy="65" r="2.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 6px #ff9f1c)' }} />
+                        {/* Shoulders */}
+                        <motion.circle cx={lShoulderX} cy="70" r="3" fill="#F59E0B"
+                            style={{ filter: 'drop-shadow(0 0 7px #F59E0B)' }}
+                            animate={{ cx: lShoulderX }} transition={spring} />
+                        <motion.circle cx={rShoulderX} cy="70" r="3" fill="#F59E0B"
+                            style={{ filter: 'drop-shadow(0 0 7px #F59E0B)' }}
+                            animate={{ cx: rShoulderX }} transition={spring} />
 
-                        {/* Shoulders (Orange) */}
-                        <motion.circle cx={leftShoulderX} cy="70" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} animate={{ cx: leftShoulderX }} />
-                        <motion.circle cx={rightShoulderX} cy="70" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} animate={{ cx: rightShoulderX }} />
+                        {/* Sternum */}
+                        <circle cx="100" cy="112" r="2.5" fill={targetColor} style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
 
-                        {/* Chest/Sternum (Orange per spec) */}
-                        <circle cx="100" cy="115" r="3" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 6px #ff9f1c)' }} />
+                        {/* Waist ring */}
+                        <motion.ellipse cx="100" cy="168" rx={waistRx} ry="5"
+                            fill="none" stroke={targetColor} strokeWidth="1.2" strokeDasharray="3 2"
+                            animate={{ rx: waistRx, stroke: targetColor }} transition={spring}
+                            style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
+                        <motion.circle cx={100 - waistRx} cy="168" r="2.2" fill={targetColor}
+                            animate={{ cx: 100 - waistRx }} transition={spring}
+                            style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
+                        <motion.circle cx={100 + waistRx} cy="168" r="2.2" fill={targetColor}
+                            animate={{ cx: 100 + waistRx }} transition={spring}
+                            style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
 
-                        {/* Abdomen (Orange per spec) */}
-                        <circle cx="100" cy="190" r="3" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 6px #ff9f1c)' }} />
+                        {/* Navel */}
+                        <circle cx="100" cy="192" r="1.8" fill={targetColor} opacity="0.6" />
 
-                        {/* Waist Edges and Center (Neon Cyan ring) */}
-                        <motion.ellipse cx="100" cy="160" rx={waistRadius} ry="6" fill="transparent" stroke="#00f5d4" strokeWidth="2" style={{ filter: 'drop-shadow(0 0 6px #00f5d4)' }} animate={{ rx: waistRadius }} />
-                        <motion.circle cx={100 - waistRadius} cy="160" r="2.5" fill="#00f5d4" style={{ filter: 'drop-shadow(0 0 6px #00f5d4)' }} animate={{ cx: 100 - waistRadius }} />
-                        <motion.circle cx={100 + waistRadius} cy="160" r="2.5" fill="#00f5d4" style={{ filter: 'drop-shadow(0 0 6px #00f5d4)' }} animate={{ cx: 100 + waistRadius }} />
+                        {/* Hips */}
+                        <motion.circle cx={lHipX} cy="222" r="3" fill="#F59E0B"
+                            style={{ filter: 'drop-shadow(0 0 7px #F59E0B)' }}
+                            animate={{ cx: lHipX }} transition={spring} />
+                        <motion.circle cx={rHipX} cy="222" r="3" fill="#F59E0B"
+                            style={{ filter: 'drop-shadow(0 0 7px #F59E0B)' }}
+                            animate={{ cx: rHipX }} transition={spring} />
+                        {/* Pelvic center */}
+                        <circle cx="100" cy="212" r="2" fill={targetColor} opacity="0.5" />
 
-                        {/* Hips (Orange/Gold) */}
-                        <motion.circle cx={leftHipX} cy="220" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} animate={{ cx: leftHipX }} />
-                        <motion.circle cx={rightHipX} cy="220" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} animate={{ cx: rightHipX }} />
-
-                        {/* Pelvic Center (Cyan) */}
-                        <motion.circle cx="100" cy="210" r="2.5" fill="#00f5d4" style={{ filter: 'drop-shadow(0 0 4px #00f5d4)' }} />
-
-                        {/* Knees / Lower limbs (Orange/Gold) */}
-                        <motion.circle cx={leftKneeX} cy="300" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} animate={{ cx: leftKneeX }} />
-                        <motion.circle cx={rightKneeX} cy="300" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} animate={{ cx: rightKneeX }} />
+                        {/* Knees */}
+                        <motion.circle cx={lKneeX} cy="298" r="3" fill="#F59E0B"
+                            style={{ filter: 'drop-shadow(0 0 7px #F59E0B)' }}
+                            animate={{ cx: lKneeX }} transition={spring} />
+                        <motion.circle cx={rKneeX} cy="298" r="3" fill="#F59E0B"
+                            style={{ filter: 'drop-shadow(0 0 7px #F59E0B)' }}
+                            animate={{ cx: rKneeX }} transition={spring} />
                     </g>
                 </motion.g>
 
-                {/* Biometric Laser Scanner Loop */}
+                {/* ── Biometric laser scanner (outside avatar group — full viewport sweep) */}
                 <motion.rect
-                    x="20" width="160" height="2"
-                    style={{ filter: `drop-shadow(0 0 10px ${targetColor})` }}
-                    animate={{
-                        y: [30, 380, 30],
-                        opacity: [0, 0.7, 0],
-                        fill: targetColor
-                    }}
-                    transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "linear"
-                    }}
+                    x="15" width="170" height="1.5"
+                    fill={targetColor}
+                    style={{ filter: `drop-shadow(0 0 8px ${targetColor})` }}
+                    animate={{ y: [20, 400, 20], opacity: [0, 0.8, 0] }}
+                    transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }}
                 />
             </motion.svg>
         </div>

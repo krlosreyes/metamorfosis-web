@@ -9,147 +9,207 @@ interface RadialGaugeProps {
     targetColor?: string;
 }
 
+// Helper to get arc path between two angles on a circle
+const arcPath = (cx: number, cy: number, r: number, startDeg: number, endDeg: number): string => {
+    const toRad = (d: number) => (d - 90) * (Math.PI / 180);
+    const x1 = cx + r * Math.cos(toRad(startDeg));
+    const y1 = cy + r * Math.sin(toRad(startDeg));
+    const x2 = cx + r * Math.cos(toRad(endDeg));
+    const y2 = cy + r * Math.sin(toRad(endDeg));
+    const large = Math.abs(endDeg - startDeg) > 180 ? 1 : 0;
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`;
+};
+
 const RadialGauge: React.FC<RadialGaugeProps> = ({
     value,
     min,
     max,
     label,
-    targetColor = '#00f5d4'
+    targetColor = '#2DD4BF',
 }) => {
     const isWHR = max <= 2;
-    // Math for Gauge
-    const clampedValue = Math.min(Math.max(value, min), max);
-    const percent = (clampedValue - min) / (max - min);
 
-    // Angles: -120 deg to +120 deg (240 degree sweep)
-    const startAngle = -120;
-    const endAngle = 120;
-    const angleRange = endAngle - startAngle;
-    const currentAngle = startAngle + (percent * angleRange);
+    // Gauge math
+    const clamped = Math.min(Math.max(value, min), max);
+    const pct = (clamped - min) / (max - min);
 
-    const size = 200; // viewBox size
-    const center = size / 2;
-    const radius = size * 0.42;
-    const innerRadius = radius - 12;
+    // Arc sweep: -130° → +130° (260° total)
+    const START = -130;
+    const END = 130;
+    const sweep = END - START;
+    const needleAngle = START + pct * sweep;
 
-    const numTicks = isWHR ? 8 : 8;
+    // Geometry
+    const size = 180;
+    const cx = size / 2;
+    const cy = size / 2 + 10; // shifted down to give room for top arc
+    const R = 70;
+    const Rinner = R - 10;
+    const Rticks = R - 18;
+    const Rtext = R - 30;
 
-    // Generate Ticks
-    const ticks = Array.from({ length: numTicks + 1 }).map((_, i) => {
-        const tPercent = i / numTicks;
-        const oAngle = startAngle + (tPercent * angleRange);
-        const rad = (oAngle - 90) * (Math.PI / 180);
+    // Color zones for background arc segments
+    const zones = [
+        { from: 0, to: 0.4, color: '#2DD4BF' },
+        { from: 0.4, to: 0.7, color: '#FBBF24' },
+        { from: 0.7, to: 1.0, color: '#EF4444' },
+    ];
 
-        const tickLength = 8;
-        const textRadius = innerRadius - 16;
-
-        // Outer dot
-        const x1 = center + innerRadius * Math.cos(rad);
-        const y1 = center + innerRadius * Math.sin(rad);
-        const x2 = center + (innerRadius - tickLength) * Math.cos(rad);
-        const y2 = center + (innerRadius - tickLength) * Math.sin(rad);
-
-        // Text Position
-        const tx = center + textRadius * Math.cos(rad);
-        const ty = center + textRadius * Math.sin(rad);
-
-        const tickValue = min + (tPercent * (max - min));
-        const displayValue = isWHR ? tickValue.toFixed(1) : Math.round(tickValue);
-
-        return { x1, y1, x2, y2, tx, ty, displayValue };
-    });
+    // Major + minor ticks
+    const majorCount = 8;
+    const minorCount = 32;
 
     return (
-        <div className="flex justify-center items-center relative w-full max-w-[180px] aspect-square mx-auto">
-            <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size * 0.85}`} className="relative z-10 drop-shadow-2xl overflow-visible">
+        <div className="w-full aspect-square max-w-[160px] mx-auto flex items-center justify-center">
+            <svg
+                width="100%"
+                height="100%"
+                viewBox={`0 0 ${size} ${size}`}
+                className="overflow-visible"
+                style={{ filter: `drop-shadow(0 0 12px ${targetColor}40)` }}
+            >
                 <defs>
-                    <linearGradient id={`gradient-arc-${label}`} x1="0%" y1="100%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#00f5d4" />
-                        <stop offset="50%" stopColor="#00f5d4" stopOpacity={0.5} />
-                        <stop offset="100%" stopColor="#ff9f1c" />
+                    {/* Needle gradient */}
+                    <linearGradient id={`needle-grad-${label}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={targetColor} />
+                        <stop offset="100%" stopColor={targetColor} stopOpacity="0.2" />
+                    </linearGradient>
+                    {/* Glow filter */}
+                    <filter id={`glow-${label}`}>
+                        <feGaussianBlur stdDeviation="3" result="blur" />
+                        <feMerge>
+                            <feMergeNode in="blur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                    {/* Progress arc gradient */}
+                    <linearGradient id={`arc-grad-${label}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#2DD4BF" />
+                        <stop offset="60%" stopColor="#FBBF24" stopOpacity="0.8" />
+                        <stop offset="100%" stopColor="#EF4444" />
                     </linearGradient>
                 </defs>
 
-                {/* Outer Track Arc (Background) */}
+                {/* ── Track (full arc background) ── */}
                 <path
-                    d={`M ${center + radius * Math.cos((startAngle - 90) * Math.PI / 180)} ${center + radius * Math.sin((startAngle - 90) * Math.PI / 180)} A ${radius} ${radius} 0 1 1 ${center + radius * Math.cos((endAngle - 90) * Math.PI / 180)} ${center + radius * Math.sin((endAngle - 90) * Math.PI / 180)}`}
+                    d={arcPath(cx, cy, R, START, END)}
                     fill="none"
                     stroke="#1E293B"
-                    strokeWidth="12"
+                    strokeWidth="10"
                     strokeLinecap="round"
-                    className="opacity-60"
+                    opacity="0.7"
                 />
 
-                {/* Inner Decorative Track Line */}
-                <path
-                    d={`M ${center + innerRadius * Math.cos((startAngle - 90) * Math.PI / 180)} ${center + innerRadius * Math.sin((startAngle - 90) * Math.PI / 180)} A ${innerRadius} ${innerRadius} 0 1 1 ${center + innerRadius * Math.cos((endAngle - 90) * Math.PI / 180)} ${center + innerRadius * Math.sin((endAngle - 90) * Math.PI / 180)}`}
-                    fill="none"
-                    stroke="#334155"
-                    strokeWidth="1"
-                    className="opacity-40"
-                    strokeDasharray="4 4"
-                />
-
-                {/* Progress Arc */}
-                <path
-                    d={`M ${center + radius * Math.cos((startAngle - 90) * Math.PI / 180)} ${center + radius * Math.sin((startAngle - 90) * Math.PI / 180)} A ${radius} ${radius} 0 ${percent > 0.5 ? 1 : 0} 1 ${center + radius * Math.cos((currentAngle - 90) * Math.PI / 180)} ${center + radius * Math.sin((currentAngle - 90) * Math.PI / 180)}`}
-                    fill="none"
-                    stroke={`url(#gradient-arc-${label})`}
-                    strokeWidth="12"
-                    strokeLinecap="round"
-                    className="opacity-90"
-                    style={{ filter: `drop-shadow(0 0 8px ${targetColor})` }}
-                />
-
-                {/* Ticks and Labels */}
-                {ticks.map((tick, i) => (
-                    <g key={i}>
-                        <line
-                            x1={tick.x1} y1={tick.y1}
-                            x2={tick.x2} y2={tick.y2}
-                            stroke="#475569"
-                            strokeWidth={2}
-                        />
-                        <text
-                            x={tick.tx} y={tick.ty}
-                            fill="#94A3B8"
-                            fontSize="11"
-                            textAnchor="middle"
-                            dominantBaseline="central"
-                            className="font-sans font-bold tracking-tighter"
-                        >
-                            {tick.displayValue}
-                        </text>
-                    </g>
+                {/* ── Zone color segments on inner ring ── */}
+                {zones.map((z, i) => (
+                    <path
+                        key={i}
+                        d={arcPath(cx, cy, Rinner, START + z.from * sweep, START + z.to * sweep)}
+                        fill="none"
+                        stroke={z.color}
+                        strokeWidth="3"
+                        strokeLinecap="butt"
+                        opacity="0.25"
+                    />
                 ))}
 
-                {/* Animated Needle Group */}
+                {/* ── Progress arc (filled to current value) ── */}
+                <motion.path
+                    d={arcPath(cx, cy, R, START, needleAngle)}
+                    fill="none"
+                    stroke={`url(#arc-grad-${label})`}
+                    strokeWidth="10"
+                    strokeLinecap="round"
+                    filter={`url(#glow-${label})`}
+                    animate={{ d: arcPath(cx, cy, R, START, needleAngle) }}
+                    transition={{ type: 'spring', stiffness: 80, damping: 18 }}
+                />
+
+                {/* ── Minor Ticks ── */}
+                {Array.from({ length: minorCount + 1 }).map((_, i) => {
+                    const a = START + (i / minorCount) * sweep;
+                    const rad = (a - 90) * (Math.PI / 180);
+                    const outer = R + 2;
+                    const inner = outer - 4;
+                    return (
+                        <line key={i}
+                            x1={cx + outer * Math.cos(rad)} y1={cy + outer * Math.sin(rad)}
+                            x2={cx + inner * Math.cos(rad)} y2={cy + inner * Math.sin(rad)}
+                            stroke="#334155" strokeWidth="0.8"
+                        />
+                    );
+                })}
+
+                {/* ── Major Ticks + Labels ── */}
+                {Array.from({ length: majorCount + 1 }).map((_, i) => {
+                    const tPct = i / majorCount;
+                    const a = START + tPct * sweep;
+                    const rad = (a - 90) * (Math.PI / 180);
+                    const outer = R + 2;
+                    const inner = outer - 8;
+                    const tx = cx + Rtext * Math.cos(rad);
+                    const ty = cy + Rtext * Math.sin(rad);
+                    const v = min + tPct * (max - min);
+                    const display = isWHR ? v.toFixed(1) : Math.round(v);
+                    return (
+                        <g key={i}>
+                            <line
+                                x1={cx + outer * Math.cos(rad)} y1={cy + outer * Math.sin(rad)}
+                                x2={cx + inner * Math.cos(rad)} y2={cy + inner * Math.sin(rad)}
+                                stroke="#475569" strokeWidth="1.5"
+                            />
+                            <text
+                                x={tx} y={ty}
+                                fill="#64748B" fontSize="9"
+                                textAnchor="middle" dominantBaseline="central"
+                                fontWeight="600"
+                            >
+                                {display}
+                            </text>
+                        </g>
+                    );
+                })}
+
+                {/* ── Animated Needle ── */}
                 <motion.g
-                    initial={{ rotate: startAngle }}
-                    animate={{ rotate: currentAngle }}
-                    transition={{ type: "spring", stiffness: 60, damping: 8, mass: 0.5, restDelta: 0.001 }}
-                    style={{ originX: '50%', originY: '50%' }}
+                    style={{ originX: `${cx}px`, originY: `${cy}px` }}
+                    animate={{ rotate: needleAngle }}
+                    initial={{ rotate: START }}
+                    transition={{ type: 'spring', stiffness: 70, damping: 10, mass: 0.4 }}
                 >
-                    {/* Sleek needle line */}
-                    <line
-                        x1={center} y1={center}
-                        x2={center} y2={center - radius + 4}
-                        stroke="#00f5d4"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        style={{ filter: `drop-shadow(0 0 6px #00f5d4)` }}
+                    {/* Needle body (tapered) */}
+                    <polygon
+                        points={`${cx - 2},${cy} ${cx + 2},${cy} ${cx},${cy - R + 8}`}
+                        fill={`url(#needle-grad-${label})`}
+                        filter={`url(#glow-${label})`}
+                    />
+                    {/* Needle counterweight */}
+                    <polygon
+                        points={`${cx - 2},${cy} ${cx + 2},${cy} ${cx},${cy + 14}`}
+                        fill={targetColor} opacity="0.4"
                     />
                 </motion.g>
 
-                {/* Central glowing pivot base (luxury feel) */}
-                <circle cx={center} cy={center} r="10" fill="#0B1120" stroke="#00f5d4" strokeWidth="3" style={{ filter: `drop-shadow(0 0 8px #00f5d4)` }} />
-                <circle cx={center} cy={center} r="4" fill="#00f5d4" />
+                {/* ── Center Pivot ── */}
+                <circle cx={cx} cy={cy} r="10" fill="#0B1829" stroke={targetColor} strokeWidth="2"
+                    style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} />
+                <circle cx={cx} cy={cy} r="4" fill={targetColor} />
 
-                {/* Central Value Readout */}
-                <text x={center} y={center + 45} textAnchor="middle" fill="#FFFFFF" fontSize="26" fontWeight="900" style={{ filter: `drop-shadow(0 2px 4px rgba(0,0,0,0.5))` }}>
-                    {isWHR ? clampedValue.toFixed(2) : Math.round(clampedValue)}
+                {/* ── Central Digital Readout ── */}
+                <text
+                    x={cx} y={cy + 32}
+                    textAnchor="middle"
+                    fill="#FFFFFF" fontSize="20" fontWeight="900"
+                    style={{ filter: `drop-shadow(0 0 6px ${targetColor}80)` }}
+                >
+                    {isWHR ? clamped.toFixed(2) : Math.round(clamped)}
                 </text>
-                <text x={center} y={center + 60} textAnchor="middle" fill="#00f5d4" fontSize="12" fontWeight="bold" letterSpacing="1" className="uppercase">
+                <text
+                    x={cx} y={cy + 46}
+                    textAnchor="middle"
+                    fill={targetColor} fontSize="9" fontWeight="700"
+                    letterSpacing="2"
+                >
                     {label}
                 </text>
             </svg>
