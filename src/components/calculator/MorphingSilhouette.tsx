@@ -63,8 +63,11 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
             <motion.svg
                 viewBox="0 0 200 400"
                 preserveAspectRatio="xMidYMid meet"
-                className="relative z-10 w-full h-full drop-shadow-[0_0_15px_rgba(45,212,191,0.5)]"
-                animate={{ scaleY: heightScale }}
+                className="relative z-10 w-full h-full"
+                animate={{
+                    scaleY: heightScale,
+                    filter: `drop-shadow(0 0 15px ${isHighVisceralFat ? 'rgba(245, 158, 11, 0.5)' : 'rgba(45, 212, 191, 0.5)'})`
+                }}
                 transition={{ type: "spring", stiffness: 80, damping: 15 }}
             >
                 {/* Cabeza (Proporcionada) */}
@@ -90,9 +93,12 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                 {/* Luz de Escaneo Biométrico (Biometric Radar Scanner) */}
                 <motion.rect
                     x="20" width="160" height="2"
-                    fill="#ffffff"
-                    style={{ filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.8))' }}
-                    animate={{ y: [30, 380, 30], opacity: [0, 0.8, 0] }}
+                    style={{ filter: `drop-shadow(0 0 8px ${targetColor})` }}
+                    animate={{
+                        y: [30, 380, 30],
+                        opacity: [0, 0.8, 0],
+                        fill: targetColor
+                    }}
                     transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                 />
 

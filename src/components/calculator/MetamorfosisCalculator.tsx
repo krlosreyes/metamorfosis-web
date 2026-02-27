@@ -85,11 +85,11 @@ const MetamorfosisCalculator = () => {
     };
 
     return (
-        <div className="h-[calc(100vh-80px)] overflow-hidden bg-[#030712] text-white p-6 md:p-12 font-sans relative flex items-center justify-center">
+        <div className="fixed inset-0 top-[80px] h-[calc(100vh-80px)] overflow-hidden bg-[#030712] text-white p-4 md:p-12 font-sans flex items-center justify-center">
 
-            <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-[1.1fr_1fr] items-center gap-12 md:gap-16 z-10 h-full">
+            <div className="w-full max-w-7xl grid grid-cols-1 grid-rows-[45%_55%] md:grid-cols-[1.1fr_1fr] md:grid-rows-1 items-center gap-4 md:gap-16 z-10 h-full pb-4 md:pb-0">
                 {/* Visual Reactive Avatar (Mobile First: Top, Desktop: Left) */}
-                <div className="w-full h-full max-h-[85vh] flex flex-col items-center justify-center relative order-1 md:order-1">
+                <div className="w-full h-full max-h-[85vh] flex flex-col items-center justify-center relative order-1 md:order-1 pt-4 md:pt-0">
 
                     {/* Reactive SVG Silhouette Morphing Engine */}
                     <MorphingSilhouette
@@ -125,7 +125,7 @@ const MetamorfosisCalculator = () => {
                 </div>
 
                 {/* Sliders Data (Mobile First: Bottom, Desktop: Right) */}
-                <div className="w-full flex flex-col justify-center order-2 md:order-2">
+                <div className="w-full h-full flex flex-col justify-start md:justify-center order-2 md:order-2 overflow-y-auto overflow-x-hidden pr-2 custom-scrollbar">
                     <ControlPanel
                         gender={gender} setGender={setGender}
                         weight={weight} setWeight={setWeight}
