@@ -24,21 +24,34 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
     const hFactor = Math.max(15, hip * 0.45);
 
     // 4. SVG Morphing Path
-    // Generates a realistic female hourglass if waist is low, hip is high.
+    // Generates a realistic human contour including Head, Neck, Arms, Torso, and Legs.
+    // X-Center is 100. Y ranges from 10 (top of head) to 380 (feet).
     const morphingPath = `
-        M 100 70
-        C 125 70, 145 80, 145 100
-        C 145 130, ${100 + wFactor * 0.8} 150, ${100 + wFactor} 190
-        C ${100 + wFactor} 220, ${100 + hFactor} 230, ${100 + hFactor} 260
-        C ${100 + hFactor} 310, 120 380, 120 380
+        M 100 15
+        C 115 15, 120 25, 120 40
+        C 120 55, 110 60, 108 65
+        C 115 68, 130 70, 140 75
+        C 150 82, 155 100, 150 130
+        C 145 160, 140 220, 142 260
+        C 143 270, 135 270, 132 260
+        C 130 220, 125 150, 125 120
+        C 125 120, 120 130, ${100 + wFactor * 0.8} 150
+        C ${100 + wFactor} 190, ${100 + wFactor} 220, ${100 + hFactor} 240
+        C ${100 + hFactor} 270, ${100 + hFactor * 0.9} 310, 115 380
         L 105 380
         C 105 320, 105 290, 100 280
         C 95 290, 95 320, 95 380
-        L 80 380
-        C 80 380, ${100 - hFactor} 310, ${100 - hFactor} 260
-        C ${100 - hFactor} 230, ${100 - wFactor} 220, ${100 - wFactor} 190
-        C ${100 - wFactor} 150, 55 130, 55 100
-        C 55 80, 75 70, 100 70
+        L 85 380
+        C 85 380, ${100 - hFactor * 0.9} 310, ${100 - hFactor} 240
+        C ${100 - hFactor} 220, ${100 - wFactor} 190, ${100 - wFactor * 0.8} 150
+        C 80 130, 75 120, 75 120
+        C 75 150, 70 220, 68 260
+        C 65 270, 57 270, 58 260
+        C 60 220, 55 160, 50 130
+        C 45 100, 50 82, 60 75
+        C 70 70, 85 68, 92 65
+        C 90 60, 80 55, 80 40
+        C 80 25, 85 15, 100 15
         Z
     `;
 
