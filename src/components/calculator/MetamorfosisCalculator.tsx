@@ -116,17 +116,8 @@ const MetamorfosisCalculator = () => {
                         {/* Data Card Content */}
                         <div className="w-full flex-1 flex flex-col bg-[#0c1f31]/60 backdrop-blur-xl rounded-[28px] border border-[#2DD4BF]/20 shadow-[0_0_30px_rgba(0,245,212,0.15)] p-[24px] md:p-[32px] overflow-hidden min-h-0">
 
-                            {/* Title strip */}
-                            <div className="flex-shrink-0 flex items-center justify-between mb-4">
-                                <div>
-                                    <h1 className="text-base md:text-lg font-black uppercase tracking-[0.2em] text-[#2DD4BF]
-                                                   drop-shadow-[0_0_10px_rgba(45,212,191,0.6)]">
-                                        BIOMETRÍA
-                                    </h1>
-                                    <p className="text-[10px] text-slate-400 tracking-widest uppercase mt-0.5">
-                                        Ingresa tus medidas (Independiente)
-                                    </p>
-                                </div>
+                            {/* Title strip (Status only) */}
+                            <div className="flex-shrink-0 flex items-center justify-end mb-4">
                                 <div className={`text-right ${textColor}`}>
                                     <div className="text-[10px] font-bold tracking-widest uppercase opacity-80">Estado</div>
                                     <div className="text-sm font-black">{isHighRisk ? 'Riesgo Alto' : 'Óptimo'}</div>
