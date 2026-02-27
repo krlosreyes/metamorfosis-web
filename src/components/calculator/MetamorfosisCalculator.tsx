@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ControlPanel from './ControlPanel'; // relative import
 import MorphingSilhouette from './MorphingSilhouette';
-import RadialGauge from './RadialGauge';
 
 // ─── Math Engine ────────────────────────────────────────────────────────────
 const calculateBodyFat = (gender: 'male' | 'female', waist: number, neck: number, height: number, hip: number): number => {
@@ -137,21 +136,40 @@ const MetamorfosisCalculator = () => {
                                 />
                             </div>
 
-                            {/* ── Telemetry Gauges row ─────────────────────────── */}
-                            <div className="flex justify-around items-end flex-1 min-h-[160px] pt-4 mt-4 border-t border-white/5 relative z-10 overflow-visible">
-                                <div className="flex w-full justify-around items-center relative overflow-visible">
-                                    <RadialGauge
-                                        value={bmi}
-                                        min={12} max={45}
-                                        label="IMC"
-                                        targetColor={bmi > 25 ? '#F59E0B' : '#2DD4BF'}
-                                    />
-                                    <RadialGauge
-                                        value={whr}
-                                        min={0.6} max={1.1}
-                                        label="WHR"
-                                        targetColor={isHighRisk ? '#F59E0B' : '#2DD4BF'}
-                                    />
+                            {/* ── Telemetry Gauges row (DIGITAL REPLACEMENT) ── */}
+                            <div className="grid grid-cols-2 gap-4 flex-shrink-0 mt-auto pt-4 border-t border-white/5 relative z-10 w-full min-h-[120px]">
+                                {/* IMC Card */}
+                                <div
+                                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-[#0B1829] border shadow-lg transition-colors duration-300"
+                                    style={{
+                                        borderColor: bmi >= 25 ? '#F59E0B' : '#2DD4BF',
+                                        boxShadow: `0 0 15px ${bmi >= 25 ? 'rgba(245,158,11,0.15)' : 'rgba(45,212,191,0.15)'}`
+                                    }}
+                                >
+                                    <span className="text-[10px] md:text-xs font-bold text-gray-400 tracking-widest uppercase mb-1 text-center leading-tight">Masa Corporal (IMC)</span>
+                                    <span
+                                        className="text-3xl md:text-4xl font-mono font-black transition-colors duration-300"
+                                        style={{ color: bmi >= 25 ? '#F59E0B' : '#FFFFFF' }}
+                                    >
+                                        {bmi.toFixed(1)}
+                                    </span>
+                                </div>
+
+                                {/* ICC Card */}
+                                <div
+                                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-[#0B1829] border shadow-lg transition-colors duration-300"
+                                    style={{
+                                        borderColor: isHighRisk ? '#F59E0B' : '#2DD4BF',
+                                        boxShadow: `0 0 15px ${isHighRisk ? 'rgba(245,158,11,0.15)' : 'rgba(45,212,191,0.15)'}`
+                                    }}
+                                >
+                                    <span className="text-[10px] md:text-xs font-bold text-gray-400 tracking-widest uppercase mb-1 text-center leading-tight">Cintura-Cadera (ICC)</span>
+                                    <span
+                                        className="text-3xl md:text-4xl font-mono font-black transition-colors duration-300"
+                                        style={{ color: isHighRisk ? '#F59E0B' : '#FFFFFF' }}
+                                    >
+                                        {whr.toFixed(2)}
+                                    </span>
                                 </div>
                             </div>
                         </div>
