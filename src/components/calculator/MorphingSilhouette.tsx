@@ -46,9 +46,8 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
 
     // Prevent arms from clipping torso
     const bodySpread = Math.max(0, wOffset, hOffset);
-    const armShift = Math.max(0, bodySpread * 0.85);
 
-    // 4. Mathematical Anatomy Engine (A-Pose Configuration based on Reference Image)
+    // 4. Mathematical Anatomy Engine (Torso/Legs Only Configuration based on User Request)
     const shoulderShift = gender === 'male' ? 5 : 0;
 
     const pointsRight = [
@@ -60,41 +59,28 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
         [10, 52],      // 5: Neck
         [18, 55],      // 6: Traps
         [32, 62],      // 7: Upper Shoulder
-        [43 + shoulderShift, 70],  // 8: Outer Shoulder / Deltoid
-        [46 + shoulderShift + armShift * 0.5, 95], // 9: Outer Bicep
-        [46 + shoulderShift + armShift * 0.7, 120], // 10: Outer Tricep/Elbow
-        [45 + shoulderShift + armShift, 150], // 11: Outer Forearm High
-        [48 + shoulderShift + armShift, 180], // 12: Outer Forearm Low
-        [46 + shoulderShift + armShift, 200], // 13: Outer Wrist
-        [48 + shoulderShift + armShift, 220], // 14: Outer Hand
-        [45 + shoulderShift + armShift, 235], // 15: Fingertips
-        [38 + shoulderShift + armShift, 235], // 16: Inner Fingers
-        [38 + shoulderShift + armShift, 220], // 17: Inner Hand
-        [39 + shoulderShift + armShift, 205], // 18: Inner Thumb/Wrist
-        [40 + shoulderShift + armShift, 180], // 19: Inner Forearm Low
-        [36 + shoulderShift + armShift, 150], // 20: Inner Elbow
-        [35 + shoulderShift + armShift * 0.7, 120], // 21: Inner Bicep
-        [33 + shoulderShift + armShift * 0.5, 95],  // 22: Armpit High
-        [28 + shoulderShift * 0.5, 80],       // 23: Armpit curve
-        [32 + wOffset * 0.2, 110],            // 24: Upper Lat / Ribs
-        [28 + wOffset * 0.5, 135],            // 25: Mid Torso
-        [22 + wOffset, 165],                // 26: Waist
-        [28 + wOffset * 0.3 + hOffset * 0.3, 190], // 27: Upper Hip
-        [38 + hOffset, 220],                // 28: Hip / Outer Thigh High
-        [36 + hOffset * 0.8, 260],            // 29: Outer Thigh Mid
-        [24 + hOffset * 0.2, 300],            // 30: Outer Knee
-        [27 + hOffset * 0.1, 340],            // 31: Outer Calf
-        [18, 380],                          // 32: Outer Ankle
-        [22, 390],                          // 33: Outer Foot
-        [8, 395],                           // 34: Foot Bottom
-        [4, 385],                           // 35: Inner Foot
-        [7, 375],                           // 36: Inner Ankle
-        [12, 340],                          // 37: Inner Calf
-        [9, 300],                           // 38: Inner Knee
-        [16 + hOffset * 0.3, 260],            // 39: Inner Thigh Mid
-        [12 + hOffset * 0.1, 230],            // 40: Inner Thigh High
-        [3, 210],                           // 41: Crotch curve
-        [0, 205]                            // 42: Center Crotch
+        [40 + shoulderShift, 70],  // 8: Outer Shoulder
+        // -- Arms Removed --
+        [35 + shoulderShift * 0.5, 90], // 9: Outer Chest Curve
+        [32 + wOffset * 0.2, 110],            // 10: Upper Lat / Ribs
+        [28 + wOffset * 0.5, 135],            // 11: Mid Torso
+        [22 + wOffset, 165],                // 12: Waist
+        [28 + wOffset * 0.3 + hOffset * 0.3, 190], // 13: Upper Hip
+        [38 + hOffset, 220],                // 14: Hip / Outer Thigh High
+        [36 + hOffset * 0.8, 260],            // 15: Outer Thigh Mid
+        [24 + hOffset * 0.2, 300],            // 16: Outer Knee
+        [27 + hOffset * 0.1, 340],            // 17: Outer Calf
+        [18, 380],                          // 18: Outer Ankle
+        [22, 390],                          // 19: Outer Foot
+        [8, 395],                           // 20: Foot Bottom
+        [0, 385],                           // 21: Inner Foot (Touch center)
+        [0, 375],                           // 22: Inner Ankle (Touch center)
+        [0, 340],                           // 23: Inner Calf (Touch center)
+        [0, 300],                           // 24: Inner Knee (Touch center)
+        [0, 260],                           // 25: Inner Thigh Mid (Touch center)
+        [0, 230],                           // 26: Inner Thigh High (Touch center)
+        [0, 210],                           // 27: Crotch curve (Touch center)
+        [0, 205]                            // 28: Center Crotch
     ];
 
     // 5. Symmetric Mirroring Engine
@@ -105,13 +91,9 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
     // 6. Generate the ultra-smooth hyper-realistic continuous path
     const morphingPath = catmullRom2bezier(fullPoints, 1) + " Z";
 
-    // Dynamic Nodes coordinate tracking directly mapping to new A-Pose
-    const rightShoulderX = 100 + 43 + shoulderShift;
-    const leftShoulderX = 100 - (43 + shoulderShift);
-    const rightElbowX = 100 + 46 + shoulderShift + armShift * 0.85;
-    const leftElbowX = 100 - (46 + shoulderShift + armShift * 0.85);
-    const rightWristX = 100 + 46 + shoulderShift + armShift;
-    const leftWristX = 100 - (46 + shoulderShift + armShift);
+    // Dynamic Nodes coordinate tracking
+    const rightShoulderX = 100 + 40 + shoulderShift;
+    const leftShoulderX = 100 - (40 + shoulderShift);
     const rightKneeX = 100 + 24 + hOffset * 0.2;
     const leftKneeX = 100 - (24 + hOffset * 0.2);
     const rightHipX = 100 + 38 + hOffset;
@@ -274,10 +256,6 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                         <motion.ellipse cx="100" cy="160" rx={waistRadius} ry="6" fill="transparent" stroke="#00f5d4" strokeWidth="2" style={{ filter: 'drop-shadow(0 0 6px #00f5d4)' }} animate={{ rx: waistRadius }} />
                         <motion.circle cx={100 - waistRadius} cy="160" r="2.5" fill="#00f5d4" style={{ filter: 'drop-shadow(0 0 6px #00f5d4)' }} animate={{ cx: 100 - waistRadius }} />
                         <motion.circle cx={100 + waistRadius} cy="160" r="2.5" fill="#00f5d4" style={{ filter: 'drop-shadow(0 0 6px #00f5d4)' }} animate={{ cx: 100 + waistRadius }} />
-
-                        {/* Hands / Wrists (Orange) */}
-                        <motion.circle cx={leftWristX} cy="205" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} animate={{ cx: leftWristX }} />
-                        <motion.circle cx={rightWristX} cy="205" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} animate={{ cx: rightWristX }} />
 
                         {/* Hips (Orange/Gold) */}
                         <motion.circle cx={leftHipX} cy="220" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} animate={{ cx: leftHipX }} />
