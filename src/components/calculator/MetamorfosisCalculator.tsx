@@ -146,9 +146,9 @@ const MetamorfosisCalculator = () => {
                         {step === 'measuring' && (
                             <button
                                 onClick={() => setStep('results')}
-                                className="mt-8 w-full bg-teal-500 hover:bg-teal-400 text-gray-900 font-black uppercase tracking-widest py-4 rounded-xl transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(45,212,191,0.4)]"
+                                className="mt-8 w-full bg-[#2DD4BF] hover:bg-teal-400 text-[#030712] text-lg font-black uppercase tracking-widest py-4 rounded-xl transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(45,212,191,0.4)]"
                             >
-                                Ver mi Diagnóstico Inicial
+                                VER MI DIAGNÓSTICO INICIAL
                             </button>
                         )}
                     </div>
@@ -166,26 +166,26 @@ const MetamorfosisCalculator = () => {
                         animate={{ scale: 1, opacity: 1, y: 0 }}
                         className="bg-gray-900/90 border border-teal-500/30 p-8 rounded-3xl w-full max-w-md shadow-[0_0_50px_rgba(45,212,191,0.15)] text-center relative overflow-hidden"
                     >
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 to-indigo-500"></div>
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#2DD4BF] to-indigo-500"></div>
                         <h3 className="text-2xl font-black uppercase tracking-tighter text-white mb-2">Desbloquea tu Biología</h3>
-                        <p className="text-gray-400 text-sm mb-6">Hemos detectado patrones en tu índice FFMI (Masa Libre de Grasa: <span className="text-teal-400 font-bold">{ffmi.toFixed(1)}</span>). Descubre cómo revertir tu resistencia metabólica exacta.</p>
+                        <p className="text-gray-400 text-sm mb-6">Hemos detectado patrones en tu índice FFMI (Masa Libre de Grasa: <span className="text-[#2DD4BF] font-bold">{ffmi.toFixed(1)}</span>). Descubre cómo revertir tu resistencia metabólica exacta con un reporte clínico detallado.</p>
 
-                        <form onSubmit={handleCheckout}>
-                            <button type="submit" className="w-full bg-teal-500 hover:bg-teal-400 text-gray-900 font-black uppercase tracking-widest py-4 rounded-xl transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(45,212,191,0.4)] mb-4 flex justify-center items-center gap-2">
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                                Reporte PRO ($1.99 USD)
+                        <form onSubmit={handleCheckout} className="flex gap-4">
+                            {/* ePayco Red Button */}
+                            <button type="submit" className="flex-1 bg-[#E02A2A] hover:bg-red-500 text-white font-black py-4 rounded-xl transition-all hover:scale-[1.02] shadow-lg flex justify-center items-center">
+                                <span className="text-xl italic tracking-tighter">ePayco</span>
                             </button>
 
-                            {/* Wallets Trust Badges */}
-                            <div className="flex justify-center items-center gap-4 opacity-50 grayscale hover:grayscale-0 transition-all cursor-default">
+                            {/* Wallets Trust Badges (Black Block) */}
+                            <div className="flex-1 bg-black border border-gray-800 rounded-xl flex justify-center items-center gap-4 shadow-lg cursor-default">
+                                {/* Google Pay SVG Mock */}
+                                <svg className="h-6 text-white" viewBox="0 0 50 20" fill="currentColor">
+                                    <text x="0" y="15" fontSize="14" fontWeight="bold">G Pay</text>
+                                </svg>
                                 {/* Apple Pay SVG Mock */}
-                                <svg className="h-6" viewBox="0 0 50 20" fill="currentColor">
+                                <svg className="h-6 text-white" viewBox="0 0 50 20" fill="currentColor">
                                     <path d="M12 9c0-1.8 1.4-2.8 2.2-3.3-1-1.1-2.6-1.3-3.1-1.3-1.3-.1-2.6.7-3.3.7-.7 0-1.7-.6-2.8-.6-1.5 0-2.9.8-3.6 2.1-1.6 2.8-.4 6.9 1.1 9.1.7 1.1 1.6 2.2 2.7 2.2 1.1 0 1.5-.7 2.8-.7 1.3 0 1.7.7 2.8.7 1.2 0 1.9-1.1 2.6-2.1.9-1.3 1.3-2.6 1.3-2.7 0-.1-2.5-1-2.5-3.8zm-1.8-6.1c.6-.7 1-1.7 1-2.7 0-.1 0-.2 0-.2-1 0-2 .6-2.6 1.4-.5.6-.9 1.6-.8 2.5.1 0 .2.1.2.1 1 0 1.7-.5 2.2-1.1z" />
                                     <text x="20" y="15" fontSize="14" fontWeight="bold">Pay</text>
-                                </svg>
-                                {/* Google Pay SVG Mock */}
-                                <svg className="h-6" viewBox="0 0 50 20" fill="currentColor">
-                                    <text x="0" y="15" fontSize="14" fontWeight="bold">G Pay</text>
                                 </svg>
                             </div>
                         </form>

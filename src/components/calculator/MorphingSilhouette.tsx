@@ -72,12 +72,23 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                 }}
                 transition={{ type: "spring", stiffness: 80, damping: 15 }}
             >
+                {/* Background Scanning Rings (Radar effect behind avatar) */}
+                <g className="opacity-40">
+                    <circle cx="100" cy="190" r="140" fill="none" stroke="#2DD4BF" strokeWidth="0.5" />
+                    <circle cx="100" cy="190" r="100" fill="none" stroke="#2DD4BF" strokeWidth="0.5" />
+                    <circle cx="100" cy="190" r="60" fill="none" stroke="#2DD4BF" strokeWidth="0.5" />
+                    {/* Horizontal Axis */}
+                    <line x1="0" y1="190" x2="200" y2="190" stroke="#2DD4BF" strokeWidth="0.5" />
+                    {/* Vertical Axis */}
+                    <line x1="100" y1="0" x2="100" y2="400" stroke="#2DD4BF" strokeWidth="0.5" />
+                </g>
+
                 {/* Cabeza (Proporcionada) */}
                 <motion.circle
                     cx="100" cy="40" r="22"
                     fill={targetColor === '#F59E0B' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(45, 212, 191, 0.15)'}
                     stroke={targetColor}
-                    strokeWidth="2"
+                    strokeWidth="1.5"
                     animate={{ stroke: targetColor, fill: targetColor === '#F59E0B' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(45, 212, 191, 0.15)' }}
                     transition={{ type: "spring", stiffness: 100, damping: 20 }}
                 />
@@ -87,10 +98,40 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                     d={morphingPath}
                     fill={targetColor === '#F59E0B' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(45, 212, 191, 0.15)'}
                     stroke={targetColor}
-                    strokeWidth="2"
+                    strokeWidth="1.5"
                     animate={{ stroke: targetColor, fill: targetColor === '#F59E0B' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(45, 212, 191, 0.15)' }}
                     transition={{ type: "spring", stiffness: 80, damping: 15 }}
                 />
+
+                {/* Anatomical Glowing Joints (To simulate 3D Mesh) */}
+                <g fill="#2DD4BF" style={{ filter: `drop-shadow(0 0 6px #2DD4BF)` }}>
+                    {/* Cabeza */}
+                    <circle cx="100" cy="25" r="2.5" />
+                    <circle cx="100" cy="55" r="2.5" />
+
+                    {/* Hombros */}
+                    <circle cx="65" cy="80" r="3" fill="#F59E0B" style={{ filter: `drop-shadow(0 0 6px #F59E0B)` }} />
+                    <circle cx="135" cy="80" r="3" fill="#F59E0B" style={{ filter: `drop-shadow(0 0 6px #F59E0B)` }} />
+
+                    {/* Pecho / Diafragma */}
+                    <circle cx="75" cy="130" r="2.5" />
+                    <circle cx="125" cy="130" r="2.5" />
+                    <circle cx="100" cy="130" r="2.5" />
+
+                    {/* Cintura (Animada horizontalmente, brilla si hay riesgo) */}
+                    <motion.circle cx={100 - (wFactor / 2.5)} cy="180" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: 100 - (wFactor / 2.5), fill: targetColor }} />
+                    <motion.circle cx="100" cy="180" r="2.5" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ fill: targetColor }} />
+                    <motion.circle cx={100 + (wFactor / 2.5)} cy="180" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: 100 + (wFactor / 2.5), fill: targetColor }} />
+
+                    {/* Cadera (Animada horizontalmente) */}
+                    <motion.circle cx={100 - (hFactor / 1.5)} cy="250" r="3" fill="#F59E0B" style={{ filter: `drop-shadow(0 0 6px #F59E0B)` }} animate={{ cx: 100 - (hFactor / 1.5) }} />
+                    <motion.circle cx="100" cy="250" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ fill: targetColor }} />
+                    <motion.circle cx={100 + (hFactor / 1.5)} cy="250" r="3" fill="#F59E0B" style={{ filter: `drop-shadow(0 0 6px #F59E0B)` }} animate={{ cx: 100 + (hFactor / 1.5) }} />
+
+                    {/* Rodillas */}
+                    <motion.circle cx="75" cy="350" r="3" fill="#F59E0B" style={{ filter: `drop-shadow(0 0 6px #F59E0B)` }} />
+                    <motion.circle cx="125" cy="350" r="3" fill="#F59E0B" style={{ filter: `drop-shadow(0 0 6px #F59E0B)` }} />
+                </g>
 
                 {/* Luz de Escaneo Biométrico (Biometric Radar Scanner) */}
                 <motion.rect
@@ -98,10 +139,10 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                     style={{ filter: `drop-shadow(0 0 8px ${targetColor})` }}
                     animate={{
                         y: [30, 380, 30],
-                        opacity: [0, 0.6, 0], // Semi-transparent effect
+                        opacity: [0, 0.8, 0],
                         fill: targetColor
                     }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                    transition={{ duration: 3.5, repeat: Infinity, ease: "linear" }}
                 />
             </motion.svg>
         </div>

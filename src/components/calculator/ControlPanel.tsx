@@ -13,19 +13,38 @@ interface SliderFieldProps {
 
 export const SliderField: React.FC<SliderFieldProps> = ({ label, value, min, max, unit, setter, activeColor }) => {
     return (
-        <div className="w-full">
-            <div className="flex justify-between items-end mb-1">
-                <label className="text-gray-400 font-mono text-[10px] uppercase tracking-widest">{label}</label>
-                <div className={`font-black text-xl ${activeColor} transition-colors`}>{value}<span className="text-gray-500 text-sm ml-1">{unit}</span></div>
+        <div className="w-full relative mb-6">
+            <div className="flex items-center justify-between mb-2">
+                <label className="text-gray-400 font-sans text-xs uppercase tracking-widest">{label}</label>
+                <div className="flex items-center">
+                    <span className={`font-black text-lg ${activeColor} transition-colors`}>{value}</span>
+                    <span className="text-gray-500 text-xs ml-1 font-bold">{unit}</span>
+                </div>
             </div>
-            <input
-                type="range"
-                min={min}
-                max={max}
-                value={value}
-                onChange={(e) => setter(Number(e.target.value))}
-                className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-teal-500 hover:accent-amber-500 transition-all focus:outline-none"
-            />
+            <div className="relative flex items-center h-4">
+                <input
+                    type="range"
+                    min={min}
+                    max={max}
+                    value={value}
+                    onChange={(e) => setter(Number(e.target.value))}
+                    className="absolute z-10 w-full h-full opacity-0 cursor-pointer"
+                />
+
+                {/* Custom Track */}
+                <div className="absolute w-full h-[2px] bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                        className="h-full bg-teal-500 transition-all duration-150 ease-out"
+                        style={{ width: `${((value - min) / (max - min)) * 100}%` }}
+                    />
+                </div>
+
+                {/* Custom Thumb */}
+                <div
+                    className="absolute w-3 h-3 bg-teal-400 rounded-full shadow-[0_0_8px_rgba(45,212,191,0.8)] pointer-events-none transition-all duration-150 ease-out"
+                    style={{ left: `calc(${((value - min) / (max - min)) * 100}% - 6px)` }}
+                />
+            </div>
         </div>
     );
 };
@@ -48,18 +67,18 @@ interface ControlPanelProps {
 
 const ControlPanel: React.FC<ControlPanelProps> = (props) => {
     return (
-        <div className="w-full flex flex-col gap-6 z-10 bg-gray-900/40 p-6 md:p-8 rounded-3xl border border-gray-800 backdrop-blur-md shadow-2xl">
-            <h2 className="text-3xl font-black uppercase tracking-tighter text-teal-400 mb-2">Biometría</h2>
+        <div className="w-full flex flex-col z-10 bg-[#0B1120]/80 p-6 md:p-8 rounded-[32px] border border-[#1E293B] shadow-2xl relative">
+            <h2 className="text-xl font-black uppercase tracking-widest text-[#2DD4BF] mb-6 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)]">BIOMETRÍA</h2>
 
-            <div className="flex gap-4 mb-2">
+            <div className="flex gap-4 mb-8">
                 <button
-                    className={`flex-1 py-3 rounded-xl border ${props.gender === 'male' ? 'bg-teal-500/20 border-teal-500 text-teal-400' : 'bg-gray-900 border-gray-700 text-gray-400'} uppercase font-bold tracking-widest transition-all`}
+                    className={`flex-1 py-2 rounded-xl border ${props.gender === 'male' ? 'bg-[#0F172A] border-[#2DD4BF] text-[#2DD4BF]' : 'bg-[#0F172A] border-[#1E293B] text-gray-400'} uppercase text-sm font-bold tracking-widest transition-all`}
                     onClick={() => props.setGender('male')}
-                >Masculino</button>
+                >MASCULINO</button>
                 <button
-                    className={`flex-1 py-3 rounded-xl border ${props.gender === 'female' ? 'bg-teal-500/20 border-teal-500 text-teal-400' : 'bg-gray-900 border-gray-700 text-gray-400'} uppercase font-bold tracking-widest transition-all`}
+                    className={`flex-1 py-2 rounded-xl border ${props.gender === 'female' ? 'bg-[#0F172A] border-[#2DD4BF] text-[#2DD4BF]' : 'bg-[#0F172A] border-[#1E293B] text-gray-400'} uppercase text-sm font-bold tracking-widest transition-all`}
                     onClick={() => props.setGender('female')}
-                >Femenino</button>
+                >FEMENINO</button>
             </div>
 
             <div className="space-y-6">
