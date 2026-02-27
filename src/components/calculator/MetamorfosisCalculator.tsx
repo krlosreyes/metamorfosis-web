@@ -41,7 +41,7 @@ const MetamorfosisCalculator = () => {
     const [waist, setWaist] = useState<number>(90);
     const [hip, setHip] = useState<number>(100);
     const [neck, setNeck] = useState<number>(38);
-    const [showOverlay, setShowOverlay] = useState(false);
+    const [step, setStep] = useState<'measuring' | 'results'>('measuring');
 
     // Calc Values
     const whr = calculateWHR(waist, hip);
@@ -52,16 +52,6 @@ const MetamorfosisCalculator = () => {
     const isHighVisceralFat = whr > (gender === 'male' ? 0.90 : 0.85);
     const avatarShadowColor = isHighVisceralFat ? 'rgba(245, 158, 11, 0.5)' : 'rgba(45, 212, 191, 0.2)';
     const textColor = isHighVisceralFat ? 'text-amber-500' : 'text-teal-400';
-
-    useEffect(() => {
-        // Show ePayco overlay automatically after basic interactions if body fat implies insight
-        const timeout = setTimeout(() => {
-            if (bf > 0 && whr > 0) {
-                setShowOverlay(true);
-            }
-        }, 3000);
-        return () => clearTimeout(timeout);
-    }, [bf, whr]);
 
     const handleCheckout = (e: React.FormEvent) => {
         e.preventDefault();
@@ -106,6 +96,15 @@ const MetamorfosisCalculator = () => {
                     neck={neck} setNeck={setNeck}
                     textColor={textColor}
                 />
+
+                {step === 'measuring' && (
+                    <button
+                        onClick={() => setStep('results')}
+                        className="mt-8 w-full bg-teal-500 hover:bg-teal-400 text-gray-900 font-black uppercase tracking-widest py-4 rounded-xl transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(45,212,191,0.4)]"
+                    >
+                        Ver mi Diagnóstico Inicial
+                    </button>
+                )}
             </div>
 
             {/* Right Column: Visual Reactive Avatar */}
@@ -141,7 +140,7 @@ const MetamorfosisCalculator = () => {
             </div>
 
             {/* Glassmorphism ePayco Checkout Overlay */}
-            {showOverlay && (
+            {step === 'results' && (
                 <motion.div
                     initial={{ backdropFilter: "blur(0px)", backgroundColor: "rgba(3, 7, 18, 0)" }}
                     animate={{ backdropFilter: "blur(12px)", backgroundColor: "rgba(3, 7, 18, 0.85)" }}
