@@ -59,24 +59,31 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             />
 
-            {/* Silueta Base */}
+            {/* Silueta Base (Holographic Wireframe) */}
             <motion.svg
                 viewBox="0 0 200 400"
-                className="relative z-10 w-full h-full drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]"
+                preserveAspectRatio="xMidYMid meet"
+                className="relative z-10 w-full h-full drop-shadow-[0_0_15px_rgba(45,212,191,0.5)]"
                 animate={{ scaleY: heightScale }}
                 transition={{ type: "spring", stiffness: 80, damping: 15 }}
             >
                 {/* Cabeza (Proporcionada) */}
                 <motion.circle
                     cx="100" cy="40" r="22"
-                    animate={{ fill: targetColor }}
+                    fill="transparent"
+                    stroke={targetColor}
+                    strokeWidth="1.5"
+                    animate={{ stroke: targetColor }}
                     transition={{ type: "spring", stiffness: 100, damping: 20 }}
                 />
 
-                {/* Torso Mutante */}
+                {/* Torso Mutante (Wireframe Estético) */}
                 <motion.path
                     d={morphingPath}
-                    animate={{ fill: targetColor }}
+                    fill="transparent"
+                    stroke={targetColor}
+                    strokeWidth="1.5"
+                    animate={{ stroke: targetColor }}
                     transition={{ type: "spring", stiffness: 80, damping: 15 }}
                 />
 

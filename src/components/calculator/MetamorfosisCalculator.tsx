@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import ControlPanel from './ControlPanel';
 import MorphingSilhouette from './MorphingSilhouette';
+import RadialGauge from './RadialGauge';
 
 // U.S. Navy Standard Math Engine functions
 const calculateBodyFat = (gender: 'male' | 'female', waist: number, neck: number, height: number, hip: number): number => {
@@ -47,6 +48,7 @@ const MetamorfosisCalculator = () => {
     const whr = calculateWHR(waist, hip);
     const bf = calculateBodyFat(gender, waist, neck, height, hip);
     const ffmi = calculateFFMI(weight, bf, height);
+    const bmi = weight / Math.pow(height / 100, 2);
 
     // Hooks & Reactive Logic
     const isHighVisceralFat = whr > (gender === 'male' ? 0.90 : 0.85);
@@ -83,11 +85,11 @@ const MetamorfosisCalculator = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#030712] text-white p-6 md:p-12 font-sans relative overflow-hidden flex items-center justify-center">
+        <div className="h-[calc(100vh-80px)] overflow-hidden bg-[#030712] text-white p-6 md:p-12 font-sans relative flex items-center justify-center">
 
-            <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-[1.1fr_1fr] items-center gap-12 md:gap-16 z-10">
+            <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-[1.1fr_1fr] items-center gap-12 md:gap-16 z-10 h-full">
                 {/* Visual Reactive Avatar (Mobile First: Top, Desktop: Left) */}
-                <div className="w-full flex flex-col items-center justify-center relative order-1 md:order-1">
+                <div className="w-full h-full max-h-[85vh] flex flex-col items-center justify-center relative order-1 md:order-1">
 
                     {/* Reactive SVG Silhouette Morphing Engine */}
                     <MorphingSilhouette
@@ -98,16 +100,20 @@ const MetamorfosisCalculator = () => {
                         whr={whr}
                     />
 
-                    {/* Metric Readouts */}
-                    <div className="grid grid-cols-2 gap-4 mt-8 w-full max-w-md">
-                        <div className="bg-gray-900/50 border border-gray-800 p-4 rounded-xl text-center">
-                            <span className="block text-gray-500 text-[10px] uppercase tracking-widest mb-1">Cintura/Cadera (WHR)</span>
-                            <span className={`text-2xl font-black ${textColor}`}>{whr.toFixed(2)}</span>
-                        </div>
-                        <div className="bg-gray-900/50 border border-gray-800 p-4 rounded-xl text-center">
-                            <span className="block text-gray-500 text-[10px] uppercase tracking-widest mb-1">Grasa Corporal</span>
-                            <span className={`text-2xl font-black ${textColor}`}>{bf.toFixed(1)}%</span>
-                        </div>
+                    {/* Radial Telemetry Gauges */}
+                    <div className="flex gap-8 mt-2 w-full justify-center max-w-md">
+                        <RadialGauge
+                            value={bmi}
+                            min={15} max={40}
+                            label="IMC"
+                            targetColor={bmi > 25 ? '#F59E0B' : '#2DD4BF'}
+                        />
+                        <RadialGauge
+                            value={whr}
+                            min={0.7} max={1.2}
+                            label="WHR"
+                            targetColor={textColor === 'text-amber-500' ? '#F59E0B' : '#2DD4BF'}
+                        />
                     </div>
 
                     {isHighVisceralFat && (
