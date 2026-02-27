@@ -17,8 +17,8 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
     max,
     label,
     targetColor = '#2DD4BF',
-    size = 120,
-    strokeWidth = 6
+    size = 140,
+    strokeWidth = 10
 }) => {
     // Math for the SVG Circle
     const radius = (size - strokeWidth) / 2;
@@ -67,10 +67,10 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
 
             {/* Central Metric Value */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-xl font-black text-white" style={{ textShadow: `0 0 10px ${targetColor}` }}>
+                <span className="text-3xl font-black text-white" style={{ textShadow: `0 0 10px ${targetColor}` }}>
                     {value.toFixed(2)}
                 </span>
-                <span className="text-[9px] uppercase tracking-widest text-gray-400 mt-1">
+                <span className="text-[11px] uppercase tracking-widest text-gray-400 mt-1">
                     {label}
                 </span>
             </div>

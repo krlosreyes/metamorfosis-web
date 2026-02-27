@@ -75,22 +75,20 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                 {/* Cabeza (Proporcionada) */}
                 <motion.circle
                     cx="100" cy="40" r="22"
-                    fill={targetColor}
-                    fillOpacity={0.05}
+                    fill={targetColor === '#F59E0B' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(45, 212, 191, 0.15)'}
                     stroke={targetColor}
-                    strokeWidth="0.5"
-                    animate={{ stroke: targetColor, fill: targetColor }}
+                    strokeWidth="2"
+                    animate={{ stroke: targetColor, fill: targetColor === '#F59E0B' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(45, 212, 191, 0.15)' }}
                     transition={{ type: "spring", stiffness: 100, damping: 20 }}
                 />
 
                 {/* Torso Mutante (Wireframe Estético) */}
                 <motion.path
                     d={morphingPath}
-                    fill={targetColor}
-                    fillOpacity={0.05}
+                    fill={targetColor === '#F59E0B' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(45, 212, 191, 0.15)'}
                     stroke={targetColor}
-                    strokeWidth="0.5"
-                    animate={{ stroke: targetColor, fill: targetColor }}
+                    strokeWidth="2"
+                    animate={{ stroke: targetColor, fill: targetColor === '#F59E0B' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(45, 212, 191, 0.15)' }}
                     transition={{ type: "spring", stiffness: 80, damping: 15 }}
                 />
 
@@ -105,16 +103,6 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                     }}
                     transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                 />
-
-                {/* Grid Visualizer opcional en background (Para look sci-fi) */}
-                {isHighVisceralFat && (
-                    <motion.circle
-                        cx="100" cy="190" r={wFactor}
-                        fill="none" stroke="rgba(245, 158, 11, 0.5)" strokeWidth="2" strokeDasharray="4 4"
-                        animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                    />
-                )}
             </motion.svg>
         </div>
     );

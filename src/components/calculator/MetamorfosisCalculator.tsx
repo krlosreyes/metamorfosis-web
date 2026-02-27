@@ -85,105 +85,113 @@ const MetamorfosisCalculator = () => {
     };
 
     return (
-        <div className="fixed inset-0 top-[80px] h-[calc(100vh-80px)] overflow-hidden bg-[#030712] text-white p-4 md:p-12 font-sans flex items-center justify-center">
+        <div className="fixed inset-0 top-[80px] h-[calc(100vh-80px)] overflow-hidden bg-[#030712] text-white p-4 md:p-8 font-sans flex items-center justify-center">
 
-            <div className="w-full max-w-7xl grid grid-cols-1 grid-rows-[45%_55%] md:grid-cols-[1.1fr_1fr] md:grid-rows-1 items-center gap-4 md:gap-16 z-10 h-full pb-4 md:pb-0">
-                {/* Visual Reactive Avatar (Mobile First: Top, Desktop: Left) */}
-                <div className="w-full h-full max-h-[85vh] flex flex-col items-center justify-center relative order-1 md:order-1 pt-4 md:pt-0">
+            {/* Inner Frosted Glass Cockpit Container */}
+            <div className="w-full max-w-6xl h-full max-h-[85vh] bg-gray-900/40 backdrop-blur-3xl border border-teal-500/50 rounded-[40px] shadow-[0_0_50px_rgba(45,212,191,0.15)] flex overflow-hidden">
 
-                    {/* Reactive SVG Silhouette Morphing Engine */}
-                    <MorphingSilhouette
-                        waist={waist}
-                        hip={hip}
-                        height={height}
-                        gender={gender}
-                        whr={whr}
-                    />
+                <div className="w-full h-full grid grid-cols-1 grid-rows-[45%_55%] md:grid-cols-[1.1fr_1fr] md:grid-rows-1 items-stretch z-10">
 
-                    {/* Radial Telemetry Gauges */}
-                    <div className="flex gap-8 mt-2 w-full justify-center max-w-md">
-                        <RadialGauge
-                            value={bmi}
-                            min={15} max={40}
-                            label="IMC"
-                            targetColor={bmi > 25 ? '#F59E0B' : '#2DD4BF'}
+                    {/* Visual Reactive Avatar (Mobile First: Top, Desktop: Left) */}
+                    <div className="w-full h-full flex flex-col items-center justify-center relative order-1 md:order-1 border-b md:border-b-0 md:border-r border-gray-800/50 p-6">
+
+                        {/* Reactive SVG Silhouette Morphing Engine */}
+                        <MorphingSilhouette
+                            waist={waist}
+                            hip={hip}
+                            height={height}
+                            gender={gender}
+                            whr={whr}
                         />
-                        <RadialGauge
-                            value={whr}
-                            min={0.7} max={1.2}
-                            label="WHR"
-                            targetColor={textColor === 'text-amber-500' ? '#F59E0B' : '#2DD4BF'}
-                        />
+
+                        {isHighVisceralFat && (
+                            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="absolute bottom-8 text-center text-sm text-gray-400 px-6 max-w-sm bg-gray-900/80 backdrop-blur-md rounded-xl p-4 border border-amber-500/30">
+                                <span className="text-amber-500 font-bold block mb-1">¿Sabías qué?</span>
+                                Tu coeficiente de Grasa Visceral ({whr.toFixed(2)}) está interfiriendo con la señalización de leptina en este momento.
+                            </motion.div>
+                        )}
                     </div>
 
-                    {isHighVisceralFat && (
-                        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="mt-6 text-center text-sm text-gray-400 px-6 max-w-md">
-                            <span className="text-amber-500 font-bold block mb-1">¿Sabías qué?</span>
-                            Tu coeficiente de Grasa Visceral ({whr.toFixed(2)}) está interfiriendo con la señalización de leptina en este momento.
-                        </motion.div>
-                    )}
+                    {/* Sliders Data & Gauges (Mobile First: Bottom, Desktop: Right) */}
+                    <div className="w-full h-full flex flex-col justify-start md:justify-between order-2 md:order-2 overflow-y-auto overflow-x-hidden p-6 md:p-10 custom-scrollbar">
+
+                        <div className="flex-grow">
+                            <ControlPanel
+                                gender={gender} setGender={setGender}
+                                weight={weight} setWeight={setWeight}
+                                height={height} setHeight={setHeight}
+                                waist={waist} setWaist={setWaist}
+                                hip={hip} setHip={setHip}
+                                neck={neck} setNeck={setNeck}
+                                textColor={textColor}
+                            />
+                        </div>
+
+                        {/* Radial Telemetry Gauges relocated here */}
+                        <div className="flex justify-around items-center mt-6 pt-6 border-t border-gray-800/50">
+                            <RadialGauge
+                                value={bmi}
+                                min={15} max={40}
+                                label="IMC"
+                                targetColor={bmi > 25 ? '#F59E0B' : '#2DD4BF'}
+                            />
+                            <RadialGauge
+                                value={whr}
+                                min={0.7} max={1.2}
+                                label="WHR"
+                                targetColor={textColor === 'text-amber-500' ? '#F59E0B' : '#2DD4BF'}
+                            />
+                        </div>
+
+                        {step === 'measuring' && (
+                            <button
+                                onClick={() => setStep('results')}
+                                className="mt-8 w-full bg-teal-500 hover:bg-teal-400 text-gray-900 font-black uppercase tracking-widest py-4 rounded-xl transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(45,212,191,0.4)]"
+                            >
+                                Ver mi Diagnóstico Inicial
+                            </button>
+                        )}
+                    </div>
                 </div>
-
-                {/* Sliders Data (Mobile First: Bottom, Desktop: Right) */}
-                <div className="w-full h-full flex flex-col justify-start md:justify-center order-2 md:order-2 overflow-y-auto overflow-x-hidden pr-2 custom-scrollbar">
-                    <ControlPanel
-                        gender={gender} setGender={setGender}
-                        weight={weight} setWeight={setWeight}
-                        height={height} setHeight={setHeight}
-                        waist={waist} setWaist={setWaist}
-                        hip={hip} setHip={setHip}
-                        neck={neck} setNeck={setNeck}
-                        textColor={textColor}
-                    />
-
-                    {step === 'measuring' && (
-                        <button
-                            onClick={() => setStep('results')}
-                            className="mt-8 w-full bg-teal-500 hover:bg-teal-400 text-gray-900 font-black uppercase tracking-widest py-4 rounded-xl transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(45,212,191,0.4)]"
-                        >
-                            Ver mi Diagnóstico Inicial
-                        </button>
-                    )}
-                </div>
-                {/* Glassmorphism ePayco Checkout Overlay */}
-                {step === 'results' && (
-                    <motion.div
-                        initial={{ backdropFilter: "blur(0px)", backgroundColor: "rgba(3, 7, 18, 0)" }}
-                        animate={{ backdropFilter: "blur(12px)", backgroundColor: "rgba(3, 7, 18, 0.85)" }}
-                        className="absolute inset-0 z-50 flex items-center justify-center p-6"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            className="bg-gray-900/90 border border-teal-500/30 p-8 rounded-3xl w-full max-w-md shadow-[0_0_50px_rgba(45,212,191,0.15)] text-center relative overflow-hidden"
-                        >
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 to-indigo-500"></div>
-                            <h3 className="text-2xl font-black uppercase tracking-tighter text-white mb-2">Desbloquea tu Biología</h3>
-                            <p className="text-gray-400 text-sm mb-6">Hemos detectado patrones en tu índice FFMI (Masa Libre de Grasa: <span className="text-teal-400 font-bold">{ffmi.toFixed(1)}</span>). Descubre cómo revertir tu resistencia metabólica exacta.</p>
-
-                            <form onSubmit={handleCheckout}>
-                                <button type="submit" className="w-full bg-teal-500 hover:bg-teal-400 text-gray-900 font-black uppercase tracking-widest py-4 rounded-xl transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(45,212,191,0.4)] mb-4 flex justify-center items-center gap-2">
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                                    Reporte PRO ($1.99 USD)
-                                </button>
-
-                                {/* Wallets Trust Badges */}
-                                <div className="flex justify-center items-center gap-4 opacity-50 grayscale hover:grayscale-0 transition-all cursor-default">
-                                    {/* Apple Pay SVG Mock */}
-                                    <svg className="h-6" viewBox="0 0 50 20" fill="currentColor">
-                                        <path d="M12 9c0-1.8 1.4-2.8 2.2-3.3-1-1.1-2.6-1.3-3.1-1.3-1.3-.1-2.6.7-3.3.7-.7 0-1.7-.6-2.8-.6-1.5 0-2.9.8-3.6 2.1-1.6 2.8-.4 6.9 1.1 9.1.7 1.1 1.6 2.2 2.7 2.2 1.1 0 1.5-.7 2.8-.7 1.3 0 1.7.7 2.8.7 1.2 0 1.9-1.1 2.6-2.1.9-1.3 1.3-2.6 1.3-2.7 0-.1-2.5-1-2.5-3.8zm-1.8-6.1c.6-.7 1-1.7 1-2.7 0-.1 0-.2 0-.2-1 0-2 .6-2.6 1.4-.5.6-.9 1.6-.8 2.5.1 0 .2.1.2.1 1 0 1.7-.5 2.2-1.1z" />
-                                        <text x="20" y="15" fontSize="14" fontWeight="bold">Pay</text>
-                                    </svg>
-                                    {/* Google Pay SVG Mock */}
-                                    <svg className="h-6" viewBox="0 0 50 20" fill="currentColor">
-                                        <text x="0" y="15" fontSize="14" fontWeight="bold">G Pay</text>
-                                    </svg>
-                                </div>
-                            </form>
-                        </motion.div>
-                    </motion.div>
-                )}
             </div>
+            {/* Glassmorphism ePayco Checkout Overlay */}
+            {step === 'results' && (
+                <motion.div
+                    initial={{ backdropFilter: "blur(0px)", backgroundColor: "rgba(3, 7, 18, 0)" }}
+                    animate={{ backdropFilter: "blur(12px)", backgroundColor: "rgba(3, 7, 18, 0.85)" }}
+                    className="absolute inset-0 z-50 flex items-center justify-center p-6"
+                >
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        className="bg-gray-900/90 border border-teal-500/30 p-8 rounded-3xl w-full max-w-md shadow-[0_0_50px_rgba(45,212,191,0.15)] text-center relative overflow-hidden"
+                    >
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 to-indigo-500"></div>
+                        <h3 className="text-2xl font-black uppercase tracking-tighter text-white mb-2">Desbloquea tu Biología</h3>
+                        <p className="text-gray-400 text-sm mb-6">Hemos detectado patrones en tu índice FFMI (Masa Libre de Grasa: <span className="text-teal-400 font-bold">{ffmi.toFixed(1)}</span>). Descubre cómo revertir tu resistencia metabólica exacta.</p>
+
+                        <form onSubmit={handleCheckout}>
+                            <button type="submit" className="w-full bg-teal-500 hover:bg-teal-400 text-gray-900 font-black uppercase tracking-widest py-4 rounded-xl transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(45,212,191,0.4)] mb-4 flex justify-center items-center gap-2">
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                Reporte PRO ($1.99 USD)
+                            </button>
+
+                            {/* Wallets Trust Badges */}
+                            <div className="flex justify-center items-center gap-4 opacity-50 grayscale hover:grayscale-0 transition-all cursor-default">
+                                {/* Apple Pay SVG Mock */}
+                                <svg className="h-6" viewBox="0 0 50 20" fill="currentColor">
+                                    <path d="M12 9c0-1.8 1.4-2.8 2.2-3.3-1-1.1-2.6-1.3-3.1-1.3-1.3-.1-2.6.7-3.3.7-.7 0-1.7-.6-2.8-.6-1.5 0-2.9.8-3.6 2.1-1.6 2.8-.4 6.9 1.1 9.1.7 1.1 1.6 2.2 2.7 2.2 1.1 0 1.5-.7 2.8-.7 1.3 0 1.7.7 2.8.7 1.2 0 1.9-1.1 2.6-2.1.9-1.3 1.3-2.6 1.3-2.7 0-.1-2.5-1-2.5-3.8zm-1.8-6.1c.6-.7 1-1.7 1-2.7 0-.1 0-.2 0-.2-1 0-2 .6-2.6 1.4-.5.6-.9 1.6-.8 2.5.1 0 .2.1.2.1 1 0 1.7-.5 2.2-1.1z" />
+                                    <text x="20" y="15" fontSize="14" fontWeight="bold">Pay</text>
+                                </svg>
+                                {/* Google Pay SVG Mock */}
+                                <svg className="h-6" viewBox="0 0 50 20" fill="currentColor">
+                                    <text x="0" y="15" fontSize="14" fontWeight="bold">G Pay</text>
+                                </svg>
+                            </div>
+                        </form>
+                    </motion.div>
+                </motion.div>
+            )}
         </div>
     );
 };
