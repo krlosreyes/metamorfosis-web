@@ -13,8 +13,8 @@ interface SliderFieldProps {
 
 export const SliderField: React.FC<SliderFieldProps> = ({ label, value, min, max, unit, setter, activeColor }) => {
     return (
-        <div className="w-full relative mb-6">
-            <div className="flex items-center justify-between mb-2">
+        <div className="w-full relative mb-4">
+            <div className="flex items-center justify-between mb-1">
                 <label className="text-gray-400 font-sans text-xs uppercase tracking-widest">{label}</label>
                 <div className="flex items-center">
                     <span className={`font-black text-lg ${activeColor} transition-colors`}>{value}</span>
@@ -67,21 +67,21 @@ interface ControlPanelProps {
 
 const ControlPanel: React.FC<ControlPanelProps> = (props) => {
     return (
-        <div className="w-full flex flex-col z-10 bg-[#0B1120]/80 p-6 md:p-8 rounded-[32px] border border-[#1E293B] shadow-2xl relative">
-            <h2 className="text-xl font-black uppercase tracking-widest text-[#2DD4BF] mb-6 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)]">BIOMETRÍA</h2>
+        <div className="w-full flex flex-col z-10 relative">
+            <h2 className="text-lg md:text-xl font-black uppercase tracking-widest text-[#2DD4BF] mb-4 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)]">BIOMETRÍA</h2>
 
-            <div className="flex gap-4 mb-8">
+            <div className="flex gap-4 mb-4 md:mb-6">
                 <button
-                    className={`flex-1 py-2 rounded-xl border ${props.gender === 'male' ? 'bg-[#0F172A] border-[#2DD4BF] text-[#2DD4BF]' : 'bg-[#0F172A] border-[#1E293B] text-gray-400'} uppercase text-sm font-bold tracking-widest transition-all`}
+                    className={`flex-1 py-2 rounded-xl border ${props.gender === 'male' ? 'bg-[#0F172A] border-[#2DD4BF] text-[#2DD4BF]' : 'bg-transparent border-[#1E293B] text-gray-500'} uppercase text-sm font-bold tracking-widest transition-all`}
                     onClick={() => props.setGender('male')}
                 >MASCULINO</button>
                 <button
-                    className={`flex-1 py-2 rounded-xl border ${props.gender === 'female' ? 'bg-[#0F172A] border-[#2DD4BF] text-[#2DD4BF]' : 'bg-[#0F172A] border-[#1E293B] text-gray-400'} uppercase text-sm font-bold tracking-widest transition-all`}
+                    className={`flex-1 py-2 rounded-xl border ${props.gender === 'female' ? 'bg-[#0F172A] border-[#2DD4BF] text-[#2DD4BF]' : 'bg-transparent border-[#1E293B] text-gray-500'} uppercase text-sm font-bold tracking-widest transition-all`}
                     onClick={() => props.setGender('female')}
                 >FEMENINO</button>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-1">
                 <SliderField label="Peso" value={props.weight} min={40} max={150} unit="kg" setter={props.setWeight} activeColor={props.textColor} />
                 <SliderField label="Altura" value={props.height} min={140} max={220} unit="cm" setter={props.setHeight} activeColor={props.textColor} />
                 <SliderField label="Cintura" value={props.waist} min={50} max={150} unit="cm" setter={props.setWaist} activeColor={props.textColor} />

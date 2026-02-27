@@ -113,28 +113,36 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
 
                 {/* Anatomical Glowing Joints (To simulate mapped 3D data points) */}
                 <g>
-                    {/* Head / Neck points (Cyan) */}
-                    <circle cx="100" cy="25" r="2" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
-                    <circle cx="100" cy="65" r="2" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
+                    {/* Head - Forehead (Cyan) */}
+                    <circle cx="100" cy="25" r="2.5" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
+
+                    {/* Neck Base (Orange) */}
+                    <circle cx="100" cy="65" r="2.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 6px #F59E0B)' }} />
 
                     {/* Shoulders (Orange/Gold) */}
                     <circle cx="65" cy="80" r="3.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 8px #F59E0B)' }} />
                     <circle cx="135" cy="80" r="3.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 8px #F59E0B)' }} />
 
-                    {/* Chest / Breath nodes (Cyan Array) */}
-                    <circle cx="80" cy="120" r="2.5" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
-                    <circle cx="100" cy="120" r="2.5" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
-                    <circle cx="120" cy="120" r="2.5" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
+                    {/* Sternum (Cyan) */}
+                    <circle cx="100" cy="115" r="2.5" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
 
-                    {/* Waist / Visceral Center (Animated horizontal spread depending on waist size) */}
-                    <motion.circle cx={100 - (wFactor / 3)} cy="180" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: 100 - (wFactor / 3), fill: targetColor }} />
-                    <motion.circle cx="100" cy="180" r="2.5" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ fill: targetColor }} />
-                    <motion.circle cx={100 + (wFactor / 3)} cy="180" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: 100 + (wFactor / 3), fill: targetColor }} />
+                    {/* Belly Button / Waist Center (Cyan) */}
+                    <circle cx="100" cy="170" r="2.5" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
+
+                    {/* Waist Edges (Orange) */}
+                    <motion.circle cx={100 - (wFactor / 1.5)} cy="170" r="3" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 6px #F59E0B)' }} animate={{ cx: 100 - (wFactor / 1.5) }} />
+                    <motion.circle cx={100 + (wFactor / 1.5)} cy="170" r="3" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 6px #F59E0B)' }} animate={{ cx: 100 + (wFactor / 1.5) }} />
+
+                    {/* Hands / Wrists (Orange) */}
+                    <motion.circle cx={100 - (hFactor * 1.1)} cy="260" r="2.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 6px #F59E0B)' }} animate={{ cx: 100 - (hFactor * 1.1) }} />
+                    <motion.circle cx={100 + (hFactor * 1.1)} cy="260" r="2.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 6px #F59E0B)' }} animate={{ cx: 100 + (hFactor * 1.1) }} />
 
                     {/* Hips (Orange/Gold) */}
-                    <motion.circle cx={100 - (hFactor * 0.7)} cy="250" r="3.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 8px #F59E0B)' }} animate={{ cx: 100 - (hFactor * 0.7) }} />
-                    <motion.circle cx={100 + (hFactor * 0.7)} cy="250" r="3.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 8px #F59E0B)' }} animate={{ cx: 100 + (hFactor * 0.7) }} />
-                    <motion.circle cx="100" cy="250" r="2" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
+                    <motion.circle cx={100 - (hFactor * 0.7)} cy="225" r="3.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 8px #F59E0B)' }} animate={{ cx: 100 - (hFactor * 0.7) }} />
+                    <motion.circle cx={100 + (hFactor * 0.7)} cy="225" r="3.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 8px #F59E0B)' }} animate={{ cx: 100 + (hFactor * 0.7) }} />
+
+                    {/* Pelvic Center (Cyan) */}
+                    <motion.circle cx="100" cy="225" r="2.5" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
 
                     {/* Knees / Lower limbs (Orange/Gold) */}
                     <circle cx="85" cy="350" r="3" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 6px #F59E0B)' }} />

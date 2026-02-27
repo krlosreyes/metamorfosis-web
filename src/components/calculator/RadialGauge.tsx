@@ -20,7 +20,7 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
     const isWHR = max <= 2;
     const numTicks = isWHR ? 8 : 8; // 0 to 0.8 has 8 intervals of 0.1? Actually 0 to 0.8 has 8 ticks. 0 to 80 has 8 ticks of 10.
 
-    const size = 160;
+    const size = 120; // Reduced from 160 for better fit on all screens
 
     // Math for Gauge
     const clampedValue = Math.min(Math.max(value, min), max);

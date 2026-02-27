@@ -80,13 +80,13 @@ const MetamorfosisCalculator = () => {
     };
 
     return (
-        <div className="fixed inset-0 top-[80px] h-[calc(100vh-80px)] overflow-hidden bg-[#030712] text-white p-4 md:p-8 font-sans flex items-center justify-center">
+        <div className="fixed top-[80px] left-0 right-0 bottom-0 overflow-hidden bg-[#030712] text-white p-2 md:p-4 lg:p-6 font-sans flex items-center justify-center">
 
             {/* Inner Cockpit Container - Pure dark UI */}
-            <div className="w-full max-w-[1200px] h-full max-h-[90vh] flex overflow-hidden">
+            <div className="w-full h-full flex overflow-hidden">
 
-                {/* 1.1fr vs 1fr exact proportional grid */}
-                <div className="w-full h-full grid grid-cols-1 grid-rows-[45%_55%] md:grid-cols-[1.1fr_1fr] items-stretch gap-6 md:gap-8 z-10 w-full">
+                {/* exactly proportional grid adapting to mobile sizes gracefully */}
+                <div className="w-full h-full grid grid-cols-1 grid-rows-[minmax(200px,1fr)_auto] md:grid-cols-[1.1fr_1fr] md:grid-rows-1 items-stretch gap-4 md:gap-6 z-10 w-full">
 
                     {/* Visual Reactive Avatar / Left Panel */}
                     <div className="w-full h-full flex flex-col items-center justify-center relative order-1 md:order-1 border-2 border-[#2DD4BF] rounded-[32px] overflow-hidden shadow-[0_0_40px_rgba(45,212,191,0.2)] bg-[#0B1120]/60 backdrop-blur-3xl">
@@ -119,61 +119,66 @@ const MetamorfosisCalculator = () => {
                     </div>
 
                     {/* Sliders Data & Gauges / Right Panel */}
-                    <div className="w-full h-full flex flex-col justify-start order-2 md:order-2 overflow-y-auto overflow-x-hidden pr-2 pb-8 custom-scrollbar gap-6 relative">
+                    <div className="w-full h-full flex flex-col justify-between order-2 md:order-2 overflow-hidden gap-4 md:gap-6 relative min-h-0">
 
-                        <ControlPanel
-                            gender={gender} setGender={setGender}
-                            weight={weight} setWeight={setWeight}
-                            height={height} setHeight={setHeight}
-                            waist={waist} setWaist={setWaist}
-                            hip={hip} setHip={setHip}
-                            neck={neck} setNeck={setNeck}
-                            textColor={textColor}
-                        />
+                        {/* Unified Dark Data Container */}
+                        <div className="w-full flex-1 flex flex-col bg-[#0B1120] rounded-[24px] md:rounded-[32px] border border-[#1E293B] shadow-2xl p-4 md:p-6 overflow-hidden min-h-0">
+                            <div className="flex-shrink-0">
+                                <ControlPanel
+                                    gender={gender} setGender={setGender}
+                                    weight={weight} setWeight={setWeight}
+                                    height={height} setHeight={setHeight}
+                                    waist={waist} setWaist={setWaist}
+                                    hip={hip} setHip={setHip}
+                                    neck={neck} setNeck={setNeck}
+                                    textColor={textColor}
+                                />
+                            </div>
 
-                        {/* Radial Telemetry Gauges relocated here 0-80 and 0-0.8 */}
-                        <div className="flex justify-around items-center pt-2">
-                            <RadialGauge
-                                value={bmi}
-                                min={0} max={80}
-                                label="IMC"
-                                targetColor={bmi > 25 ? '#F59E0B' : '#2DD4BF'}
-                            />
-                            <RadialGauge
-                                value={whr}
-                                min={0} max={0.8}
-                                label="WHR"
-                                targetColor={textColor === 'text-amber-500' ? '#F59E0B' : '#2DD4BF'}
-                            />
+                            {/* Radial Telemetry Gauges relocated here 0-80 and 0-0.8 */}
+                            <div className="flex justify-around items-center flex-shrink min-h-0 mt-auto pt-2">
+                                <RadialGauge
+                                    value={bmi}
+                                    min={0} max={80}
+                                    label="IMC"
+                                    targetColor={bmi > 25 ? '#F59E0B' : '#2DD4BF'}
+                                />
+                                <RadialGauge
+                                    value={whr}
+                                    min={0} max={0.8}
+                                    label="WHR"
+                                    targetColor={textColor === 'text-amber-500' ? '#F59E0B' : '#2DD4BF'}
+                                />
+                            </div>
                         </div>
 
                         {/* Integrated e-Commerce Footer Panel */}
-                        <div className="flex flex-col gap-4 mt-auto pt-4 relative z-20">
+                        <div className="flex flex-col gap-3 md:gap-4 flex-shrink-0 relative z-20">
 
                             {/* Neon CTA Button */}
                             <button
                                 onClick={() => alert('Generando Diagnóstico...')}
-                                className="w-full bg-[#2DD4BF] hover:bg-teal-400 text-[#030712] text-sm md:text-lg font-black uppercase tracking-widest py-4 rounded-[20px] transition-all hover:scale-[1.02] relative shadow-[0_0_20px_rgba(45,212,191,0.3)] hover:shadow-[0_0_30px_rgba(45,212,191,0.6)]"
+                                className="w-full bg-[#2DD4BF] hover:bg-teal-400 text-[#030712] text-sm md:text-lg font-black uppercase tracking-widest py-3 md:py-4 rounded-[16px] md:rounded-[20px] transition-all hover:scale-[1.02] relative shadow-[0_0_20px_rgba(45,212,191,0.3)] hover:shadow-[0_0_30px_rgba(45,212,191,0.6)]"
                             >
-                                <motion.div className="absolute inset-0 bg-[#2DD4BF] opacity-20 rounded-[20px]" animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} />
+                                <motion.div className="absolute inset-0 bg-[#2DD4BF] opacity-20 rounded-[16px] md:rounded-[20px]" animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} />
                                 VER MI DIAGNÓSTICO INICIAL
                             </button>
 
                             {/* Prominent Payment Providers row */}
-                            <form onSubmit={handleCheckout} className="flex gap-4">
+                            <form onSubmit={handleCheckout} className="flex gap-3 md:gap-4">
 
                                 {/* ePayco Red Bold Button */}
-                                <button type="submit" className="flex-1 bg-[#E02A2A] hover:bg-red-500 text-white font-black py-4 rounded-[20px] transition-all hover:scale-[1.02] shadow-lg flex justify-center items-center border border-red-500/50 hover:shadow-[0_0_15px_rgba(224,42,42,0.4)]">
-                                    <span className="text-2xl italic tracking-tighter">ePayco</span>
+                                <button type="submit" className="flex-1 bg-[#E02A2A] hover:bg-red-500 text-white font-black py-3 md:py-4 rounded-[16px] md:rounded-[20px] transition-all hover:scale-[1.02] shadow-lg flex justify-center items-center border border-red-500/50 hover:shadow-[0_0_15px_rgba(224,42,42,0.4)]">
+                                    <span className="text-xl md:text-2xl italic tracking-tighter">ePayco</span>
                                 </button>
 
-                                {/* GPay / Apple Pay Cyan Bold Block */}
-                                <div className="flex-1 bg-[#2DD4BF] text-[#030712] border border-[#2DD4BF] rounded-[20px] flex justify-center items-center gap-6 shadow-[0_0_15px_rgba(45,212,191,0.4)] cursor-pointer hover:bg-teal-400 transition-all font-black hover:scale-[1.02]">
-                                    <svg className="h-6" viewBox="0 0 50 20" fill="currentColor">
+                                {/* GPay / Apple Pay RESTYLED to Black/Gray */}
+                                <div className="flex-1 bg-black text-white border border-[#1E293B] hover:border-gray-600 rounded-[16px] md:rounded-[20px] flex justify-center items-center gap-4 md:gap-6 shadow-lg cursor-pointer hover:bg-gray-900 transition-all font-black hover:scale-[1.02]">
+                                    <svg className="h-5 md:h-6" viewBox="0 0 50 20" fill="currentColor">
                                         <text x="0" y="15" fontSize="16" fontWeight="bold">G Pay</text>
                                     </svg>
-                                    <div className="w-px h-6 bg-[#030712]/20"></div>
-                                    <svg className="h-6" viewBox="0 0 50 20" fill="currentColor">
+                                    <div className="w-px h-5 md:h-6 bg-[#1E293B]"></div>
+                                    <svg className="h-5 md:h-6" viewBox="0 0 50 20" fill="currentColor">
                                         <path d="M12 9c0-1.8 1.4-2.8 2.2-3.3-1-1.1-2.6-1.3-3.1-1.3-1.3-.1-2.6.7-3.3.7-.7 0-1.7-.6-2.8-.6-1.5 0-2.9.8-3.6 2.1-1.6 2.8-.4 6.9 1.1 9.1.7 1.1 1.6 2.2 2.7 2.2 1.1 0 1.5-.7 2.8-.7 1.3 0 1.7.7 2.8.7 1.2 0 1.9-1.1 2.6-2.1.9-1.3 1.3-2.6 1.3-2.7 0-.1-2.5-1-2.5-3.8zm-1.8-6.1c.6-.7 1-1.7 1-2.7 0-.1 0-.2 0-.2-1 0-2 .6-2.6 1.4-.5.6-.9 1.6-.8 2.5.1 0 .2.1.2.1 1 0 1.7-.5 2.2-1.1z" />
                                         <text x="20" y="15" fontSize="16" fontWeight="bold">Pay</text>
                                     </svg>
