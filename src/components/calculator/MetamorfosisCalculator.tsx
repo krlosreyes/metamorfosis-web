@@ -138,7 +138,7 @@ const MetamorfosisCalculator = () => {
                             </div>
 
                             {/* ── Telemetry Gauges row ─────────────────────────── */}
-                            <div className="flex justify-around items-center flex-shrink min-h-0 mt-4 md:mt-8 pt-4 md:pt-6 border-t border-white/5">
+                            <div className="flex justify-around items-end flex-1 min-h-[120px] pt-4 mt-4 border-t border-white/5 relative z-10">
                                 <RadialGauge
                                     value={bmi}
                                     min={12} max={45}

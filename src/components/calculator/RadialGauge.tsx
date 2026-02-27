@@ -39,14 +39,14 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
     const sweep = END - START;
     const needleAngle = START + pct * sweep;
 
-    // Geometry
-    const size = 180;
+    // Compact Geometry so it doesn't clip
+    const size = 160;
     const cx = size / 2;
-    const cy = size / 2 + 10; // shifted down to give room for top arc
-    const R = 70;
-    const Rinner = R - 10;
-    const Rticks = R - 18;
-    const Rtext = R - 30;
+    const cy = size / 2 + 10;
+    const R = 60;
+    const Rinner = R - 8;
+    const Rticks = R - 16;
+    const Rtext = R - 26;
 
     // Color zones for background arc segments
     const zones = [
@@ -170,12 +170,12 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
                     );
                 })}
 
-                {/* ── Animated Needle ── */}
+                {/* ── Animated Needle (using reliable SVG transform rotation) ── */}
                 <motion.g
-                    style={{ transformOrigin: `${cx}px ${cy}px` }}
-                    animate={{ rotate: needleAngle }}
                     initial={{ rotate: START }}
+                    animate={{ rotate: needleAngle }}
                     transition={{ type: 'spring', stiffness: 70, damping: 10, mass: 0.4 }}
+                    style={{ originX: `${cx}px`, originY: `${cy}px` }}
                 >
                     {/* Needle body (tapered) */}
                     <polygon
@@ -185,7 +185,7 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
                     />
                     {/* Needle counterweight */}
                     <polygon
-                        points={`${cx - 2},${cy} ${cx + 2},${cy} ${cx},${cy + 14}`}
+                        points={`${cx - 2},${cy} ${cx + 2},${cy} ${cx},${cy + 12}`}
                         fill={targetColor} opacity="0.4"
                     />
                 </motion.g>
