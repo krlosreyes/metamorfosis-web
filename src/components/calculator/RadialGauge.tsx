@@ -16,51 +16,54 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
     label,
     targetColor = '#2DD4BF'
 }) => {
+    // Determine number of ticks based on scale
+    const isWHR = max <= 2;
+    const numTicks = isWHR ? 8 : 8; // 0 to 0.8 has 8 intervals of 0.1? Actually 0 to 0.8 has 8 ticks. 0 to 80 has 8 ticks of 10.
+
     const size = 160;
 
     // Math for Gauge
     const clampedValue = Math.min(Math.max(value, min), max);
     const percent = (clampedValue - min) / (max - min);
 
-    // Angles: -120 deg to +120 deg
+    // Angles: -120 deg to +120 deg (240 degree sweep)
     const startAngle = -120;
     const endAngle = 120;
     const angleRange = endAngle - startAngle;
     const currentAngle = startAngle + (percent * angleRange);
 
-    const radius = size * 0.35;
+    const radius = size * 0.4;
     const center = size / 2;
 
     // Generate Ticks
-    const numTicks = 10;
     const ticks = Array.from({ length: numTicks + 1 }).map((_, i) => {
         const tPercent = i / numTicks;
         const oAngle = startAngle + (tPercent * angleRange);
         const rad = (oAngle - 90) * (Math.PI / 180);
 
-        const isMajor = i % 2 === 0;
-        const tickLength = isMajor ? 12 : 6;
+        const isMajor = true;
+        const tickLength = 6;
 
-        const x1 = center + (radius - tickLength) * Math.cos(rad);
-        const y1 = center + (radius - tickLength) * Math.sin(rad);
-        const x2 = center + radius * Math.cos(rad);
-        const y2 = center + radius * Math.sin(rad);
+        // Inner radius for numbers
+        const textRadius = radius - 18;
+        const x1 = center + radius * Math.cos(rad);
+        const y1 = center + radius * Math.sin(rad);
+        const x2 = center + (radius - tickLength) * Math.cos(rad);
+        const y2 = center + (radius - tickLength) * Math.sin(rad);
 
         // Text Position
-        const tx = center + (radius - 22) * Math.cos(rad);
-        const ty = center + (radius - 22) * Math.sin(rad);
+        const tx = center + textRadius * Math.cos(rad);
+        const ty = center + textRadius * Math.sin(rad);
 
         const tickValue = min + (tPercent * (max - min));
-        const displayValue = max <= 2 ? tickValue.toFixed(1) : Math.round(tickValue);
+        const displayValue = isWHR ? tickValue.toFixed(1) : Math.round(tickValue);
 
         return { x1, y1, x2, y2, tx, ty, isMajor, displayValue };
     });
 
-    const needleRad = (currentAngle - 90) * (Math.PI / 180);
-
     return (
         <div className="flex flex-col items-center justify-center relative" style={{ width: size, height: size * 0.85 }}>
-            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="relative z-10 drop-shadow-xl">
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="relative z-10 drop-shadow-2xl">
                 <defs>
                     <linearGradient id={`gradient-arc`} x1="0%" y1="100%" x2="100%" y2="100%">
                         <stop offset="0%" stopColor="#2DD4BF" />
@@ -69,23 +72,27 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
                     </linearGradient>
                 </defs>
 
-                {/* Outer Track Arc */}
+                {/* Dark Background Glass Circle
+                <circle cx={center} cy={center} r={radius + 15} fill="#0B1120" stroke="#1f2937" strokeWidth="2" className="opacity-80" /> */}
+
+                {/* Outer Track Arc (Background) */}
                 <path
-                    d={`M ${center + (radius + 5) * Math.cos((startAngle - 90) * Math.PI / 180)} ${center + (radius + 5) * Math.sin((startAngle - 90) * Math.PI / 180)} A ${radius + 5} ${radius + 5} 0 1 1 ${center + (radius + 5) * Math.cos((endAngle - 90) * Math.PI / 180)} ${center + (radius + 5) * Math.sin((endAngle - 90) * Math.PI / 180)}`}
+                    d={`M ${center + radius * Math.cos((startAngle - 90) * Math.PI / 180)} ${center + radius * Math.sin((startAngle - 90) * Math.PI / 180)} A ${radius} ${radius} 0 1 1 ${center + radius * Math.cos((endAngle - 90) * Math.PI / 180)} ${center + radius * Math.sin((endAngle - 90) * Math.PI / 180)}`}
                     fill="none"
-                    stroke="rgba(30,30,40, 0.8)"
-                    strokeWidth="12"
+                    stroke="#1E293B"
+                    strokeWidth="8"
                     strokeLinecap="round"
                 />
 
                 {/* Progress Arc */}
                 <path
-                    d={`M ${center + radius * Math.cos((startAngle - 90) * Math.PI / 180)} ${center + radius * Math.sin((startAngle - 90) * Math.PI / 180)} A ${radius} ${radius} 0 1 1 ${center + radius * Math.cos((endAngle - 90) * Math.PI / 180)} ${center + radius * Math.sin((endAngle - 90) * Math.PI / 180)}`}
+                    d={`M ${center + radius * Math.cos((startAngle - 90) * Math.PI / 180)} ${center + radius * Math.sin((startAngle - 90) * Math.PI / 180)} A ${radius} ${radius} 0 ${percent > 0.5 ? 1 : 0} 1 ${center + radius * Math.cos((currentAngle - 90) * Math.PI / 180)} ${center + radius * Math.sin((currentAngle - 90) * Math.PI / 180)}`}
                     fill="none"
                     stroke={`url(#gradient-arc)`}
-                    strokeWidth="3"
+                    strokeWidth="8"
                     strokeLinecap="round"
-                    className="opacity-60"
+                    className="opacity-90"
+                    style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }}
                 />
 
                 {/* Ticks and Labels */}
@@ -94,21 +101,19 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
                         <line
                             x1={tick.x1} y1={tick.y1}
                             x2={tick.x2} y2={tick.y2}
-                            stroke={tick.isMajor ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.3)"}
-                            strokeWidth={tick.isMajor ? 2 : 1.5}
+                            stroke={"rgba(255,255,255,0.4)"}
+                            strokeWidth={1.5}
                         />
-                        {tick.isMajor && (
-                            <text
-                                x={tick.tx} y={tick.ty}
-                                fill="rgba(255,255,255,0.7)"
-                                fontSize="11"
-                                textAnchor="middle"
-                                dominantBaseline="central"
-                                className="font-sans font-medium"
-                            >
-                                {tick.displayValue}
-                            </text>
-                        )}
+                        <text
+                            x={tick.tx} y={tick.ty}
+                            fill="rgba(255,255,255,0.7)"
+                            fontSize="11"
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            className="font-sans font-medium tracking-tighter"
+                        >
+                            {tick.displayValue}
+                        </text>
                     </g>
                 ))}
 
@@ -116,9 +121,10 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
                 <motion.g
                     initial={{ rotate: startAngle }}
                     animate={{ rotate: currentAngle }}
-                    transition={{ type: "spring", stiffness: 50, damping: 15 }}
+                    transition={{ type: "spring", stiffness: 40, damping: 15 }}
                     style={{ originX: '50%', originY: '50%' }}
                 >
+                    {/* The sleek needle line */}
                     <line
                         x1={center} y1={center}
                         x2={center} y2={center - radius + 5}
@@ -127,13 +133,14 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
                         strokeLinecap="round"
                         style={{ filter: `drop-shadow(0 0 4px #2DD4BF)` }}
                     />
+                    {/* The center pin */}
                     <circle cx={center} cy={center} r="6" fill="#1E293B" stroke="#2DD4BF" strokeWidth="2" style={{ filter: `drop-shadow(0 0 2px #2DD4BF)` }} />
                     <circle cx={center} cy={center - radius + 5} r="3" fill="#2DD4BF" style={{ filter: `drop-shadow(0 0 4px #2DD4BF)` }} />
                 </motion.g>
             </svg>
 
-            <div className="absolute bottom-2 flex flex-col items-center justify-center">
-                <span className="text-sm font-bold tracking-widest text-[#2DD4BF]">
+            <div className="absolute bottom-[-10px] flex flex-col items-center justify-center">
+                <span className="text-sm font-black tracking-widest text-[#2DD4BF] drop-shadow-md">
                     {label}
                 </span>
             </div>

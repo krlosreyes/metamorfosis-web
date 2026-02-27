@@ -10,24 +10,21 @@ interface MorphingSilhouetteProps {
 }
 
 const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, height, gender, whr }) => {
-    // 1. Lógica de Riesgo Metabólico (Inflamación)
+    // 1. Metabolic Risk Logic
     const isHighVisceralFat = whr > (gender === 'male' ? 0.90 : 0.85);
-    const targetColor = isHighVisceralFat ? '#F59E0B' : '#2DD4BF'; // Amber (Danger) vs Teal (Optimal)
+    const targetColor = isHighVisceralFat ? '#F59E0B' : '#2DD4BF';
     const auraColor = isHighVisceralFat ? 'rgba(245, 158, 11, 0.4)' : 'rgba(45, 212, 191, 0.15)';
 
-    // 2. Física Proporcional (Eje Y)
-    // Escalar el SVG usando el ViewBox transformado o usando motion.scale
+    // 2. Physical Proportion (Y Axis)
     const baseHeight = 175;
     const heightScale = Math.max(0.85, Math.min(1.15, height / baseHeight));
 
-    // 3. Deformación Endócrina (Eje X)
-    // Representamos los cm reales en proporción de dibujo biológico
-    // Cintura promedio: 80cm. Hip: 100cm.
-    const wFactor = Math.max(10, waist * 0.45); // Dilatación Abdominal Visual
-    const hFactor = Math.max(15, hip * 0.45);   // Caderas
+    // 3. Endocrine Deformation (X Axis)
+    const wFactor = Math.max(10, waist * 0.45);
+    const hFactor = Math.max(15, hip * 0.45);
 
-    // 4. Ecuación Geométrica de SVG (Polígono Simétrico y Suave)
-    // El centro del avatar está en X=100.
+    // 4. SVG Morphing Path
+    // Generates a realistic female hourglass if waist is low, hip is high.
     const morphingPath = `
         M 100 70
         C 125 70, 145 80, 145 100
@@ -48,18 +45,17 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
     return (
         <div className="relative w-full aspect-[1/1.5] flex items-center justify-center pointer-events-none">
 
-            {/* Campo de Fuerza Circular (Aura Metabólica) */}
+            {/* Metabolic Aura */}
             <motion.div
-                className="absolute w-64 h-64 rounded-full blur-3xl"
+                className="absolute w-64 h-64 rounded-full blur-3xl opacity-30"
                 animate={{
                     backgroundColor: auraColor,
                     scale: [1, 1.15, 1],
-                    opacity: isHighVisceralFat ? [0.6, 0.8, 0.6] : [0.3, 0.5, 0.3]
                 }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             />
 
-            {/* Silueta Base (Holographic Wireframe) */}
+            {/* Holographic Wireframe SVG */}
             <motion.svg
                 width="100%"
                 height="100%"
@@ -72,28 +68,32 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                 }}
                 transition={{ type: "spring", stiffness: 80, damping: 15 }}
             >
-                {/* Background Scanning Rings (Radar effect behind avatar) */}
-                <g className="opacity-40">
+                <defs>
+                    {/* 3D Geometric Mesh Texture */}
+                    <pattern id="mesh-pattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
+                        <path d="M 8 0 L 0 8 M 0 0 L 8 8" fill="none" stroke="rgba(45,212,191,0.25)" strokeWidth="0.5" />
+                    </pattern>
+                </defs>
+
+                {/* Background Sonar / Targeting Grid */}
+                <g className="opacity-30">
                     <circle cx="100" cy="190" r="140" fill="none" stroke="#2DD4BF" strokeWidth="0.5" />
                     <circle cx="100" cy="190" r="100" fill="none" stroke="#2DD4BF" strokeWidth="0.5" />
                     <circle cx="100" cy="190" r="60" fill="none" stroke="#2DD4BF" strokeWidth="0.5" />
-                    {/* Horizontal Axis */}
                     <line x1="0" y1="190" x2="200" y2="190" stroke="#2DD4BF" strokeWidth="0.5" />
-                    {/* Vertical Axis */}
                     <line x1="100" y1="0" x2="100" y2="400" stroke="#2DD4BF" strokeWidth="0.5" />
                 </g>
 
-                {/* Cabeza (Proporcionada) */}
+                {/* Head (Proportional) */}
                 <motion.circle
                     cx="100" cy="40" r="22"
                     fill={targetColor === '#F59E0B' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(45, 212, 191, 0.15)'}
                     stroke={targetColor}
                     strokeWidth="1.5"
-                    animate={{ stroke: targetColor, fill: targetColor === '#F59E0B' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(45, 212, 191, 0.15)' }}
-                    transition={{ type: "spring", stiffness: 100, damping: 20 }}
                 />
+                <circle cx="100" cy="40" r="22" fill="url(#mesh-pattern)" />
 
-                {/* Torso Mutante (Wireframe Estético) */}
+                {/* 3D Morphing Torso Base Fill */}
                 <motion.path
                     d={morphingPath}
                     fill={targetColor === '#F59E0B' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(45, 212, 191, 0.15)'}
@@ -103,46 +103,54 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                     transition={{ type: "spring", stiffness: 80, damping: 15 }}
                 />
 
-                {/* Anatomical Glowing Joints (To simulate 3D Mesh) */}
-                <g fill="#2DD4BF" style={{ filter: `drop-shadow(0 0 6px #2DD4BF)` }}>
-                    {/* Cabeza */}
-                    <circle cx="100" cy="25" r="2.5" />
-                    <circle cx="100" cy="55" r="2.5" />
+                {/* 3D Morphing Torso Mesh Texture */}
+                <motion.path
+                    d={morphingPath}
+                    fill="url(#mesh-pattern)"
+                    animate={{ d: morphingPath }}
+                    transition={{ type: "spring", stiffness: 80, damping: 15 }}
+                />
 
-                    {/* Hombros */}
-                    <circle cx="65" cy="80" r="3" fill="#F59E0B" style={{ filter: `drop-shadow(0 0 6px #F59E0B)` }} />
-                    <circle cx="135" cy="80" r="3" fill="#F59E0B" style={{ filter: `drop-shadow(0 0 6px #F59E0B)` }} />
+                {/* Anatomical Glowing Joints (To simulate mapped 3D data points) */}
+                <g>
+                    {/* Head / Neck points (Cyan) */}
+                    <circle cx="100" cy="25" r="2" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
+                    <circle cx="100" cy="65" r="2" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
 
-                    {/* Pecho / Diafragma */}
-                    <circle cx="75" cy="130" r="2.5" />
-                    <circle cx="125" cy="130" r="2.5" />
-                    <circle cx="100" cy="130" r="2.5" />
+                    {/* Shoulders (Orange/Gold) */}
+                    <circle cx="65" cy="80" r="3.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 8px #F59E0B)' }} />
+                    <circle cx="135" cy="80" r="3.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 8px #F59E0B)' }} />
 
-                    {/* Cintura (Animada horizontalmente, brilla si hay riesgo) */}
-                    <motion.circle cx={100 - (wFactor / 2.5)} cy="180" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: 100 - (wFactor / 2.5), fill: targetColor }} />
+                    {/* Chest / Breath nodes (Cyan Array) */}
+                    <circle cx="80" cy="120" r="2.5" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
+                    <circle cx="100" cy="120" r="2.5" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
+                    <circle cx="120" cy="120" r="2.5" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
+
+                    {/* Waist / Visceral Center (Animated horizontal spread depending on waist size) */}
+                    <motion.circle cx={100 - (wFactor / 3)} cy="180" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: 100 - (wFactor / 3), fill: targetColor }} />
                     <motion.circle cx="100" cy="180" r="2.5" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ fill: targetColor }} />
-                    <motion.circle cx={100 + (wFactor / 2.5)} cy="180" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: 100 + (wFactor / 2.5), fill: targetColor }} />
+                    <motion.circle cx={100 + (wFactor / 3)} cy="180" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: 100 + (wFactor / 3), fill: targetColor }} />
 
-                    {/* Cadera (Animada horizontalmente) */}
-                    <motion.circle cx={100 - (hFactor / 1.5)} cy="250" r="3" fill="#F59E0B" style={{ filter: `drop-shadow(0 0 6px #F59E0B)` }} animate={{ cx: 100 - (hFactor / 1.5) }} />
-                    <motion.circle cx="100" cy="250" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ fill: targetColor }} />
-                    <motion.circle cx={100 + (hFactor / 1.5)} cy="250" r="3" fill="#F59E0B" style={{ filter: `drop-shadow(0 0 6px #F59E0B)` }} animate={{ cx: 100 + (hFactor / 1.5) }} />
+                    {/* Hips (Orange/Gold) */}
+                    <motion.circle cx={100 - (hFactor * 0.7)} cy="250" r="3.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 8px #F59E0B)' }} animate={{ cx: 100 - (hFactor * 0.7) }} />
+                    <motion.circle cx={100 + (hFactor * 0.7)} cy="250" r="3.5" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 8px #F59E0B)' }} animate={{ cx: 100 + (hFactor * 0.7) }} />
+                    <motion.circle cx="100" cy="250" r="2" fill="#2DD4BF" style={{ filter: 'drop-shadow(0 0 4px #2DD4BF)' }} />
 
-                    {/* Rodillas */}
-                    <motion.circle cx="75" cy="350" r="3" fill="#F59E0B" style={{ filter: `drop-shadow(0 0 6px #F59E0B)` }} />
-                    <motion.circle cx="125" cy="350" r="3" fill="#F59E0B" style={{ filter: `drop-shadow(0 0 6px #F59E0B)` }} />
+                    {/* Knees / Lower limbs (Orange/Gold) */}
+                    <circle cx="85" cy="350" r="3" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 6px #F59E0B)' }} />
+                    <circle cx="115" cy="350" r="3" fill="#F59E0B" style={{ filter: 'drop-shadow(0 0 6px #F59E0B)' }} />
                 </g>
 
-                {/* Luz de Escaneo Biométrico (Biometric Radar Scanner) */}
+                {/* Biometric Laser Scanner Loop */}
                 <motion.rect
                     x="20" width="160" height="2"
-                    style={{ filter: `drop-shadow(0 0 8px ${targetColor})` }}
+                    style={{ filter: `drop-shadow(0 0 10px ${targetColor})` }}
                     animate={{
                         y: [30, 380, 30],
-                        opacity: [0, 0.8, 0],
+                        opacity: [0, 0.7, 0],
                         fill: targetColor
                     }}
-                    transition={{ duration: 3.5, repeat: Infinity, ease: "linear" }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                 />
             </motion.svg>
         </div>
