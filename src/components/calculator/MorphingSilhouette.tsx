@@ -7,6 +7,7 @@ interface MorphingSilhouetteProps {
     height: number;
     gender: 'male' | 'female';
     whr: number;
+    weight: number;
 }
 
 // Catmull-Rom → Cubic Bezier spline generator
@@ -27,19 +28,24 @@ const catmullRom2bezier = (pts: number[][], tension = 1): string => {
     return d;
 };
 
-const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, height, gender, whr }) => {
+const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, height, gender, whr, weight }) => {
     // ── 1. Metabolic Risk Color Targeting ─────────────────────────────────
     const isHighRisk = whr > (gender === 'male' ? 0.90 : 0.85);
-    const targetColor = isHighRisk ? '#F59E0B' : '#00f5d4'; // Fallback to amber on risk, default CIAN
+    const targetColor = isHighRisk ? '#F59E0B' : '#00f5d4';
     const auraColor = isHighRisk ? 'rgba(245,158,11,0.25)' : 'rgba(0,245,212,0.15)';
 
-    // ── 2. Proportional Scaling ───────────────────────────────────────────
+    // ── 2. Proportional Height Scaling ────────────────────────────────────
     const heightScale = Math.max(0.85, Math.min(1.15, height / 170));
 
     // ── 3. Parametric Deformation (Hourglass engine) ──────────────────────
-    // Calibrated: baseline waist=70, hip=95
-    const wOff = (waist - 70) * 0.35;
-    const hOff = (hip - 95) * 0.35;
+    // Baselines: waist=70cm, hip=95cm, weight=65kg
+    // Stronger multipliers ensure sliders produce clearly visible changes
+    const wOff = (waist - 70) * 0.55;   // waist width offset (±)
+    const hOff = (hip - 95) * 0.55;     // hip width offset (±)
+
+    // BMI-driven torso volume: heavier = wider chest/abdomen
+    const bmi = weight / Math.pow(height / 100, 2);
+    const bmiOffset = (bmi - 22) * 0.6; // neutral at BMI=22; expands for higher BMI
 
     const maleShift = gender === 'male' ? 5 : 0; // broader shoulders for male
 
@@ -61,10 +67,10 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
         [32 + maleShift, 70],   // deltoid peak
 
         // ARMLESS TORSO (Outer curve directly blending from shoulder to lat)
-        [28 + maleShift, 85],   // outer chest descending
-        [24 + wOff * 0.1, 110], // upper lat
-        [20 + wOff * 0.2, 140], // lower lat / rib cage
-        [16 + wOff * 0.6, 170], // natural waist indent
+        [28 + maleShift + bmiOffset * 0.4, 85],  // outer chest (wider with BMI)
+        [24 + wOff * 0.1 + bmiOffset * 0.6, 110], // upper lat (BMI inflates torso)
+        [20 + wOff * 0.2 + bmiOffset * 0.8, 140], // lower lat / rib cage
+        [16 + wOff * 0.6 + bmiOffset * 0.5, 170], // natural waist indent
         [22 + wOff * 0.4 + hOff * 0.3, 195], // iliac crest (upper hip curve)
 
         // HIPS (Preserving hourglass but strictly mapped)
@@ -98,7 +104,7 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
     // Knee markers are moved slightly inwards since the legs are a solid block
     const rKneeX = 100 + 8 + hOff * 0.15;
     const lKneeX = 100 - (8 + hOff * 0.15);
-    const waistRx = Math.max(12, 16 + wOff);
+    const waistRx = Math.max(12, 16 + wOff + bmiOffset * 0.3);
 
     const spring = { type: 'spring' as const, stiffness: 85, damping: 18 };
 

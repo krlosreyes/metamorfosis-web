@@ -87,7 +87,7 @@ const MetamorfosisCalculator = () => {
                         </div>
 
                         {/* MorphingSilhouette */}
-                        <MorphingSilhouette waist={waist} hip={hip} height={height} gender={gender} whr={whr} />
+                        <MorphingSilhouette waist={waist} hip={hip} height={height} gender={gender} whr={whr} weight={weight} />
 
                         {/* Metabolic Alert Banner */}
                         <AnimatePresence>
