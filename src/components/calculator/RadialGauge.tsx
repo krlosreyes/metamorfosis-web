@@ -172,7 +172,7 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
 
                 {/* ── Animated Needle ── */}
                 <motion.g
-                    style={{ originX: `${cx}px`, originY: `${cy}px` }}
+                    style={{ transformOrigin: `${cx}px ${cy}px` }}
                     animate={{ rotate: needleAngle }}
                     initial={{ rotate: START }}
                     transition={{ type: 'spring', stiffness: 70, damping: 10, mass: 0.4 }}
