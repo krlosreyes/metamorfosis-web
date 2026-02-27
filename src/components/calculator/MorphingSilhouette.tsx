@@ -149,6 +149,51 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                     <pattern id="mesh-pattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
                         <path d="M 8 0 L 0 8 M 0 0 L 8 8" fill="none" stroke="rgba(0,245,212,0.25)" strokeWidth="0.5" />
                     </pattern>
+
+                    {/* SVG Implementation of WebGL Fragment Shader */}
+                    <filter id="hologram-shader" x="-50%" y="-50%" width="200%" height="200%">
+                        {/* 1. Procedural Noise Modulation (fract(sin(dot...))) */}
+                        <feTurbulence type="fractalNoise" baseFrequency="0.1" numOctaves="2" result="noise" />
+                        <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0   0 0.96 0 0 0   0 0.83 0 0 0   0 0 0 0.05 0" result="coloredNoise" />
+
+                        {/* 2. Base Hologram Soft Translucency (baseColor * 0.4) */}
+                        <feComponentTransfer in="SourceGraphic" result="baseTranslucent">
+                            <feFuncA type="linear" slope="0.4" />
+                        </feComponentTransfer>
+
+                        {/* 3. Fresnel Edge Glow */}
+                        <feMorphology in="SourceAlpha" operator="erode" radius="0.75" result="eroded" />
+                        <feComposite in="SourceAlpha" in2="eroded" operator="out" result="fresnelEdgeAlpha" />
+                        <feComposite in="SourceGraphic" in2="fresnelEdgeAlpha" operator="in" result="fresnelEdge" />
+                        <feGaussianBlur in="fresnelEdge" stdDeviation="1.5" result="fresnelGlow" />
+
+                        {/* 4. Soft Volumetric Bloom */}
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="bloomModerate" />
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="bloomHeavy" />
+
+                        {/* 5. Composite Final Output */}
+                        <feMerge>
+                            <feMergeNode in="bloomHeavy" />
+                            <feMergeNode in="bloomModerate" />
+                            <feMergeNode in="coloredNoise" />
+                            <feMergeNode in="baseTranslucent" />
+                            <feMergeNode in="fresnelGlow" />
+                        </feMerge>
+                    </filter>
+
+                    <pattern id="scanlines" patternUnits="userSpaceOnUse" width="4" height="4">
+                        <rect width="4" height="1" fill="#00f5d4" fillOpacity="0.2" />
+                    </pattern>
+
+                    <linearGradient id="sweep-gradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="transparent" />
+                        <stop offset="50%" stopColor={targetColor} stopOpacity="0.6" />
+                        <stop offset="100%" stopColor="transparent" />
+                    </linearGradient>
+
+                    <clipPath id="hologram-clip">
+                        <motion.path d={morphingPath} animate={{ d: morphingPath }} transition={{ type: "spring", stiffness: 80, damping: 15 }} />
+                    </clipPath>
                 </defs>
 
                 {/* Background Sonar / Targeting Grid */}
@@ -166,23 +211,40 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                     style={{ originX: "100px", originY: "200px" }}
                     transition={{ type: "spring", stiffness: 80, damping: 15 }}
                 >
-                    {/* 3D Morphing Torso Volumetric Fill */}
+                    {/* Core Hologram Body with GLSL-equivalent Filter applied */}
                     <motion.path
                         d={morphingPath}
                         fill="url(#body-glow)"
                         stroke={targetColor}
                         strokeWidth="1.5"
+                        filter="url(#hologram-shader)"
                         animate={{ stroke: targetColor, d: morphingPath }}
                         transition={{ type: "spring", stiffness: 80, damping: 15 }}
                     />
 
-                    {/* 3D Morphing Torso Mesh Texture */}
+                    {/* Masked Elements strict to Body Contour */}
+                    <g clipPath="url(#hologram-clip)">
+                        {/* Medical Grid Scanlines */}
+                        <rect x="0" y="0" width="200" height="400" fill="url(#scanlines)" style={{ mixBlendMode: 'screen' }} />
+
+                        {/* Animated Radar Sweep */}
+                        <motion.rect
+                            x="0" width="200" height="40"
+                            fill="url(#sweep-gradient)"
+                            style={{ mixBlendMode: 'screen' }}
+                            animate={{ y: [-40, 400] }}
+                            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                        />
+                    </g>
+
+                    {/* Inner Dimensional Wireframe Mesh Texture */}
                     <motion.path
                         d={morphingPath}
                         fill="url(#mesh-pattern)"
                         animate={{ d: morphingPath }}
                         transition={{ type: "spring", stiffness: 80, damping: 15 }}
                         style={{ mixBlendMode: 'screen' }}
+                        opacity={0.6}
                     />
 
                     {/* Anatomical Glowing Joints perfectly mapped to math engine */}
