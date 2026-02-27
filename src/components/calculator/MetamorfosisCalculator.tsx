@@ -114,7 +114,7 @@ const MetamorfosisCalculator = () => {
                     ════════════════════════════════════════════════════════ */}
                     <div className="flex flex-col justify-between overflow-hidden gap-[20px] md:gap-[32px] order-2 relative min-h-0">
                         {/* Data Card Content */}
-                        <div className="w-full flex-1 flex flex-col bg-[#0c1f31]/60 backdrop-blur-xl rounded-[28px] border border-[#2DD4BF]/20 shadow-[0_0_30px_rgba(0,245,212,0.15)] p-[24px] md:p-[32px] overflow-hidden min-h-0">
+                        <div className="w-full flex-1 flex flex-col bg-[#0c1f31]/60 backdrop-blur-xl rounded-[28px] border border-[#2DD4BF]/20 shadow-[0_0_30px_rgba(0,245,212,0.15)] p-[24px] md:p-[32px] min-h-0">
 
                             {/* Title strip (Status only) */}
                             <div className="flex-shrink-0 flex items-center justify-end mb-4">
@@ -138,8 +138,8 @@ const MetamorfosisCalculator = () => {
                             </div>
 
                             {/* ── Telemetry Gauges row ─────────────────────────── */}
-                            <div className="flex justify-around items-end flex-1 min-h-[120px] pt-4 mt-4 border-t border-white/5 relative z-10">
-                                <div className="flex w-full justify-around items-center relative">
+                            <div className="flex justify-around items-end flex-1 min-h-[160px] pt-4 mt-4 border-t border-white/5 relative z-10 overflow-visible">
+                                <div className="flex w-full justify-around items-center relative overflow-visible">
                                     <RadialGauge
                                         value={bmi}
                                         min={12} max={45}

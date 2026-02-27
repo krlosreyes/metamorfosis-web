@@ -64,7 +64,7 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
             <svg
                 width="100%"
                 height="100%"
-                viewBox={`0 0 ${size} ${size}`}
+                viewBox={`0 0 ${size} ${size + 20}`}
                 className="overflow-visible"
                 style={{ filter: `drop-shadow(0 0 12px ${targetColor}40)` }}
             >
