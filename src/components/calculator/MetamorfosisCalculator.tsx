@@ -139,18 +139,20 @@ const MetamorfosisCalculator = () => {
 
                             {/* ── Telemetry Gauges row ─────────────────────────── */}
                             <div className="flex justify-around items-end flex-1 min-h-[120px] pt-4 mt-4 border-t border-white/5 relative z-10">
-                                <RadialGauge
-                                    value={bmi}
-                                    min={12} max={45}
-                                    label="IMC"
-                                    targetColor={bmi > 25 ? '#F59E0B' : '#2DD4BF'}
-                                />
-                                <RadialGauge
-                                    value={whr}
-                                    min={0.6} max={1.1}
-                                    label="WHR"
-                                    targetColor={isHighRisk ? '#F59E0B' : '#2DD4BF'}
-                                />
+                                <div className="flex w-full justify-around items-center relative">
+                                    <RadialGauge
+                                        value={bmi}
+                                        min={12} max={45}
+                                        label="IMC"
+                                        targetColor={bmi > 25 ? '#F59E0B' : '#2DD4BF'}
+                                    />
+                                    <RadialGauge
+                                        value={whr}
+                                        min={0.6} max={1.1}
+                                        label="WHR"
+                                        targetColor={isHighRisk ? '#F59E0B' : '#2DD4BF'}
+                                    />
+                                </div>
                             </div>
                         </div>
 
