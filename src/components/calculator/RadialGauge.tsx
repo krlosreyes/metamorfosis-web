@@ -117,17 +117,23 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
                     </g>
                 ))}
 
-                {/* Animated Needle Base and Line */}
+                {/* Animated Needle Base and Line with Oscillatory Transition */}
                 <motion.g
                     initial={{ rotate: startAngle }}
                     animate={{ rotate: currentAngle }}
-                    transition={{ type: "spring", stiffness: 40, damping: 15 }}
+                    transition={{
+                        type: "spring",
+                        stiffness: 60,
+                        damping: 8,
+                        mass: 0.5,
+                        restDelta: 0.001
+                    }}
                     style={{ originX: '50%', originY: '50%' }}
                 >
                     {/* The sleek needle line */}
                     <line
                         x1={center} y1={center}
-                        x2={center} y2={center - radius + 5}
+                        x2={center} y2={center - radius + 1}
                         stroke="#2DD4BF"
                         strokeWidth="3"
                         strokeLinecap="round"
@@ -135,7 +141,7 @@ const RadialGauge: React.FC<RadialGaugeProps> = ({
                     />
                     {/* The center pin */}
                     <circle cx={center} cy={center} r="6" fill="#1E293B" stroke="#2DD4BF" strokeWidth="2" style={{ filter: `drop-shadow(0 0 2px #2DD4BF)` }} />
-                    <circle cx={center} cy={center - radius + 5} r="3" fill="#2DD4BF" style={{ filter: `drop-shadow(0 0 4px #2DD4BF)` }} />
+                    <circle cx={center} cy={center - radius + 1} r="3" fill="#2DD4BF" style={{ filter: `drop-shadow(0 0 4px #2DD4BF)` }} />
                 </motion.g>
             </svg>
 
