@@ -49,45 +49,16 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
     const thoracicCurve = -4;
     const lumbarCurve = 6;
 
-    // ── 4A. RIGHT-HALF Anatomy (viewBox: center = x=100) - FRONT VIEW ──────────
+    // ── 4A. Matriz de Puntos FRONTALES (Maniquí con piernas separadas) ──────────
     const pointsRight = [
-        // Cabeza (more anatomical)
-        [0, 10],                        // 0: Centro cabeza superior
-        [8, 11],                        // 1: Curva cabeza derecha
-        [14, 18],                       // 2: Sien / Oreja
-        [12, 30],                       // 3: Mandíbula
-        [8, 40],                        // 4: Base del cuello
-        [18, 45],                       // 5: Trapecio
-        [shoulderBase, 55],             // 6: Hombro Peak (Corte del deltoide)
-
-        // --- Pecho y Dorsal (Hombros definidos, pecho con curva fisiológica) ---
-        [shoulderBase - 3, 85],         // 7: Axila / Caída del dorsal
-        [28 + thoracicCurve + (visceralCurve * 0.1), 115], // 8: Costillas altas / Esternón
-
-        // --- Cintura (Expansión Visceral Logarítmica) ---
-        [22 + visceralCurve * 0.5, 145], // 9: Abdomen superior
-        [20 + visceralCurve, 170],       // 10: Cintura máxima (non-linear expansion)
-
-        // --- Curva Lumbar (inward curve) ---
-        [24 + lumbarCurve + visceralCurve * 0.3, 195], // 11: Espalda baja
-
-        // --- Cadera y Glúteo (non-linear pelvis flare) ---
-        [pelvisBase + hipCurve, 225],     // 12: Cadera máxima (Trocánter)
-
-        // --- Piernas (Separación real, real muscle shape) ---
-        [pelvisBase + hipCurve * 0.8, 275], // 13: Muslo exterior
-        [22 + hipCurve * 0.3, 315],         // 14: Rodilla exterior
-        [24 + hipCurve * 0.1, 350],         // 15: Pantorrilla exterior
-        [12, 385],                          // 16: Tobillo exterior
-        [14, 398],                          // 17: Pie exterior
-        [4, 400],                           // 18: Punta del pie
-        [0, 395],                           // 19: Pie interior
-        [0, 385],
-        [0, 350],
-        [0, 315],
-        [0, 275],
-        [0, 240],
-        [0, 210]                            // Entrepierna (anatomical narrowing)
+        [0, 10], [8, 11], [14, 18], [12, 30], [8, 40], [18, 45], [shoulderBase, 55], // Cabeza a hombro
+        [shoulderBase - 3, 85], [28 + thoracicCurve + (visceralCurve * 0.1), 115], // Pecho
+        [22 + visceralCurve * 0.5, 145], [20 + visceralCurve, 170], // Cintura
+        [24 + lumbarCurve + visceralCurve * 0.3, 195], [pelvisBase + hipCurve, 225], // Cadera
+        [pelvisBase + hipCurve * 0.8, 275], [22 + hipCurve * 0.3, 315], [24 + hipCurve * 0.1, 350], // Muslo a pantorrilla exterior
+        [12, 385], [14, 398], [4, 400], // Tobillo y pie exterior
+        [2, 395], [4, 385], [8, 350], [10, 315], [14 + hipCurve * 0.1, 275], [4, 240], // PIERNA INTERIOR (Crea el gap)
+        [0, 210] // Centro entrepierna
     ];
 
     // ── 5A. Symmetric Mirroring Engine (Front View) ────────────────────────────────────
@@ -106,41 +77,22 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
     const waistRadius = Math.max(12, 22 + visceralCurve);
 
     // ── 4B. LOGARITHMIC ASYMMETRIC PROFILE VIEW ─────────────────────────
-    // El perfil mira hacia la derecha. Frente = X aumenta, Espalda = X disminuye.
-    // --- MOTOR DE PERFIL (VOLUMEN ANATÓMICO CORREGIDO) ---
+    // --- MOTOR DE PERFIL (Curvas orgánicas y postura en S) ---
     const profilePoints = [
         // FRENTE (De arriba hacia abajo)
-        [100, 10],                        // 0: Tope de la cabeza
-        [110, 18],                        // 1: Frente
-        [112, 25],                        // 2: Nariz
-        [108, 35],                        // 3: Mentón
-        [102, 45],                        // 4: Garganta
-        [115, 80],                        // 5: Pecho (Volumen frontal)
-        [112 + visceralCurve * 1.2, 130], // 6: Abdomen superior
-        [110 + visceralCurve * 2.0, 170], // 7: Pico Visceral (Ombligo)
-        [105 + visceralCurve * 0.5, 215], // 8: Pelvis frontal
-        [110 + hipCurve * 0.4, 270],      // 9: Muslo frontal
-        [108, 320],                       // 10: Rodilla frontal
-        [110, 370],                       // 11: Espinilla
-        [116, 405],                       // 12: Punta del pie
-        [110, 410],                       // 13: Planta del pie frontal
+        [100, 10], [108, 18], [110, 25], [106, 35], [102, 45], [112, 80], // Cabeza y pecho
+        [110 + visceralCurve * 1.2, 130], [108 + visceralCurve * 2.0, 170], [105 + visceralCurve * 0.5, 215], // Abdomen
+        [108 + hipCurve * 0.2, 270], [105, 320], [108, 370], [114, 405], [108, 410], // Pierna frontal
 
         // ESPALDA (De abajo hacia arriba)
-        [90, 410],                        // 14: Talón inferior
-        [85, 400],                        // 15: Talón posterior
-        [82 - hipCurve * 0.2, 360],       // 16: Pantorrilla
-        [90, 320],                        // 17: Hueco poplíteo
-        [80 - hipCurve * 0.5, 270],       // 18: Isquiotibial
-        [75 - hipCurve * 1.2, 225],       // 19: Glúteo Máximo (Expansión Subcutánea)
-        [92, 170],                        // 20: Curva Lumbar (Hacia adentro)
-        [82, 110],                        // 21: Escápula / Espalda alta (Volumen trasero)
-        [88, 50],                         // 22: Nuca
-        [86, 25],                         // 23: Parte trasera cabeza
-        [100, 10]                         // 24: Cierra la figura
+        [92, 410], [88, 400], [85 - hipCurve * 0.1, 360], [92, 320], // Pie trasero y pantorrilla
+        [84 - hipCurve * 0.4, 270], [78 - hipCurve * 1.2, 225], // Isquiotibial y Glúteo
+        [92, 170], [84, 110], [88, 50], [86, 25], // Lumbar, Dorsal y Nuca
+        [100, 10] // Cierra la figura
     ];
 
     // ── 5B. Path Generation (Profile) ─────────────────────────
-    const morphingPathProfile = catmullRom2bezier(profilePoints, 0.85);
+    const morphingPathProfile = catmullRom2bezier(profilePoints, 0.85) + ' Z';
 
     // ── 7B. Dynamic Nodes coordinate tracking (Profile) ────────────────
     const profileBellyX = 110 + visceralCurve * 2.0;
