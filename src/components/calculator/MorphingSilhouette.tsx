@@ -28,7 +28,7 @@ const catmullRom2bezier = (pts: number[][], tension = 1): string => {
     return d;
 };
 
-const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, height, gender, whr, weight }) => {
+const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, height, gender, whr, weight: _weight }) => {
     // ── 1. Metabolic Risk Color Targeting ─────────────────────────────────
     const isHighRisk = whr > (gender === 'male' ? 0.90 : 0.85);
     const targetColor = isHighRisk ? '#F59E0B' : '#00f5d4';
@@ -37,74 +37,75 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
     // ── 2. Proportional Height Scaling ────────────────────────────────────
     const heightScale = Math.max(0.85, Math.min(1.15, height / 170));
 
-    // ── 3. Parametric Deformation (Hourglass engine) ──────────────────────
-    // Baselines: waist=70cm, hip=95cm, weight=65kg
-    // Stronger multipliers ensure sliders produce clearly visible changes
-    const wOff = (waist - 70) * 0.55;   // waist width offset (±)
-    const hOff = (hip - 95) * 0.55;     // hip width offset (±)
+    // ── 3. Advanced Anatomical Engine v2 (Non-linear visceral deformation) ──
+    // Usamos Math.log para que la expansión abdominal crezca de forma no lineal (más real).
+    const visceralCurve = Math.log(Math.max(waist, 50) / 50) * 25;
+    const hipCurve = Math.log(Math.max(hip, 80) / 80) * 25;
 
-    // BMI-driven torso volume: heavier = wider chest/abdomen
-    const bmi = weight / Math.pow(height / 100, 2);
-    const bmiOffset = (bmi - 22) * 0.6; // neutral at BMI=22; expands for higher BMI
+    const shoulderBase = gender === 'male' ? 34 : 28;
+    const pelvisBase = gender === 'female' ? 36 : 30;
 
-    const maleShift = gender === 'male' ? 5 : 0; // broader shoulders for male
+    // Natural S-curve spine offsets
+    const thoracicCurve = -2;
+    const lumbarCurve = 5;
 
-    // ── 4. RIGHT-HALF Anatomy (viewBox: center = x=100) ───────────────────
-    // ARMLESS, SOLID/UNIFIED LEG COLUMN (No division)
-    const pts: number[][] = [
-        // HEAD
-        [0, 12],   // crown center
-        [8, 13],   // top-right skull
-        [13, 23],   // temple
-        [12, 33],   // cheekbone
-        [8, 43],   // jaw
-        [6, 50],   // chin
+    // ── 4. Matriz de Puntos (CORE-ONLY: Sin brazos para foco metabólico) ──
+    const pointsRight = [
+        [0, 10],                    // 0: Centro cabeza
+        [8, 12],                    // 1: Tope derecho cabeza
+        [12, 22],                   // 2: Sien
+        [10, 35],                   // 3: Mandíbula/Pómulo
+        [6, 45],                    // 4: Cuello
+        [16, 50],                   // 5: Trapecio
+        [shoulderBase, 58],         // 6: Hombro (Peak)
 
-        // NECK & SHOULDER (Tapering directly inward, NO ARMS)
-        [6, 56],   // neck right
-        [14, 60],   // neck base
-        [24 + maleShift, 65],   // medial shoulder
-        [32 + maleShift, 70],   // deltoid peak
+        // --- Transición directa a Torso (Sin brazos) ---
+        [shoulderBase - 3, 80],     // 7: Deltoide a Dorsal
+        [26 + thoracicCurve + (visceralCurve * 0.1), 105], // 8: Pecho superior / Esternón
 
-        // ARMLESS TORSO (Outer curve directly blending from shoulder to lat)
-        [28 + maleShift + bmiOffset * 0.4, 85],  // outer chest (wider with BMI)
-        [24 + wOff * 0.1 + bmiOffset * 0.6, 110], // upper lat (BMI inflates torso)
-        [20 + wOff * 0.2 + bmiOffset * 0.8, 140], // lower lat / rib cage
-        [16 + wOff * 0.6 + bmiOffset * 0.5, 170], // natural waist indent
-        [22 + wOff * 0.4 + hOff * 0.3, 195], // iliac crest (upper hip curve)
+        // --- Cintura (Expansión Visceral Logarítmica) ---
+        [24 + visceralCurve * 0.5, 130], // 9: Abdomen superior
+        [22 + visceralCurve, 160],       // 10: Cintura máxima
 
-        // HIPS (Preserving hourglass but strictly mapped)
-        [30 + hOff, 222],       // max hip width / trochanter
+        // --- Curva Lumbar / Pelvis ---
+        [24 + lumbarCurve + visceralCurve * 0.4, 185], // 11: Espalda baja
 
-        // UNIFIED SLIM OUTER LEG (Reduced thigh volume, acts as outer bounds of a skirt/column)
-        [26 + hOff * 0.6, 260], // upper outer thigh
-        [20 + hOff * 0.3, 300], // outer knee
-        [16 + hOff * 0.1, 340], // outer calf
-        [12, 375], // outer ankle
-        [14, 390], // outer heel
-        [6, 398], // outer toe
+        // --- Caderas ---
+        [pelvisBase + hipCurve * 0.5, 210], // 12: Cadera alta
+        [pelvisBase + hipCurve, 240],       // 13: Cadera máxima (Trocánter)
 
-        // NO DIVISION - DIRECT PATH TO CENTER BOTTOM
-        [0, 402], // Base center. This ensures NO gap exists between the legs.
+        // --- Piernas ---
+        [pelvisBase + hipCurve * 0.8, 275], // 14: Muslo
+        [22 + hipCurve * 0.3, 315],         // 15: Rodilla
+        [24 + hipCurve * 0.1, 350],         // 16: Pantorrilla
+        [12, 385],                          // 17: Tobillo
+        [14, 398],                          // 18: Pie exterior
+        [4, 400],                           // 19: Punta del pie
+        [0, 395],                           // 20: Pie interior (centro)
+        [0, 385],
+        [0, 350],
+        [0, 315],
+        [0, 275],
+        [0, 240],
+        [0, 210],                           // Entrepierna
     ];
 
-    // ── 5. Symmetric Mirror ────────────────────────────────────────────────
-    const right = pts.map(p => [100 + p[0], p[1]]);
-    const left = pts.slice().reverse().map(p => [100 - p[0], p[1]]);
-    const full = [...right, ...left];
+    // ── 5. Symmetric Mirroring Engine ────────────────────────────────────
+    const rightSide = pointsRight.map(p => [100 + p[0], p[1]]);
+    const leftSide = pointsRight.slice().reverse().map(p => [100 - p[0], p[1]]);
+    const fullPoints = [...rightSide, ...leftSide];
 
-    const morphPath = catmullRom2bezier(full, 1) + ' Z';
+    // ── 6. Generación del Path (Tensión ajustada a 0.85 para suavidad orgánica) ──
+    const morphingPath = catmullRom2bezier(fullPoints, 0.85) + ' Z';
 
-    // ── 6. Dynamic Joint Positions (Mapped strictly to cyan targetColor) ──
-    const rShoulderX = 100 + 30 + maleShift;
-    const lShoulderX = 100 - (30 + maleShift);
-    const rHipX = 100 + 26 + hOff;
-    const lHipX = 100 - (26 + hOff);
-
-    // Knee markers are moved slightly inwards since the legs are a solid block
-    const rKneeX = 100 + 8 + hOff * 0.15;
-    const lKneeX = 100 - (8 + hOff * 0.15);
-    const waistRx = Math.max(12, 16 + wOff + bmiOffset * 0.3);
+    // ── 7. Dynamic Nodes coordinate tracking (Sincronizado con la nueva matemática) ──
+    const rightShoulderX = 100 + shoulderBase;
+    const leftShoulderX = 100 - shoulderBase;
+    const rightHipX = 100 + pelvisBase + hipCurve;
+    const leftHipX = 100 - (pelvisBase + hipCurve);
+    const rightKneeX = 100 + 22 + hipCurve * 0.3;
+    const leftKneeX = 100 - (22 + hipCurve * 0.3);
+    const waistRadius = Math.max(12, 22 + visceralCurve);
 
     const spring = { type: 'spring' as const, stiffness: 85, damping: 18 };
 
@@ -149,7 +150,7 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                     </linearGradient>
 
                     <clipPath id="ms-clip">
-                        <motion.path d={morphPath} animate={{ d: morphPath }} transition={spring} />
+                        <motion.path d={morphingPath} animate={{ d: morphingPath }} transition={spring} />
                     </clipPath>
 
                     {/* Advanced WebGL-like Shader: Fresnel edge glow */}
@@ -182,12 +183,12 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                 <motion.g animate={{ scaleY: heightScale }} style={{ originX: '100px', originY: '205px' }} transition={spring}>
                     {/* BASE HOLOGRAPHIC GEOMETRY */}
                     <motion.path
-                        d={morphPath}
+                        d={morphingPath}
                         fill="url(#ms-body-fill)"
                         stroke={targetColor}
                         strokeWidth="1.2"
                         filter="url(#ms-fresnel)"
-                        animate={{ d: morphPath, stroke: targetColor }}
+                        animate={{ d: morphingPath, stroke: targetColor }}
                         transition={spring}
                     />
 
@@ -208,39 +209,39 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
 
                     {/* BLOOM TRACING ON CONTOUR */}
                     <motion.path
-                        d={morphPath}
+                        d={morphingPath}
                         fill="none"
                         stroke={targetColor}
                         strokeWidth="2"
                         opacity="0.3"
                         filter="url(#ms-bloom)"
-                        animate={{ d: morphPath, stroke: targetColor }}
+                        animate={{ d: morphingPath, stroke: targetColor }}
                         transition={spring}
                     />
 
                     {/* BIOMETRIC CYAN JOINT NODES */}
                     <g>
                         <circle cx="100" cy="20" r="2.5" fill={targetColor} style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
-                        <circle cx="100" cy="62" r="2.5" fill={targetColor} opacity="0.8" style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
+                        <circle cx="100" cy="50" r="2.5" fill={targetColor} opacity="0.8" style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
 
-                        <motion.circle cx={lShoulderX} cy="72" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: lShoulderX }} transition={spring} />
-                        <motion.circle cx={rShoulderX} cy="72" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: rShoulderX }} transition={spring} />
+                        <motion.circle cx={leftShoulderX} cy="58" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: leftShoulderX }} transition={spring} />
+                        <motion.circle cx={rightShoulderX} cy="58" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: rightShoulderX }} transition={spring} />
 
-                        <circle cx="100" cy="112" r="2.5" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} />
+                        <circle cx="100" cy="105" r="2.5" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} />
 
-                        <motion.ellipse cx="100" cy="168" rx={waistRx} ry="4" fill="none" stroke={targetColor} strokeWidth="1.5" strokeDasharray="3 2" animate={{ rx: waistRx, stroke: targetColor }} transition={spring} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} />
-                        <motion.circle cx={100 - waistRx} cy="168" r="2.5" fill={targetColor} animate={{ cx: 100 - waistRx }} transition={spring} style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
-                        <motion.circle cx={100 + waistRx} cy="168" r="2.5" fill={targetColor} animate={{ cx: 100 + waistRx }} transition={spring} style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
+                        <motion.ellipse cx="100" cy="160" rx={waistRadius} ry="4" fill="none" stroke={targetColor} strokeWidth="1.5" strokeDasharray="3 2" animate={{ rx: waistRadius, stroke: targetColor }} transition={spring} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} />
+                        <motion.circle cx={100 - waistRadius} cy="160" r="2.5" fill={targetColor} animate={{ cx: 100 - waistRadius }} transition={spring} style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
+                        <motion.circle cx={100 + waistRadius} cy="160" r="2.5" fill={targetColor} animate={{ cx: 100 + waistRadius }} transition={spring} style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
 
-                        <circle cx="100" cy="192" r="2" fill={targetColor} opacity="0.6" />
+                        <circle cx="100" cy="185" r="2" fill={targetColor} opacity="0.6" />
 
-                        <motion.circle cx={lHipX} cy="222" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: lHipX }} transition={spring} />
-                        <motion.circle cx={rHipX} cy="222" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: rHipX }} transition={spring} />
+                        <motion.circle cx={leftHipX} cy="240" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: leftHipX }} transition={spring} />
+                        <motion.circle cx={rightHipX} cy="240" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: rightHipX }} transition={spring} />
 
-                        <circle cx="100" cy="214" r="2.5" fill={targetColor} opacity="0.6" style={{ filter: `drop-shadow(0 0 4px ${targetColor})` }} />
+                        <circle cx="100" cy="210" r="2.5" fill={targetColor} opacity="0.6" style={{ filter: `drop-shadow(0 0 4px ${targetColor})` }} />
 
-                        <motion.circle cx={lKneeX} cy="298" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: lKneeX }} transition={spring} />
-                        <motion.circle cx={rKneeX} cy="298" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: rKneeX }} transition={spring} />
+                        <motion.circle cx={leftKneeX} cy="315" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: leftKneeX }} transition={spring} />
+                        <motion.circle cx={rightKneeX} cy="315" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: rightKneeX }} transition={spring} />
                     </g>
                 </motion.g>
 
