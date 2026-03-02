@@ -47,7 +47,7 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
 
     const maleShift = gender === 'male' ? 5 : 0; // broader shoulders for male
 
-    // ── 4. RIGHT-HALF Anatomy (viewBox: center = x=100) ───────────────────
+    // ── 4A. RIGHT-HALF Anatomy (viewBox: center = x=100) - FRONT VIEW ──────────
     // ARMLESS, SOLID/UNIFIED LEG COLUMN (No division), LOGARITHMIC EXPANSION
     const pts: number[][] = [
         // HEAD
@@ -86,15 +86,13 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
         [0, 402],  // Base center. This ensures NO gap exists between the legs.
     ];
 
-    // ── 5. Symmetric Mirroring Engine ────────────────────────────────────
+    // ── 5A. Symmetric Mirroring Engine (Front View) ────────────────────────────────────
     const rightSide = pts.map(p => [100 + p[0], p[1]]);
     const leftSide = pts.slice().reverse().map(p => [100 - p[0], p[1]]);
     const fullPoints = [...rightSide, ...leftSide];
+    const morphingPathFront = catmullRom2bezier(fullPoints, 1) + ' Z';
 
-    // ── 6. Generación del Path (Tensión spline calibrada) ─────────────────
-    const morphingPath = catmullRom2bezier(fullPoints, 1) + ' Z';
-
-    // ── 7. Dynamic Nodes coordinate tracking (Sincronizado) ────────────────
+    // ── 7A. Dynamic Nodes coordinate tracking (Front) ────────────────
     const rightShoulderX = 100 + 30 + maleShift;
     const leftShoulderX = 100 - (30 + maleShift);
     const rightHipX = 100 + 26 + hipCurve;
@@ -104,153 +102,296 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
     const leftKneeX = 100 - (8 + hipCurve * 0.15);
     const waistRadius = Math.max(12, 16 + visceralCurve + bmiOffset * 0.3);
 
+    // ── 4B. LOGARITHMIC ASYMMETRIC PROFILE VIEW ─────────────────────────
+    // El perfil mira hacia la derecha. Frente = X aumenta, Espalda = X disminuye.
+    const profilePoints = [
+        // FRENTE (De arriba hacia abajo)
+        [100, 10],                        // 0: Tope de la cabeza
+        [106, 18],                        // 1: Frente
+        [108, 25],                        // 2: Nariz
+        [105, 35],                        // 3: Mentón
+        [100, 45],                        // 4: Garganta
+        [108, 80],                        // 5: Pecho
+        [105 + visceralCurve * 1.2, 130], // 6: Abdomen superior
+        [102 + visceralCurve * 2.0, 165], // 7: Pico Visceral (Ombligo)
+        [100 + visceralCurve * 0.5, 210], // 8: Pelvis frontal
+        [104 + hipCurve * 0.3, 260],      // 9: Muslo frontal
+        [102, 310],                       // 10: Rodilla frontal
+        [104, 360],                       // 11: Espinilla
+        [110, 400],                       // 12: Punta del pie
+        [108, 405],                       // 13: Planta del pie frontal
+
+        // ESPALDA (De abajo hacia arriba)
+        [95, 405],                        // 14: Talón inferior
+        [92, 395],                        // 15: Talón posterior
+        [90 - hipCurve * 0.1, 350],       // 16: Pantorrilla
+        [95, 310],                        // 17: Hueco poplíteo (detrás rodilla)
+        [88 - hipCurve * 0.4, 260],       // 18: Isquiotibial
+        [82 - hipCurve * 1.2, 215],       // 19: Glúteo Máximo (Subcutánea)
+        [94, 170],                        // 20: Curva Lumbar (hacia adentro)
+        [88, 110],                        // 21: Escápula / Espalda alta
+        [92, 50],                         // 22: Nuca
+        [88, 25],                         // 23: Parte trasera cabeza
+        [100, 10]                         // 24: Cierra la figura
+    ];
+
+    // ── 5B. Path Generation (Profile) ─────────────────────────
+    const morphingPathProfile = catmullRom2bezier(profilePoints, 0.85);
+
+    // ── 7B. Dynamic Nodes coordinate tracking (Profile) ────────────────
+    const profileBellyX = 102 + visceralCurve * 2.0;
+    const profileGluteX = 82 - hipCurve * 1.2;
+
     const spring = { type: 'spring' as const, stiffness: 85, damping: 18 };
 
     return (
-        <div className="relative w-full h-full min-h-0 flex items-center justify-center pointer-events-none overflow-hidden">
-
-            {/* Ambient Aura */}
+        <div className="relative w-full h-full min-h-[500px] flex flex-row items-center justify-center gap-4 overflow-hidden">
+            {/* Ambient Aura central */}
             <motion.div
-                className="absolute w-60 h-60 rounded-full blur-3xl opacity-25"
+                className="absolute w-80 h-80 rounded-full blur-3xl opacity-25"
                 animate={{ backgroundColor: auraColor, scale: [1, 1.15, 1] }}
                 transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
             />
 
-            {/* Holographic SVG Contained */}
-            <motion.svg
-                width="100%" height="100%"
-                viewBox="0 0 200 410"
-                preserveAspectRatio="xMidYMid meet"
-                className="relative z-10 w-full h-full"
-                animate={{ filter: `drop-shadow(0 0 15px ${isHighRisk ? 'rgba(245,158,11,0.5)' : 'rgba(0,245,212,0.5)'})` }}
-                transition={spring}
-            >
-                <defs>
-                    <radialGradient id="ms-body-fill" cx="50%" cy="45%" r="55%">
-                        <stop offset="0%" stopColor={targetColor} stopOpacity="0.08" />
-                        <stop offset="60%" stopColor={targetColor} stopOpacity="0.15" />
-                        <stop offset="100%" stopColor={targetColor} stopOpacity="0.25" />
-                    </radialGradient>
+            {/* ━━━━━━━━━━━━━━━━━━━━━━━ VISTA FRONTAL ━━━━━━━━━━━━━━━━━━━━━━━ */}
+            <div className="w-1/2 h-full relative">
+                <motion.svg
+                    width="100%" height="100%"
+                    viewBox="0 0 200 410"
+                    preserveAspectRatio="xMidYMid meet"
+                    className="relative z-10 w-full h-full"
+                    animate={{ filter: `drop-shadow(0 0 15px ${isHighRisk ? 'rgba(245,158,11,0.5)' : 'rgba(0,245,212,0.5)'})` }}
+                    transition={spring}
+                >
+                    <defs>
+                        <radialGradient id="ms-body-fill" cx="50%" cy="45%" r="55%">
+                            <stop offset="0%" stopColor={targetColor} stopOpacity="0.08" />
+                            <stop offset="60%" stopColor={targetColor} stopOpacity="0.15" />
+                            <stop offset="100%" stopColor={targetColor} stopOpacity="0.25" />
+                        </radialGradient>
 
-                    <pattern id="ms-mesh" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
-                        <path d="M 6 0 L 0 6 M 0 0 L 6 6" fill="none" stroke={targetColor} strokeWidth="0.3" opacity="0.4" />
-                    </pattern>
+                        <pattern id="ms-mesh" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+                            <path d="M 6 0 L 0 6 M 0 0 L 6 6" fill="none" stroke={targetColor} strokeWidth="0.3" opacity="0.4" />
+                        </pattern>
 
-                    <pattern id="ms-scanlines" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
-                        <rect width="4" height="1" fill={targetColor} fillOpacity="0.1" />
-                    </pattern>
+                        <pattern id="ms-scanlines" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+                            <rect width="4" height="1" fill={targetColor} fillOpacity="0.1" />
+                        </pattern>
 
-                    <linearGradient id="ms-sweep" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="transparent" />
-                        <stop offset="50%" stopColor={targetColor} stopOpacity="0.6" />
-                        <stop offset="100%" stopColor="transparent" />
-                    </linearGradient>
+                        <linearGradient id="ms-sweep" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="transparent" />
+                            <stop offset="50%" stopColor={targetColor} stopOpacity="0.6" />
+                            <stop offset="100%" stopColor="transparent" />
+                        </linearGradient>
 
-                    <clipPath id="ms-clip">
-                        <motion.path d={morphingPath} animate={{ d: morphingPath }} transition={spring} />
-                    </clipPath>
+                        <clipPath id="ms-clip-front">
+                            <motion.path d={morphingPathFront} animate={{ d: morphingPathFront }} transition={spring} />
+                        </clipPath>
 
-                    {/* Advanced WebGL-like Shader: Fresnel edge glow */}
-                    <filter id="ms-fresnel" x="-30%" y="-10%" width="160%" height="120%">
-                        <feMorphology in="SourceAlpha" operator="erode" radius="0.8" result="eroded" />
-                        <feComposite in="SourceAlpha" in2="eroded" operator="out" result="edge" />
-                        <feGaussianBlur in="edge" stdDeviation="1.5" result="glow" />
-                        <feColorMatrix in="glow" type="matrix" result="coloredGlow"
-                            values={isHighRisk
-                                ? "0 0 0 0 0.96  0 0 0 0 0.62  0 0 0 0 0.04  0 0 0 1.5 0"
-                                : "0 0 0 0 0.00  0 0 0 0 0.96  0 0 0 0 0.83  0 0 0 1.5 0"}
+                        {/* Advanced WebGL-like Shader: Fresnel edge glow */}
+                        <filter id="ms-fresnel" x="-30%" y="-10%" width="160%" height="120%">
+                            <feMorphology in="SourceAlpha" operator="erode" radius="0.8" result="eroded" />
+                            <feComposite in="SourceAlpha" in2="eroded" operator="out" result="edge" />
+                            <feGaussianBlur in="edge" stdDeviation="1.5" result="glow" />
+                            <feColorMatrix in="glow" type="matrix" result="coloredGlow"
+                                values={isHighRisk
+                                    ? "0 0 0 0 0.96  0 0 0 0 0.62  0 0 0 0 0.04  0 0 0 1.5 0"
+                                    : "0 0 0 0 0.00  0 0 0 0 0.96  0 0 0 0 0.83  0 0 0 1.5 0"}
+                            />
+                            <feMerge>
+                                <feMergeNode in="coloredGlow" />
+                                <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                        </filter>
+
+                        <filter id="ms-bloom" x="-40%" y="-20%" width="180%" height="140%">
+                            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b1" />
+                            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="b2" />
+                            <feMerge>
+                                <feMergeNode in="b2" />
+                                <feMergeNode in="b1" />
+                                <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                        </filter>
+                    </defs>
+
+                    <motion.g
+                        animate={{
+                            scaleY: heightScale,
+                            scaleX: [1, 1.015, 1],
+                        }}
+                        style={{ originX: '100px', originY: '205px' }}
+                        transition={{
+                            scaleY: spring,
+                            scaleX: { duration: 4, repeat: Infinity, ease: 'easeInOut' },
+                        }}
+                    >
+                        {/* BASE HOLOGRAPHIC GEOMETRY */}
+                        <motion.path
+                            d={morphingPathFront}
+                            fill="url(#ms-body-fill)"
+                            stroke={targetColor}
+                            strokeWidth="1.2"
+                            filter="url(#ms-fresnel)"
+                            animate={{ d: morphingPathFront, stroke: targetColor }}
+                            transition={spring}
                         />
-                        <feMerge>
-                            <feMergeNode in="coloredGlow" />
-                            <feMergeNode in="SourceGraphic" />
-                        </feMerge>
-                    </filter>
 
-                    <filter id="ms-bloom" x="-40%" y="-20%" width="180%" height="140%">
-                        <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b1" />
-                        <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="b2" />
-                        <feMerge>
-                            <feMergeNode in="b2" />
-                            <feMergeNode in="b1" />
-                            <feMergeNode in="SourceGraphic" />
-                        </feMerge>
-                    </filter>
-                </defs>
+                        {/* TEXTURED SKIN MESH */}
+                        <g clipPath="url(#ms-clip-front)">
+                            <rect x="0" y="0" width="200" height="410" fill="url(#ms-mesh)" style={{ mixBlendMode: 'screen' }} />
+                            <rect x="0" y="0" width="200" height="410" fill="url(#ms-scanlines)" style={{ mixBlendMode: 'screen' }} />
 
-                <motion.g animate={{ scaleY: heightScale }} style={{ originX: '100px', originY: '205px' }} transition={spring}>
-                    {/* BASE HOLOGRAPHIC GEOMETRY */}
-                    <motion.path
-                        d={morphingPath}
-                        fill="url(#ms-body-fill)"
-                        stroke={targetColor}
-                        strokeWidth="1.2"
-                        filter="url(#ms-fresnel)"
-                        animate={{ d: morphingPath, stroke: targetColor }}
-                        transition={spring}
-                    />
+                            {/* Animated Sweep Radar */}
+                            <motion.rect
+                                x="0" width="200" height="30"
+                                fill="url(#ms-sweep)"
+                                style={{ mixBlendMode: 'screen' }}
+                                animate={{ y: [-30, 420] }}
+                                transition={{ duration: 2.8, repeat: Infinity, ease: 'linear' }}
+                            />
+                        </g>
 
-                    {/* TEXTURED SKIN MESH */}
-                    <g clipPath="url(#ms-clip)">
-                        <rect x="0" y="0" width="200" height="410" fill="url(#ms-mesh)" style={{ mixBlendMode: 'screen' }} />
-                        <rect x="0" y="0" width="200" height="410" fill="url(#ms-scanlines)" style={{ mixBlendMode: 'screen' }} />
-
-                        {/* Animated Sweep Radar */}
-                        <motion.rect
-                            x="0" width="200" height="30"
-                            fill="url(#ms-sweep)"
-                            style={{ mixBlendMode: 'screen' }}
-                            animate={{ y: [-30, 420] }}
-                            transition={{ duration: 2.8, repeat: Infinity, ease: 'linear' }}
+                        {/* BLOOM TRACING ON CONTOUR */}
+                        <motion.path
+                            d={morphingPathFront}
+                            fill="none"
+                            stroke={targetColor}
+                            strokeWidth="2"
+                            opacity="0.3"
+                            filter="url(#ms-bloom)"
+                            animate={{ d: morphingPathFront, stroke: targetColor }}
+                            transition={spring}
                         />
-                    </g>
 
-                    {/* BLOOM TRACING ON CONTOUR */}
-                    <motion.path
-                        d={morphingPath}
-                        fill="none"
-                        stroke={targetColor}
-                        strokeWidth="2"
-                        opacity="0.3"
-                        filter="url(#ms-bloom)"
-                        animate={{ d: morphingPath, stroke: targetColor }}
-                        transition={spring}
+                        {/* BIOMETRIC CYAN JOINT NODES */}
+                        <g>
+                            <circle cx="100" cy="20" r="2.5" fill={targetColor} style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
+                            <circle cx="100" cy="62" r="2.5" fill={targetColor} opacity="0.8" style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
+
+                            <motion.circle cx={leftShoulderX} cy="72" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: leftShoulderX }} transition={spring} />
+                            <motion.circle cx={rightShoulderX} cy="72" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: rightShoulderX }} transition={spring} />
+
+                            <circle cx="100" cy="112" r="2.5" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} />
+
+                            <motion.ellipse cx="100" cy="168" rx={waistRadius} ry="4" fill="none" stroke={targetColor} strokeWidth="1.5" strokeDasharray="3 2" animate={{ rx: waistRadius, stroke: targetColor }} transition={spring} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} />
+                            <motion.circle cx={100 - waistRadius} cy="168" r="2.5" fill={targetColor} animate={{ cx: 100 - waistRadius }} transition={spring} style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
+                            <motion.circle cx={100 + waistRadius} cy="168" r="2.5" fill={targetColor} animate={{ cx: 100 + waistRadius }} transition={spring} style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
+
+                            <circle cx="100" cy="192" r="2" fill={targetColor} opacity="0.6" />
+
+                            <motion.circle cx={leftHipX} cy="222" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: leftHipX }} transition={spring} />
+                            <motion.circle cx={rightHipX} cy="222" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: rightHipX }} transition={spring} />
+
+                            <circle cx="100" cy="214" r="2.5" fill={targetColor} opacity="0.6" style={{ filter: `drop-shadow(0 0 4px ${targetColor})` }} />
+
+                            <motion.circle cx={leftKneeX} cy="298" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: leftKneeX }} transition={spring} />
+                            <motion.circle cx={rightKneeX} cy="298" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: rightKneeX }} transition={spring} />
+                        </g>
+                    </motion.g>
+
+                    {/* Laser Scanner Line */}
+                    <motion.rect
+                        x="20" width="160" height="2"
+                        fill={targetColor}
+                        style={{ filter: `drop-shadow(0 0 10px ${targetColor})` }}
+                        animate={{ y: [20, 400, 20], opacity: [0, 0.9, 0] }}
+                        transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }}
                     />
+                </motion.svg>
+            </div>
 
-                    {/* BIOMETRIC CYAN JOINT NODES */}
-                    <g>
-                        <circle cx="100" cy="20" r="2.5" fill={targetColor} style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
-                        <circle cx="100" cy="50" r="2.5" fill={targetColor} opacity="0.8" style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
+            {/* ━━━━━━━━━━━━━━━━━━━━━━━ VISTA LATERAL (PERFIL) ━━━━━━━━━━━━━━━━━━━━━━━ */}
+            <div className="w-1/2 h-full relative">
+                <motion.svg
+                    width="100%" height="100%"
+                    viewBox="0 0 200 410"
+                    preserveAspectRatio="xMidYMid meet"
+                    className="relative z-10 w-full h-full"
+                    animate={{ filter: `drop-shadow(0 0 15px ${isHighRisk ? 'rgba(245,158,11,0.5)' : 'rgba(0,245,212,0.5)'})` }}
+                    transition={spring}
+                >
+                    <defs>
+                        <clipPath id="ms-clip-profile">
+                            <motion.path d={morphingPathProfile} animate={{ d: morphingPathProfile }} transition={spring} />
+                        </clipPath>
+                    </defs>
 
-                        <motion.circle cx={leftShoulderX} cy="58" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: leftShoulderX }} transition={spring} />
-                        <motion.circle cx={rightShoulderX} cy="58" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: rightShoulderX }} transition={spring} />
+                    <motion.g
+                        animate={{
+                            scaleY: heightScale,
+                            scaleX: [1, 1.015, 1],
+                        }}
+                        style={{ originX: '100px', originY: '205px' }}
+                        transition={{
+                            scaleY: spring,
+                            scaleX: { duration: 4, repeat: Infinity, ease: 'easeInOut' },
+                        }}
+                    >
+                        {/* BASE HOLOGRAPHIC GEOMETRY */}
+                        <motion.path
+                            d={morphingPathProfile}
+                            fill="url(#ms-body-fill)"
+                            stroke={targetColor}
+                            strokeWidth="1.2"
+                            filter="url(#ms-fresnel)"
+                            animate={{ d: morphingPathProfile, stroke: targetColor }}
+                            transition={spring}
+                        />
 
-                        <circle cx="100" cy="105" r="2.5" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} />
+                        {/* TEXTURED SKIN MESH */}
+                        <g clipPath="url(#ms-clip-profile)">
+                            <rect x="0" y="0" width="200" height="410" fill="url(#ms-mesh)" style={{ mixBlendMode: 'screen' }} />
+                            <rect x="0" y="0" width="200" height="410" fill="url(#ms-scanlines)" style={{ mixBlendMode: 'screen' }} />
 
-                        <motion.ellipse cx="100" cy="160" rx={waistRadius} ry="4" fill="none" stroke={targetColor} strokeWidth="1.5" strokeDasharray="3 2" animate={{ rx: waistRadius, stroke: targetColor }} transition={spring} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} />
-                        <motion.circle cx={100 - waistRadius} cy="160" r="2.5" fill={targetColor} animate={{ cx: 100 - waistRadius }} transition={spring} style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
-                        <motion.circle cx={100 + waistRadius} cy="160" r="2.5" fill={targetColor} animate={{ cx: 100 + waistRadius }} transition={spring} style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
+                            {/* Animated Sweep Radar */}
+                            <motion.rect
+                                x="0" width="200" height="30"
+                                fill="url(#ms-sweep)"
+                                style={{ mixBlendMode: 'screen' }}
+                                animate={{ y: [-30, 420] }}
+                                transition={{ duration: 2.8, repeat: Infinity, ease: 'linear' }}
+                            />
+                        </g>
 
-                        <circle cx="100" cy="185" r="2" fill={targetColor} opacity="0.6" />
+                        {/* BLOOM TRACING ON CONTOUR */}
+                        <motion.path
+                            d={morphingPathProfile}
+                            fill="none"
+                            stroke={targetColor}
+                            strokeWidth="2"
+                            opacity="0.3"
+                            filter="url(#ms-bloom)"
+                            animate={{ d: morphingPathProfile, stroke: targetColor }}
+                            transition={spring}
+                        />
 
-                        <motion.circle cx={leftHipX} cy="240" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: leftHipX }} transition={spring} />
-                        <motion.circle cx={rightHipX} cy="240" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: rightHipX }} transition={spring} />
+                        {/* BIOMETRIC JOINT NODES — PROFILE */}
+                        <g>
+                            {/* Head */}
+                            <circle cx="100" cy="15" r="2.5" fill={targetColor} style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
 
-                        <circle cx="100" cy="210" r="2.5" fill={targetColor} opacity="0.6" style={{ filter: `drop-shadow(0 0 4px ${targetColor})` }} />
+                            {/* Visceral Risk */}
+                            <motion.circle cx={profileBellyX} cy="165" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} animate={{ cx: profileBellyX }} transition={spring} />
 
-                        <motion.circle cx={leftKneeX} cy="315" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: leftKneeX }} transition={spring} />
-                        <motion.circle cx={rightKneeX} cy="315" r="3" fill={targetColor} style={{ filter: `drop-shadow(0 0 6px ${targetColor})` }} animate={{ cx: rightKneeX }} transition={spring} />
-                    </g>
-                </motion.g>
+                            {/* Subcutaneous Fat (Glute) */}
+                            <motion.circle cx={profileGluteX} cy="215" r="3.5" fill={targetColor} style={{ filter: `drop-shadow(0 0 8px ${targetColor})` }} animate={{ cx: profileGluteX }} transition={spring} />
 
-                {/* Laser Scanner Line */}
-                <motion.rect
-                    x="20" width="160" height="2"
-                    fill={targetColor}
-                    style={{ filter: `drop-shadow(0 0 10px ${targetColor})` }}
-                    animate={{ y: [20, 400, 20], opacity: [0, 0.9, 0] }}
-                    transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }}
-                />
-            </motion.svg>
+                            {/* Visceral-Lumbar Connector Line */}
+                            <motion.line x1="94" y1="170" x2={profileBellyX} y2="165" stroke="#ff9f1c" strokeWidth="1" strokeDasharray="3 3" opacity="0.5" animate={{ x2: profileBellyX }} transition={spring} />
+                        </g>
+                    </motion.g>
+
+                    {/* Laser Scanner Line */}
+                    <motion.rect
+                        x="20" width="160" height="2"
+                        fill={targetColor}
+                        style={{ filter: `drop-shadow(0 0 10px ${targetColor})` }}
+                        animate={{ y: [20, 400, 20], opacity: [0, 0.9, 0] }}
+                        transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }}
+                    />
+                </motion.svg>
+            </div>
         </div>
     );
 };
