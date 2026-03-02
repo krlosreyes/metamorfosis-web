@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { MetabolicAnatomyEngine } from '../../utils/MetabolicAnatomyEngine';
 
 interface MorphingSilhouetteProps {
     waist: number;
@@ -38,16 +39,21 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
     const heightScale = Math.max(0.85, Math.min(1.15, height / 170));
 
     // ── 3. Advanced Anatomical Engine v2 (Non-linear visceral deformation) ──
-    // Motor suavizado para evitar picos poligonales
-    const visceralCurve = Math.log(Math.max(waist, 50) / 50) * 12;
-    const hipCurve = Math.log(Math.max(hip, 80) / 80) * 12;
+    // --- Inyección del Motor Biomecánico ---
+    const deformation = MetabolicAnatomyEngine.getDeformation({ waist, hip, gender });
 
+    // Mapeo a las variables de topología existentes
+    const visceralCurve = deformation.xOffset;
+    const hipCurve = deformation.hipFlare;
+
+    // Variables estáticas base
     const shoulderBase = gender === 'male' ? 36 : 32;
     const pelvisBase = gender === 'female' ? 34 : 28;
 
     // Curvas espinales menos extremas
     const thoracicCurve = -2;
-    const lumbarCurve = 3;
+    // Integramos la compensación lumbar biomecánica
+    const lumbarCurve = 3 + deformation.lumbarShift;
 
     // ── 4A. Matriz de Puntos FRONTALES (Maniquí con piernas separadas) ──────────
     const pointsRight = [
