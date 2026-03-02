@@ -104,34 +104,35 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
 
     // ── 4B. LOGARITHMIC ASYMMETRIC PROFILE VIEW ─────────────────────────
     // El perfil mira hacia la derecha. Frente = X aumenta, Espalda = X disminuye.
+    // --- MOTOR DE PERFIL (VOLUMEN ANATÓMICO CORREGIDO) ---
     const profilePoints = [
         // FRENTE (De arriba hacia abajo)
         [100, 10],                        // 0: Tope de la cabeza
-        [106, 18],                        // 1: Frente
-        [108, 25],                        // 2: Nariz
-        [105, 35],                        // 3: Mentón
-        [100, 45],                        // 4: Garganta
-        [108, 80],                        // 5: Pecho
-        [105 + visceralCurve * 1.2, 130], // 6: Abdomen superior
-        [102 + visceralCurve * 2.0, 165], // 7: Pico Visceral (Ombligo)
-        [100 + visceralCurve * 0.5, 210], // 8: Pelvis frontal
-        [104 + hipCurve * 0.3, 260],      // 9: Muslo frontal
-        [102, 310],                       // 10: Rodilla frontal
-        [104, 360],                       // 11: Espinilla
-        [110, 400],                       // 12: Punta del pie
-        [108, 405],                       // 13: Planta del pie frontal
+        [110, 18],                        // 1: Frente
+        [112, 25],                        // 2: Nariz
+        [108, 35],                        // 3: Mentón
+        [102, 45],                        // 4: Garganta
+        [115, 80],                        // 5: Pecho (Volumen frontal)
+        [112 + visceralCurve * 1.2, 130], // 6: Abdomen superior
+        [110 + visceralCurve * 2.0, 170], // 7: Pico Visceral (Ombligo)
+        [105 + visceralCurve * 0.5, 215], // 8: Pelvis frontal
+        [110 + hipCurve * 0.4, 270],      // 9: Muslo frontal
+        [108, 320],                       // 10: Rodilla frontal
+        [110, 370],                       // 11: Espinilla
+        [116, 405],                       // 12: Punta del pie
+        [110, 410],                       // 13: Planta del pie frontal
 
         // ESPALDA (De abajo hacia arriba)
-        [95, 405],                        // 14: Talón inferior
-        [92, 395],                        // 15: Talón posterior
-        [90 - hipCurve * 0.1, 350],       // 16: Pantorrilla
-        [95, 310],                        // 17: Hueco poplíteo (detrás rodilla)
-        [88 - hipCurve * 0.4, 260],       // 18: Isquiotibial
-        [82 - hipCurve * 1.2, 215],       // 19: Glúteo Máximo (Subcutánea)
-        [94, 170],                        // 20: Curva Lumbar (hacia adentro)
-        [88, 110],                        // 21: Escápula / Espalda alta
-        [92, 50],                         // 22: Nuca
-        [88, 25],                         // 23: Parte trasera cabeza
+        [90, 410],                        // 14: Talón inferior
+        [85, 400],                        // 15: Talón posterior
+        [82 - hipCurve * 0.2, 360],       // 16: Pantorrilla
+        [90, 320],                        // 17: Hueco poplíteo
+        [80 - hipCurve * 0.5, 270],       // 18: Isquiotibial
+        [75 - hipCurve * 1.2, 225],       // 19: Glúteo Máximo (Expansión Subcutánea)
+        [92, 170],                        // 20: Curva Lumbar (Hacia adentro)
+        [82, 110],                        // 21: Escápula / Espalda alta (Volumen trasero)
+        [88, 50],                         // 22: Nuca
+        [86, 25],                         // 23: Parte trasera cabeza
         [100, 10]                         // 24: Cierra la figura
     ];
 
@@ -139,8 +140,9 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
     const morphingPathProfile = catmullRom2bezier(profilePoints, 0.85);
 
     // ── 7B. Dynamic Nodes coordinate tracking (Profile) ────────────────
-    const profileBellyX = 102 + visceralCurve * 2.0;
-    const profileGluteX = 82 - hipCurve * 1.2;
+    const profileBellyX = 110 + visceralCurve * 2.0;
+    const profileGluteX = 75 - hipCurve * 1.2;
+    const profileLumbarX = 92;
 
     const spring = { type: 'spring' as const, stiffness: 85, damping: 18 };
 
@@ -372,13 +374,13 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                             <circle cx="100" cy="15" r="2.5" fill={targetColor} style={{ filter: `drop-shadow(0 0 5px ${targetColor})` }} />
 
                             {/* Visceral Risk */}
-                            <motion.circle cx={profileBellyX} cy="165" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} animate={{ cx: profileBellyX }} transition={spring} />
+                            <motion.circle cx={profileBellyX} cy="170" r="3.5" fill="#ff9f1c" style={{ filter: 'drop-shadow(0 0 8px #ff9f1c)' }} animate={{ cx: profileBellyX }} transition={spring} />
 
                             {/* Subcutaneous Fat (Glute) */}
-                            <motion.circle cx={profileGluteX} cy="215" r="3.5" fill={targetColor} style={{ filter: `drop-shadow(0 0 8px ${targetColor})` }} animate={{ cx: profileGluteX }} transition={spring} />
+                            <motion.circle cx={profileGluteX} cy="225" r="3.5" fill={targetColor} style={{ filter: `drop-shadow(0 0 8px ${targetColor})` }} animate={{ cx: profileGluteX }} transition={spring} />
 
                             {/* Visceral-Lumbar Connector Line */}
-                            <motion.line x1="94" y1="170" x2={profileBellyX} y2="165" stroke="#ff9f1c" strokeWidth="1" strokeDasharray="3 3" opacity="0.5" animate={{ x2: profileBellyX }} transition={spring} />
+                            <motion.line x1={profileLumbarX} y1="170" x2={profileBellyX} y2="170" stroke="#ff9f1c" strokeWidth="1" strokeDasharray="3 3" opacity="0.5" animate={{ x2: profileBellyX }} transition={spring} />
                         </g>
                     </motion.g>
 
