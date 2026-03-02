@@ -28,7 +28,7 @@ const catmullRom2bezier = (pts: number[][], tension = 1): string => {
     return d;
 };
 
-const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, height, gender, whr, weight: _weight }) => {
+const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, height, gender, whr, weight }) => {
     // ── 1. Metabolic Risk Color Targeting ─────────────────────────────────
     const isHighRisk = whr > (gender === 'male' ? 0.90 : 0.85);
     const targetColor = isHighRisk ? '#F59E0B' : '#00f5d4';
@@ -38,74 +38,71 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
     const heightScale = Math.max(0.85, Math.min(1.15, height / 170));
 
     // ── 3. Advanced Anatomical Engine v2 (Non-linear visceral deformation) ──
-    // Usamos Math.log para que la expansión abdominal crezca de forma no lineal (más real).
     const visceralCurve = Math.log(Math.max(waist, 50) / 50) * 25;
     const hipCurve = Math.log(Math.max(hip, 80) / 80) * 25;
 
-    const shoulderBase = gender === 'male' ? 34 : 28;
-    const pelvisBase = gender === 'female' ? 36 : 30;
+    // BMI-driven torso volume: heavier = wider chest/abdomen
+    const bmi = weight / Math.pow(height / 100, 2);
+    const bmiOffset = (bmi - 22) * 0.6; // neutral at BMI=22; expands for higher BMI
 
-    // Natural S-curve spine offsets
-    const thoracicCurve = -2;
-    const lumbarCurve = 5;
+    const maleShift = gender === 'male' ? 5 : 0; // broader shoulders for male
 
-    // ── 4. Matriz de Puntos (CORE-ONLY: Sin brazos para foco metabólico) ──
-    const pointsRight = [
-        [0, 10],                    // 0: Centro cabeza
-        [8, 12],                    // 1: Tope derecho cabeza
-        [12, 22],                   // 2: Sien
-        [10, 35],                   // 3: Mandíbula/Pómulo
-        [6, 45],                    // 4: Cuello
-        [16, 50],                   // 5: Trapecio
-        [shoulderBase, 58],         // 6: Hombro (Peak)
+    // ── 4. RIGHT-HALF Anatomy (viewBox: center = x=100) ───────────────────
+    // ARMLESS, SOLID/UNIFIED LEG COLUMN (No division), LOGARITHMIC EXPANSION
+    const pts: number[][] = [
+        // HEAD
+        [0, 12],   // crown center
+        [8, 13],   // top-right skull
+        [13, 23],  // temple
+        [12, 33],  // cheekbone
+        [8, 43],   // jaw
+        [6, 50],   // chin
 
-        // --- Transición directa a Torso (Sin brazos) ---
-        [shoulderBase - 3, 80],     // 7: Deltoide a Dorsal
-        [26 + thoracicCurve + (visceralCurve * 0.1), 105], // 8: Pecho superior / Esternón
+        // NECK & SHOULDER (Tapering directly inward, NO ARMS)
+        [6, 56],   // neck right
+        [14, 60],  // neck base
+        [24 + maleShift, 65],   // medial shoulder
+        [32 + maleShift, 70],   // deltoid peak
 
-        // --- Cintura (Expansión Visceral Logarítmica) ---
-        [24 + visceralCurve * 0.5, 130], // 9: Abdomen superior
-        [22 + visceralCurve, 160],       // 10: Cintura máxima
+        // ARMLESS TORSO (Outer curve blending from shoulder to lat)
+        [28 + maleShift + bmiOffset * 0.4, 85],  // outer chest (wider with BMI)
+        [24 + visceralCurve * 0.1 + bmiOffset * 0.6, 110], // upper lat (BMI inflates torso)
+        [20 + visceralCurve * 0.2 + bmiOffset * 0.8, 140], // lower lat / rib cage
+        [16 + visceralCurve * 0.6 + bmiOffset * 0.5, 170], // natural waist indent
+        [22 + visceralCurve * 0.4 + hipCurve * 0.3, 195],  // iliac crest (upper hip curve)
 
-        // --- Curva Lumbar / Pelvis ---
-        [24 + lumbarCurve + visceralCurve * 0.4, 185], // 11: Espalda baja
+        // HIPS (Preserving hourglass but strictly mapped)
+        [30 + hipCurve, 222],       // max hip width / trochanter
 
-        // --- Caderas ---
-        [pelvisBase + hipCurve * 0.5, 210], // 12: Cadera alta
-        [pelvisBase + hipCurve, 240],       // 13: Cadera máxima (Trocánter)
+        // UNIFIED SLIM OUTER LEG (Reduced thigh volume, acts as outer bounds of a skirt/column)
+        [26 + hipCurve * 0.6, 260], // upper outer thigh
+        [20 + hipCurve * 0.3, 300], // outer knee
+        [16 + hipCurve * 0.1, 340], // outer calf
+        [12, 375], // outer ankle
+        [14, 390], // outer heel
+        [6, 398],  // outer toe
 
-        // --- Piernas ---
-        [pelvisBase + hipCurve * 0.8, 275], // 14: Muslo
-        [22 + hipCurve * 0.3, 315],         // 15: Rodilla
-        [24 + hipCurve * 0.1, 350],         // 16: Pantorrilla
-        [12, 385],                          // 17: Tobillo
-        [14, 398],                          // 18: Pie exterior
-        [4, 400],                           // 19: Punta del pie
-        [0, 395],                           // 20: Pie interior (centro)
-        [0, 385],
-        [0, 350],
-        [0, 315],
-        [0, 275],
-        [0, 240],
-        [0, 210],                           // Entrepierna
+        // NO DIVISION - DIRECT PATH TO CENTER BOTTOM
+        [0, 402],  // Base center. This ensures NO gap exists between the legs.
     ];
 
     // ── 5. Symmetric Mirroring Engine ────────────────────────────────────
-    const rightSide = pointsRight.map(p => [100 + p[0], p[1]]);
-    const leftSide = pointsRight.slice().reverse().map(p => [100 - p[0], p[1]]);
+    const rightSide = pts.map(p => [100 + p[0], p[1]]);
+    const leftSide = pts.slice().reverse().map(p => [100 - p[0], p[1]]);
     const fullPoints = [...rightSide, ...leftSide];
 
-    // ── 6. Generación del Path (Tensión ajustada a 0.85 para suavidad orgánica) ──
-    const morphingPath = catmullRom2bezier(fullPoints, 0.85) + ' Z';
+    // ── 6. Generación del Path (Tensión spline calibrada) ─────────────────
+    const morphingPath = catmullRom2bezier(fullPoints, 1) + ' Z';
 
-    // ── 7. Dynamic Nodes coordinate tracking (Sincronizado con la nueva matemática) ──
-    const rightShoulderX = 100 + shoulderBase;
-    const leftShoulderX = 100 - shoulderBase;
-    const rightHipX = 100 + pelvisBase + hipCurve;
-    const leftHipX = 100 - (pelvisBase + hipCurve);
-    const rightKneeX = 100 + 22 + hipCurve * 0.3;
-    const leftKneeX = 100 - (22 + hipCurve * 0.3);
-    const waistRadius = Math.max(12, 22 + visceralCurve);
+    // ── 7. Dynamic Nodes coordinate tracking (Sincronizado) ────────────────
+    const rightShoulderX = 100 + 30 + maleShift;
+    const leftShoulderX = 100 - (30 + maleShift);
+    const rightHipX = 100 + 26 + hipCurve;
+    const leftHipX = 100 - (26 + hipCurve);
+    // Knee markers moved slightly inwards for solid block look
+    const rightKneeX = 100 + 8 + hipCurve * 0.15;
+    const leftKneeX = 100 - (8 + hipCurve * 0.15);
+    const waistRadius = Math.max(12, 16 + visceralCurve + bmiOffset * 0.3);
 
     const spring = { type: 'spring' as const, stiffness: 85, damping: 18 };
 
