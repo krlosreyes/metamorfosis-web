@@ -70,28 +70,24 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
         [0, 220] // Crotch
     ];
 
-    const generatePath = (multiplier: number) => {
-        const layerVisceral = visceralCurve * multiplier;
-        const layerHip = hipCurve * multiplier;
-        const layerArmFat = (visceralCurve + hipCurve) * 0.15 * multiplier;
-
+    const morphingPath = (() => {
+        // Obtenemos los puntos con la deformación metabólica mínima/base
         const deformedPointsRight = basePointsRight.map((p, i) => {
-            // Apply targeted deformations
-            if (i >= 8 && i <= 10) return [p[0], p[1] + layerArmFat]; // Under arm triceps fat
-            if (i === 12) return [p[0] + layerVisceral * 0.4, p[1]]; // Chest
-            if (i === 13) return [p[0] + layerVisceral * 0.8, p[1]]; // Upper waist
-            if (i === 14) return [p[0] + layerVisceral, p[1]]; // Navel waist
-            if (i === 15) return [p[0] + layerVisceral * 0.6, p[1]]; // Lower waist
-            if (i === 16) return [p[0] + layerHip, p[1]]; // Hip peak
-            if (i >= 17 && i <= 18) return [p[0] + layerHip * 0.6, p[1]]; // Upper thigh
-            if (i >= 24 && i <= 25) return [p[0] + layerHip * 0.2, p[1]]; // Inner thigh fat
+            if (i >= 8 && i <= 10) return [p[0], p[1] + (visceralCurve + hipCurve) * 0.1]; // Ligeros tríceps
+            if (i === 12) return [p[0] + visceralCurve * 0.2, p[1]]; // Pecho 
+            if (i === 13) return [p[0] + visceralCurve * 0.4, p[1]]; // Cintura alta
+            if (i === 14) return [p[0] + visceralCurve * 0.5, p[1]]; // Cintura baja
+            if (i === 15) return [p[0] + visceralCurve * 0.3, p[1]]; // Cintura baja
+            if (i === 16) return [p[0] + hipCurve * 0.5, p[1]]; // Cadera
+            if (i >= 17 && i <= 18) return [p[0] + hipCurve * 0.3, p[1]]; // Muslo
+            if (i >= 24 && i <= 25) return [p[0] + hipCurve * 0.1, p[1]]; // Muslo interno
             return p;
         });
 
         const rightSide = deformedPointsRight.map(p => [100 + p[0], p[1]]);
         const leftSide = deformedPointsRight.slice().reverse().map(p => [100 - p[0], p[1]]);
         return catmullRom2bezier([...rightSide, ...leftSide], 0.75) + ' Z';
-    };
+    })();
 
     const spring = { type: 'spring' as const, stiffness: 85, damping: 18 };
 
@@ -108,52 +104,34 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                 <defs>
                     <linearGradient id="bodyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                         <stop offset="0%" stopColor="#d8369b" />     {/* Cabeza Magenta */}
-                        <stop offset="35%" stopColor="#75c8e6" />    {/* Pecho Azul/Cian */}
-                        <stop offset="65%" stopColor="#64d8eb" />    {/* Vientre Cian brillante */}
+                        <stop offset="40%" stopColor="#75c8e6" />    {/* Pecho/Abdomen Azul Claro */}
+                        <stop offset="60%" stopColor="#75c8e6" />    {/* Abdomen/Pelvis Azul Claro */}
                         <stop offset="100%" stopColor="#d8369b" />   {/* Piernas Magenta */}
                     </linearGradient>
-
-                    {/* Generador de Ruido SVG para el borde de Grasa Irregular */}
-                    <filter id="fat-blob-filter" x="-20%" y="-20%" width="140%" height="140%">
-                        <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
-                        <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G" result="displaced" />
-                        <feGaussianBlur in="displaced" stdDeviation="1.5" result="smoothed" />
-
-                        {/* Soft drop shadow to separate the blob from background */}
-                        <feDropShadow dx="0" dy="5" stdDeviation="8" floodColor="#000000" floodOpacity="0.4" />
-                    </filter>
-
-                    {/* Sombra para separar el cuerpo ideal de la grasa */}
-                    <filter id="inner-body-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#000000" floodOpacity="0.6" />
-                    </filter>
                 </defs>
 
                 <motion.g
-                    animate={{
-                        scaleY: [heightScale, heightScale * 1.005, heightScale],
-                        scaleX: [1, 1.01, 1],
-                    }}
+                    animate={{ scaleX: [1, 1.01, 1], scaleY: [1, 1.005, 1] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                     style={{ originX: '100px', originY: '200px' }}
-                    transition={{
-                        duration: 4, repeat: Infinity, ease: 'easeInOut'
-                    }}
                 >
-                    {/* LAYER 1 (Fondo): Masa Grasa / Overweight (Outer Blob) */}
+                    {/* CAPA 1: Externa (Grasa Expansiva - Blob) */}
                     <motion.path
-                        d={generatePath(1.0)}
+                        d={morphingPath}
                         fill="#d8369b"
-                        filter="url(#fat-blob-filter)"
-                        animate={{ d: generatePath(1.0) }}
+                        stroke="#d8369b"
+                        strokeWidth={4 + (visceralCurve * 2.5)}
+                        strokeLinejoin="round"
+                        strokeLinecap="round"
+                        animate={{ strokeWidth: 4 + (visceralCurve * 2.5), d: morphingPath }}
                         transition={spring}
                     />
 
-                    {/* LAYER 2 (Frente): Cuerpo Ideal/Base (Inner Core) */}
+                    {/* CAPA 2: Interna (Cuerpo Base Óptimo) */}
                     <motion.path
-                        d={generatePath(0.0)}
+                        d={morphingPath}
                         fill="url(#bodyGradient)"
-                        filter="url(#inner-body-shadow)"
-                        animate={{ d: generatePath(0.0) }}
+                        animate={{ d: morphingPath }}
                         transition={spring}
                     />
                 </motion.g>
