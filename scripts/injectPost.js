@@ -59,14 +59,23 @@ async function uploadPost() {
         const postData = JSON.parse(fileContent);
 
         // Validation
+        const allowedNodes = ['metadata', 'content', 'app_integration', 'quiz'];
+        const rootNodes = Object.keys(postData);
+
+        for (const node of rootNodes) {
+            if (!allowedNodes.includes(node)) {
+                throw new Error(`Invalid Schema: root node '${node}' is not allowed. Only 4 root nodes are strictly permitted: metadata, content, app_integration, quiz.`);
+            }
+        }
+
         if (!postData.metadata || !postData.metadata.slug) {
-            throw new Error("Invalid Schema: 'metadata.slug' is required.");
+            throw new Error("Invalid Schema: 'metadata' node with a 'slug' is required.");
         }
         if (!postData.content) {
-            throw new Error("Invalid Schema: 'content' is required.");
+            throw new Error("Invalid Schema: 'content' node is required.");
         }
         if (!postData.app_integration) {
-            console.warn("⚠️ Warning: 'app_integration' is missing. Proceeding anyway.");
+            throw new Error("Invalid Schema: 'app_integration' node is strictly required.");
         }
 
         // Quiz validation
