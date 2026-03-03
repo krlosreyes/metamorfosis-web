@@ -29,31 +29,27 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                 </ul>
             </div>
 
-            {/* Contenedor Maestro de Siluetas */}
-            <div className="absolute inset-0 flex items-center justify-center scale-75">
+            {/* CAPA 3: Riesgo Severo (Fondo - Ámbar) */}
+            <motion.svg className="absolute w-full h-full drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)]" viewBox="0 0 2547 2547" preserveAspectRatio="xMidYMid meet" animate={{ opacity: layer3Opacity }}>
+                <g transform="scale(2.4873)">
+                    <path d={PATH_OBESE} fill="#ff9f1c" />
+                </g>
+            </motion.svg>
 
-                {/* Capa 3: Riesgo Severo (Ámbar) */}
-                <motion.svg className="absolute w-full h-full drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] z-10" viewBox="0 0 2547 2547" preserveAspectRatio="xMidYMid meet" animate={{ opacity: layer3Opacity }} transition={{ duration: 0.4 }}>
-                    <g transform="scale(2.4873)">
-                        <path d={PATH_OBESE} fill="#ff9f1c" />
-                    </g>
-                </motion.svg>
+            {/* CAPA 2: Riesgo Moderado (Medio - Amarillo) */}
+            <motion.svg className="absolute w-full h-full drop-shadow-[0_5px_15px_rgba(0,0,0,0.6)]" viewBox="0 0 2127 2127" preserveAspectRatio="xMidYMid meet" animate={{ opacity: layer2Opacity }}>
+                <g transform="scale(2.07715)">
+                    <path d={PATH_OVERWEIGHT} fill="#ffeb3b" />
+                </g>
+            </motion.svg>
 
-                {/* Capa 2: Sobrepeso (Amarillo) */}
-                <motion.svg className="absolute w-full h-full drop-shadow-[0_5px_15px_rgba(0,0,0,0.6)] z-20" viewBox="0 0 2127 2127" preserveAspectRatio="xMidYMid meet" animate={{ opacity: layer2Opacity }} transition={{ duration: 0.4 }}>
-                    <g transform="scale(2.07715)">
-                        <path d={PATH_OVERWEIGHT} fill="#ffeb3b" />
-                    </g>
-                </motion.svg>
+            {/* CAPA 1: Base Óptima (Frente - Cian) */}
+            <motion.svg className="absolute w-full h-full drop-shadow-[0_0_20px_rgba(0,245,212,0.3)]" viewBox="0 0 2490 2490" preserveAspectRatio="xMidYMid meet">
+                <g transform="matrix(2.43164 0 0 2.43164 0 0)">
+                    <path d={PATH_OPTIMAL} fill="#00f5d4" />
+                </g>
+            </motion.svg>
 
-                {/* Capa 1: Óptima (Cian) */}
-                <motion.svg className="absolute w-full h-full drop-shadow-[0_0_20px_rgba(0,245,212,0.3)] z-30" viewBox="0 0 3245 3245" preserveAspectRatio="xMidYMid meet">
-                    <g transform="scale(3.16895)">
-                        <path d={PATH_OPTIMAL} fill="#00f5d4" />
-                    </g>
-                </motion.svg>
-
-            </div>
         </div>
     );
 };
