@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { PATH_OPTIMAL } from '../../utils/silhouettePaths';
+import { PATH_OPTIMAL, PATH_OVERWEIGHT, PATH_OBESE } from '../../utils/silhouettePaths';
 
 interface MorphingSilhouetteProps {
     waist: number;
@@ -11,7 +11,14 @@ interface MorphingSilhouetteProps {
     weight: number;
 }
 
-const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, height, gender, whr, weight }) => {
+const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist }) => {
+
+    // Lógica de Metamorfosis: Cross-fading dinámico
+    // Capa 1 (Cian): Base saludable (siempre visible)
+    // Capa 2 (Amarillo): Empieza a los 85cm, máxima a los 94cm.
+    const layer2Opacity = Math.max(0, Math.min(1, (waist - 85) / 9));
+    // Capa 3 (Ámbar): Empieza a los 94cm, máxima a los 102cm (Riesgo Severo).
+    const layer3Opacity = Math.max(0, Math.min(1, (waist - 94) / 8));
 
     return (
         <div className="relative w-full h-[500px] flex items-center justify-center overflow-visible">
@@ -25,9 +32,29 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
                 </ul>
             </div>
 
-            {/* CAPA BASE: Óptima (Cian) */}
+            {/* CAPA 3: Riesgo Severo (Ámbar) */}
             <motion.svg
-                className="absolute h-full drop-shadow-[0_0_20px_rgba(0,245,212,0.4)]"
+                className="absolute h-full drop-shadow-[0_0_35px_rgba(255,159,28,0.6)]"
+                viewBox="0 0 1024 1024"
+                preserveAspectRatio="xMidYMid meet"
+                animate={{ opacity: layer3Opacity }}
+            >
+                <path d={PATH_OBESE} fill="#ff9f1c" />
+            </motion.svg>
+
+            {/* CAPA 2: Sobrepeso (Amarillo) */}
+            <motion.svg
+                className="absolute h-full drop-shadow-[0_0_25px_rgba(255,235,59,0.4)]"
+                viewBox="0 0 1024 1024"
+                preserveAspectRatio="xMidYMid meet"
+                animate={{ opacity: layer2Opacity }}
+            >
+                <path d={PATH_OVERWEIGHT} fill="#ffeb3b" />
+            </motion.svg>
+
+            {/* CAPA 1: Óptima (Cian) */}
+            <motion.svg
+                className="absolute h-full drop-shadow-[0_0_15px_rgba(0,245,212,0.5)]"
                 viewBox="0 0 1024 1024"
                 preserveAspectRatio="xMidYMid meet"
             >
@@ -38,4 +65,3 @@ const MorphingSilhouette: React.FC<MorphingSilhouetteProps> = ({ waist, hip, hei
 };
 
 export default MorphingSilhouette;
-
