@@ -7,7 +7,9 @@ const IMXQuiz = () => {
     const [isThinking, setIsThinking] = useState(false);
     const [showNameInput, setShowNameInput] = useState(false);
     const [userName, setUserName] = useState('');
-    const [nameError, setNameError] = useState('');
+    const [userEmail, setUserEmail] = useState('');
+    const [formError, setFormError] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
 
     const questions = [
         {
@@ -115,22 +117,46 @@ const IMXQuiz = () => {
         }
     };
 
-    const handleNameSubmit = (e: React.FormEvent) => {
+    const handleLeadSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setFormError('');
+
         if (userName.trim().length < 2) {
-            setNameError('Por favor ingresa un nombre válido.');
+            setFormError('Por favor ingresa un nombre válido.');
             return;
         }
-        finishQuiz(totalScore);
-    };
 
-    const finishQuiz = (finalScore: number) => {
-        setIsThinking(true);
-        setTimeout(() => {
-            sessionStorage.setItem('imx_score', Math.round(finalScore).toString());
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(userEmail)) {
+            setFormError('Por favor ingresa un correo electrónico válido.');
+            return;
+        }
+
+        setIsSaving(true);
+
+        try {
+            // Import Firebase dynamically to avoid SSR issues and keep payload small
+            const { db } = await import('../lib/firebase');
+            const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
+
+            // Insert into the waitlist_leads collection
+            await addDoc(collection(db, 'waitlist_leads'), {
+                name: userName.trim(),
+                email: userEmail.trim().toLowerCase(),
+                estimated_imx: Math.round(totalScore),
+                created_at: serverTimestamp()
+            });
+
+            // Store in session for the results page
+            sessionStorage.setItem('imx_score', Math.round(totalScore).toString());
             sessionStorage.setItem('imx_userName', userName.trim());
             window.location.href = '/diagnostico';
-        }, 1500);
+
+        } catch (error) {
+            console.error("Error saving lead:", error);
+            setFormError('Hubo un error al procesar tu solicitud. Por favor intenta de nuevo.');
+            setIsSaving(false);
+        }
     };
 
     if (!hasStarted) {
@@ -155,31 +181,55 @@ const IMXQuiz = () => {
     if (showNameInput && !isThinking) {
         return (
             <div className="w-full max-w-2xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl p-6 sm:p-8 shadow-2xl border border-white/20 text-white text-center animate-fade-in">
-                <h2 className="text-2xl font-bold mb-6 text-white">
-                    ¡Casi listo!
+                <h2 className="text-2xl font-bold mb-4 text-white">
+                    Tu diagnóstico IMX está listo.
                 </h2>
-                <p className="text-gray-300 mb-6">
-                    Para personalizar tu reporte metabólico y estrategia, ¿cómo te llamas?
+                <p className="text-gray-300 mb-6 max-w-md mx-auto">
+                    Ingresa tus datos para ver tus resultados detallados y asegurar tu lugar en nuestra fase piloto privada.
                 </p>
-                <form onSubmit={handleNameSubmit} className="max-w-xs mx-auto space-y-4">
+                <form onSubmit={handleLeadSubmit} className="max-w-xs mx-auto space-y-4">
                     <input
                         type="text"
                         value={userName}
                         onChange={(e) => {
                             setUserName(e.target.value);
-                            setNameError('');
+                            setFormError('');
                         }}
                         placeholder="Tu Nombre"
-                        className="w-full bg-black/50 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#00C49A] text-center text-lg"
+                        required
+                        disabled={isSaving}
+                        className="w-full bg-black/50 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#00C49A] text-center text-lg disabled:opacity-50"
                         autoFocus
                     />
-                    {nameError && <p className="text-red-400 text-sm">{nameError}</p>}
+                    <input
+                        type="email"
+                        value={userEmail}
+                        onChange={(e) => {
+                            setUserEmail(e.target.value);
+                            setFormError('');
+                        }}
+                        placeholder="tu@correo.com"
+                        required
+                        disabled={isSaving}
+                        className="w-full bg-black/50 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#00C49A] text-center text-lg disabled:opacity-50"
+                    />
+                    {formError && <p className="text-red-400 text-sm font-medium">{formError}</p>}
+
                     <button
                         type="submit"
-                        className="w-full px-8 py-3 bg-[#00C49A] hover:bg-[#00A885] text-white font-bold rounded-xl transition-all shadow-lg shadow-[#00C49A]/20"
+                        disabled={isSaving}
+                        className="w-full px-8 py-3 bg-[#00C49A] hover:bg-[#00A885] disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg shadow-[#00C49A]/20 flex items-center justify-center gap-2"
                     >
-                        Ver Mi Diagnóstico
+                        {isSaving ? (
+                            <>
+                                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                Calculando IMX...
+                            </>
+                        ) : (
+                            'Ver Mi Diagnóstico'
+                        )}
                     </button>
+                    <p className="text-xs text-gray-500 mt-4">Tus datos están protegidos. Cero Spam.</p>
                 </form>
             </div>
         );
