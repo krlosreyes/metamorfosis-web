@@ -123,9 +123,6 @@ import Layout from "../layouts/Layout.astro";
                 >
                     <!-- Injected via JS -->
                 </div>
-                <p class="text-xs text-gray-500 mt-4 text-center">
-                    Garantía de satisfacción de 30 días.
-                </p>
             </div>
         </div>
 
@@ -193,11 +190,11 @@ import Layout from "../layouts/Layout.astro";
                 scoreCircle.style.strokeDashoffset = offset.toString();
             }
 
-            // Logic Levels
+            // Logic Levels (only for Title and Circle Colors)
             let colorClass = "";
 
             if (score <= 40) {
-                // ALERTA (0-40) - Hard Sell / Emergency Protocol
+                // ALERTA (0-40)
                 colorClass = "text-red-500";
                 if (scoreCircle) {
                     scoreCircle.classList.add(
@@ -207,35 +204,8 @@ import Layout from "../layouts/Layout.astro";
                 }
                 if (levelTitle)
                     levelTitle.innerHTML = `<span class="${colorClass}">⚠️ ${userName}, tu sistema está en Bloqueo Metabólico.</span>`;
-                if (levelDesc)
-                    levelDesc.innerText =
-                        "Tu resultado indica una resistencia severa a la insulina.";
-                if (levelAnalysis)
-                    levelAnalysis.innerHTML = `
-                Las dietas tradicionales no van a funcionar. Necesitas una <strong>intervención de emergencia de 7 días</strong> para forzar a tu cuerpo a volver a quemar grasa. Este es el protocolo exacto para tu estado.
-                <br><br>
-                <strong>Diagnóstico:</strong> Resistencia a la insulina severa.
-            `;
-
-                if (ctaTitle)
-                    ctaTitle.innerText = "Protocolo de Emergencia (7 Días)";
-                if (ctaDesc)
-                    ctaDesc.innerText =
-                        "Detén la inflamación y resetea tus hormonas ahora.";
-                if (ctaButtons)
-                    ctaButtons.innerHTML = `
-                <a href="https://buy.stripe.com/test_link_reinicio" class="inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white bg-red-600 hover:bg-red-500 rounded-xl transition-all shadow-lg hover:shadow-red-500/40 transform hover:-translate-y-1 w-full sm:w-auto">
-                    ACTIVAR PROTOCOLO ($9 USD)
-                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-                </a>
-                <div class="mt-4 text-center w-full">
-                    <a href="/protocolo" class="text-sm text-red-400 hover:text-red-300 underline">
-                        (Dev Pass) Ir al Protocolo Directamente
-                    </a>
-                </div>
-            `;
             } else if (score <= 70) {
-                // ESTANCAMIENTO (41-70) - Soft Sell
+                // ESTANCAMIENTO (41-70)
                 colorClass = "text-yellow-400";
                 if (scoreCircle) {
                     scoreCircle.classList.add(
@@ -244,35 +214,9 @@ import Layout from "../layouts/Layout.astro";
                     );
                 }
                 if (levelTitle)
-                    levelTitle.innerHTML = `<span class="${colorClass}">Estancamiento Metabólico</span>`;
-                if (levelDesc)
-                    levelDesc.innerText = `${userName}, tu metabolismo funciona, pero no a su máxima capacidad.`;
-                if (levelAnalysis)
-                    levelAnalysis.innerHTML = `
-                Estás en una zona gris. Tienes días buenos, pero la falta de consistencia y pequeños errores en el ayuno/nutrición están frenando tu progreso real.
-                <br><br>
-                <strong>Diagnóstico:</strong> Flexibilidad metabólica moderada.
-            `;
-
-                if (ctaTitle)
-                    ctaTitle.innerText = "Plan de Optimización & Desbloqueo";
-                if (ctaDesc)
-                    ctaDesc.innerText =
-                        "Ajustes estratégicos para romper el estancamiento y acelerar resultados.";
-                if (ctaButtons)
-                    ctaButtons.innerHTML = `
-                <a href="https://buy.stripe.com/test_link_optimizacion" class="inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-[#3d2e00] bg-yellow-400 hover:bg-yellow-300 rounded-xl transition-all shadow-lg hover:shadow-yellow-400/40 transform hover:-translate-y-1 w-full sm:w-auto">
-                    Ver Estrategia de Optimización ($9 USD)
-                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-                </a>
-                <div class="mt-4 text-center w-full">
-                    <a href="/protocolo" class="text-sm text-yellow-500 hover:text-yellow-400 underline">
-                        (Dev Pass) Ir al Protocolo Directamente
-                    </a>
-                </div>
-            `;
+                    levelTitle.innerHTML = `<span class="${colorClass}">⚠️ ${userName}, tu sistema está en Bloqueo Metabólico.</span>`;
             } else {
-                // MANTENIMIENTO (71-100) - App Funnel
+                // MANTENIMIENTO (71-100)
                 colorClass = "text-[#00C49A]";
                 if (scoreCircle) {
                     scoreCircle.classList.add(
@@ -281,30 +225,29 @@ import Layout from "../layouts/Layout.astro";
                     );
                 }
                 if (levelTitle)
-                    levelTitle.innerHTML = `<span class="${colorClass}">Metabolismo Optimizado</span>`;
-                if (levelDesc)
-                    levelDesc.innerText = `Excelente trabajo, ${userName}. Tienes una maquinaria biológica eficiente.`;
-                if (levelAnalysis)
-                    levelAnalysis.innerHTML = `
-                Tu cuerpo sabe alternar entre fuentes de energía. Ahora el juego se trata de longevidad, autofagia celular y rendimiento cognitivo superior.
-                <br><br>
-                <strong>Diagnóstico:</strong> Alta flexibilidad metabólica.
-            `;
+                    levelTitle.innerHTML = `<span class="${colorClass}">⚠️ ${userName}, tu sistema está en Bloqueo Metabólico.</span>`; 
+                    // Maintaining the title per user request: "Deja el título de alerta: "⚠️ [Nombre], tu sistema está en Bloqueo Metabólico.""
+            }
 
-                if (ctaTitle)
-                    ctaTitle.innerText =
-                        "Lleva tu Biohacking al Siguiente Nivel";
-                if (ctaDesc)
-                    ctaDesc.innerText =
-                        "Únete a la comunidad de ElenaApp para tracking avanzado y protocolos de longevidad.";
-                if (ctaButtons)
-                    ctaButtons.innerHTML = `
-                <a href="https://app.metamorfosisvital.com.co" class="inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white bg-[#007BFF] hover:bg-[#0069d9] rounded-xl transition-all shadow-lg hover:shadow-blue-500/40 transform hover:-translate-y-1 w-full sm:w-auto">
-                    Entrar a ElenaApp
-                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            // Universal Waitlist Text & CTA
+            if (levelDesc)
+                levelDesc.innerText = ""; // Clearing original description to focus on the analysis block
+            
+            if (levelAnalysis)
+                levelAnalysis.innerHTML = `Las dietas tradicionales no van a funcionar. Tu Índice Metamorfosis (IMX) indica que necesitas reparar tu flexibilidad metabólica antes de intentar perder peso. Contar calorías solo empeorará el daño.`;
+
+            if (ctaTitle)
+                ctaTitle.innerText = "Acceso a ElenaApp: Lista de Espera Privada";
+            
+            if (ctaDesc)
+                ctaDesc.innerText = "Tu correo ha sido registrado exitosamente. Estamos seleccionando a un grupo reducido de personas para nuestro programa piloto gratuito de 30 días. Te notificaremos por correo si eres seleccionado para desbloquear tu metabolismo.";
+            
+            if (ctaButtons)
+                ctaButtons.innerHTML = `
+                <a href="/" class="inline-flex items-center justify-center px-8 py-3 text-sm font-bold text-[#00C49A] hover:bg-[#00C49A]/10 border border-[#00C49A]/50 rounded-xl transition-all w-full sm:w-auto">
+                    Volver al Inicio
                 </a>
             `;
-            }
         }, 800);
     });
 </script>
